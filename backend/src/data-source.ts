@@ -7,6 +7,13 @@ import { ProductionPlanItem } from './modules/production/entities/production-pla
 import { WorkOrder } from './modules/production/entities/work-order.entity';
 import { WorkOrderTask } from './modules/production/entities/work-order-task.entity';
 import { Item } from './entities/item.entity';
+import { Account } from './modules/accounting/entities/account.entity';
+import { JournalEntry } from './modules/accounting/entities/journal-entry.entity';
+import { JournalEntryLine } from './modules/accounting/entities/journal-entry-line.entity';
+import { GLEntry } from './modules/accounting/entities/gl-entry.entity';
+import { CostCenter } from './modules/accounting/entities/cost-center.entity';
+import { FiscalYear } from './modules/accounting/entities/fiscal-year.entity';
+import { PaymentEntry } from './modules/accounting/entities/payment-entry.entity';
 
 // Load environment variables
 config();
@@ -28,6 +35,13 @@ export const AppDataSource = new DataSource({
     WorkOrder,
     WorkOrderTask,
     Item,
+    Account,
+    JournalEntry,
+    JournalEntryLine,
+    GLEntry,
+    CostCenter,
+    FiscalYear,
+    PaymentEntry,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

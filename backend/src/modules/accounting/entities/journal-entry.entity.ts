@@ -34,6 +34,9 @@ export class JournalEntry {
   @Column({ type: 'text', nullable: true })
   userRemark?: string;
 
+  @Column({ type: 'int', default: 0 })
+  docstatus: number; // 0: Draft, 1: Submitted, 2: Cancelled
+
   @ManyToOne(() => Tenant, { nullable: false })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;

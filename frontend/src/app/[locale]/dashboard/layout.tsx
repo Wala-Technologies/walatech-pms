@@ -17,6 +17,7 @@ import {
   ToolOutlined,
   FileTextOutlined,
   SafetyOutlined,
+  AccountBookOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -245,6 +246,51 @@ export default function DashboardLayout({
           label: (
             <Link href={`/${locale}/dashboard/documents/specifications`}>
               Specifications
+            </Link>
+          ),
+        },
+      ],
+    },
+    {
+      key: 'accounting',
+      icon: <AccountBookOutlined />,
+      label: 'Accounting',
+      children: [
+        {
+          key: 'accounting-overview',
+          label: (
+            <Link href={`/${locale}/dashboard/accounting`}>Overview</Link>
+          ),
+        },
+        {
+          key: 'chart-of-accounts',
+          label: (
+            <Link href={`/${locale}/dashboard/accounting/chart-of-accounts`}>
+              Chart of Accounts
+            </Link>
+          ),
+        },
+        {
+          key: 'journal-entries',
+          label: (
+            <Link href={`/${locale}/dashboard/accounting/journal-entries`}>
+              Journal Entries
+            </Link>
+          ),
+        },
+        {
+          key: 'general-ledger',
+          label: (
+            <Link href={`/${locale}/dashboard/accounting/general-ledger`}>
+              General Ledger
+            </Link>
+          ),
+        },
+        {
+          key: 'accounting-reports',
+          label: (
+            <Link href={`/${locale}/dashboard/accounting/reports`}>
+              Reports
             </Link>
           ),
         },
