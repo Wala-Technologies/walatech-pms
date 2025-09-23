@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "እንኳን ደህና መጡ",
+    "login": "ግባ",
+    "logout": "ውጣ",
+    "register": "ተመዝገብ",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "firstName": "ስም",
+    "lastName": "የአባት ስም",
+    "submit": "አስገባ",
+    "cancel": "ሰርዝ",
+    "save": "አስቀምጥ",
+    "delete": "ሰርዝ",
+    "edit": "አርም",
+    "add": "አክል",
+    "search": "ፈልግ",
+    "loading": "እየጫነ ነው...",
+    "error": "ስህተት",
+    "success": "ተሳክቷል",
+    "confirm": "አረጋግጥ",
+    "yes": "አዎ",
+    "no": "አይ"
+  },
+  "navigation": {
+    "dashboard": "ዳሽቦርድ",
+    "masterData": "ዋና መረጃ",
+    "manufacturing": "ማምረቻ",
+    "inventory": "ክምችት",
+    "purchasing": "ግዢ",
+    "sales": "ሽያጭ",
+    "accounting": "ሂሳብ",
+    "hr": "የሰው ሃይል",
+    "projects": "ፕሮጀክቶች",
+    "reports": "ሪፖርቶች",
+    "settings": "ቅንብሮች"
+  },
+  "auth": {
+    "loginTitle": "ወደ መለያዎ ይግቡ",
+    "registerTitle": "አዲስ መለያ ይፍጠሩ",
+    "forgotPassword": "የይለፍ ቃልዎን ረስተዋል?",
+    "rememberMe": "አስታውሰኝ",
+    "alreadyHaveAccount": "ቀደም ሲል መለያ አለዎት?",
+    "dontHaveAccount": "መለያ የለዎትም?",
+    "signIn": "ግባ",
+    "signUp": "ተመዝገብ",
+    "invalidCredentials": "የተሳሳተ ኢሜይል ወይም የይለፍ ቃል",
+    "registrationSuccess": "ምዝገባ ተሳክቷል",
+    "loginSuccess": "መግባት ተሳክቷል"
+  },
+  "manufacturing": {
+    "workOrder": "የስራ ትዕዛዝ",
+    "bom": "የቁሳቁስ ዝርዝር",
+    "production": "ምርት",
+    "qualityControl": "የጥራት ቁጥጥር",
+    "workstation": "የስራ ጣቢያ",
+    "operation": "ስራ",
+    "routing": "መንገድ"
+  },
+  "ethiopian": {
+    "calendar": "የኢትዮጵያ ዘመን አቆጣጠር",
+    "timezone": "የኢትዮጵያ ሰዓት (EAT)",
+    "currency": "የኢትዮጵያ ብር (ETB)",
+    "languages": {
+      "amharic": "አማርኛ",
+      "tigrinya": "ትግርኛ",
+      "oromo": "አፋን ኦሮሞ",
+      "english": "እንግሊዝኛ"
+    }
+  }
+}

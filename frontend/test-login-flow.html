@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Login Flow</h1>
+        
+        <div>
+            <h3>Login Test</h3>
+            <input type="email" id="email" placeholder="Email" value="admin@walatech.com">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="testLogin()">Test Login</button>
+        </div>
+
+        <div>
+            <h3>Authentication Test</h3>
+            <button onclick="testAuth()">Test Current Auth Status</button>
+            <button onclick="testTenantSettings()">Test Tenant Settings Update</button>
+            <button onclick="clearTokens()">Clear Tokens</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addResult('Testing login...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:3003/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    addResult(`Login successful! Token stored. User: ${data.user.email}`, 'success');
+                } else {
+                    addResult(`Login failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            
+            if (!token) {
+                addResult('No token found in localStorage', 'error');
+                return;
+            }
+
+            addResult('Testing authentication with stored token...', 'info');
+
+            try {
+                const response = await fetch('http://localhost:3003/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`Auth test successful! User: ${data.email}`, 'success');
+                } else {
+                    addResult(`Auth test failed: ${data.message || 'Unauthorized'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`Auth test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTenantSettings() {
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            
+            if (!token) {
+                addResult('No token found. Please login first.', 'error');
+                return;
+            }
+
+            addResult('Testing tenant settings update...', 'info');
+
+            const testSettings = {
+                company_name: 'Test Company Updated',
+                industry: 'Technology'
+            };
+
+            try {
+                const response = await fetch('http://localhost:3003/api/tenant-settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'x-tenant-subdomain': 'walatech'
+                    },
+                    body: JSON.stringify({ settings: testSettings })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`Tenant settings update successful!`, 'success');
+                } else {
+                    addResult(`Tenant settings update failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`Tenant settings error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+            addResult('All tokens cleared from localStorage', 'info');
+        }
+
+        // Check initial state
+        window.onload = function() {
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            if (token) {
+                addResult('Found existing token in localStorage', 'info');
+            } else {
+                addResult('No token found in localStorage', 'info');
+            }
+        };
+    </script>
+</body>
+</html>

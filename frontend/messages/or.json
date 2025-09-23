@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "Baga nagaan dhuftan",
+    "login": "Seeni",
+    "logout": "Ba'i",
+    "register": "Galmaa'i",
+    "email": "Imeelii",
+    "password": "Jecha icciitii",
+    "firstName": "Maqaa",
+    "lastName": "Maqaa abbaa",
+    "submit": "Ergi",
+    "cancel": "Dhiisi",
+    "save": "Olkaa'i",
+    "delete": "Haqi",
+    "edit": "Fooyyessi",
+    "add": "Dabali",
+    "search": "Barbaadi",
+    "loading": "Fe'aa jira...",
+    "error": "Dogoggora",
+    "success": "Milkaa'e",
+    "confirm": "Mirkaneessi",
+    "yes": "Eeyyee",
+    "no": "Lakki"
+  },
+  "navigation": {
+    "dashboard": "Gabatee to'annoo",
+    "masterData": "Daataa bu'uuraa",
+    "manufacturing": "Oomishaa",
+    "inventory": "Kuusaa",
+    "purchasing": "Bittaa",
+    "sales": "Gurgurtaa",
+    "accounting": "Herregaa",
+    "hr": "Qabeenya namaa",
+    "projects": "Pirojektoota",
+    "reports": "Gabaasota",
+    "settings": "Qindaa'ina"
+  },
+  "auth": {
+    "loginTitle": "Gara herrega keetii seeni",
+    "registerTitle": "Herrega haaraa uumi",
+    "forgotPassword": "Jecha icciitii irraanfatte?",
+    "rememberMe": "Na yaadadhu",
+    "alreadyHaveAccount": "Herrega qabdaa?",
+    "dontHaveAccount": "Herrega hin qabdu?",
+    "signIn": "Seeni",
+    "signUp": "Galmaa'i",
+    "invalidCredentials": "Imeelii ykn jecha icciitii dogoggoraa",
+    "registrationSuccess": "Galmaawwiin milkaa'e",
+    "loginSuccess": "Seenuun milkaa'e"
+  },
+  "manufacturing": {
+    "workOrder": "Ajaja hojii",
+    "bom": "Tarree meeshaalee",
+    "production": "Oomishaa",
+    "qualityControl": "To'annoo qulqullina",
+    "workstation": "Bakka hojii",
+    "operation": "Hojii",
+    "routing": "Karaa"
+  },
+  "ethiopian": {
+    "calendar": "Lakkoofsa waggaa Itoophiyaa",
+    "timezone": "Sa'aatii Itoophiyaa (EAT)",
+    "currency": "Birrii Itoophiyaa (ETB)",
+    "languages": {
+      "amharic": "Afaan Amaaraa",
+      "tigrinya": "Afaan Tigiraayaa",
+      "oromo": "Afaan Oromoo",
+      "english": "Afaan Ingilizii"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "እንቋዕ ብደሓን መጻእኩም",
+    "login": "እቶ",
+    "logout": "ወጽእ",
+    "register": "ተመዝገብ",
+    "email": "ኢመይል",
+    "password": "መሕለፊ ቃል",
+    "firstName": "ስም",
+    "lastName": "ስም ኣቦ",
+    "submit": "ኣእቱ",
+    "cancel": "ሰርዝ",
+    "save": "ዓቅብ",
+    "delete": "ሰርዝ",
+    "edit": "ኣርም",
+    "add": "ወስኽ",
+    "search": "ደሊ",
+    "loading": "ይጽዕን ኣሎ...",
+    "error": "ጌጋ",
+    "success": "ተዓወተ",
+    "confirm": "ኣረጋግጽ",
+    "yes": "እወ",
+    "no": "ኣይፋልን"
+  },
+  "navigation": {
+    "dashboard": "ዳሽቦርድ",
+    "masterData": "ቀንዲ ዳታ",
+    "manufacturing": "ፋብሪካ",
+    "inventory": "ክምዝት",
+    "purchasing": "ዕድጊ",
+    "sales": "ሽያጭ",
+    "accounting": "ሒሳብ",
+    "hr": "ሰብኣዊ ጸጋታት",
+    "projects": "ፕሮጀክትታት",
+    "reports": "ሪፖርትታት",
+    "settings": "ቅንብራት"
+  },
+  "auth": {
+    "loginTitle": "ናብ መለያኻ እቶ",
+    "registerTitle": "ሓዲሽ መለያ ፍጠር",
+    "forgotPassword": "መሕለፊ ቃልካ ረሲዕካዮ?",
+    "rememberMe": "ዝክረኒ",
+    "alreadyHaveAccount": "ቅድሚ ሕጂ መለያ ኣለካ?",
+    "dontHaveAccount": "መለያ የብልካን?",
+    "signIn": "እቶ",
+    "signUp": "ተመዝገብ",
+    "invalidCredentials": "ጌጋ ኢመይል ወይ መሕለፊ ቃል",
+    "registrationSuccess": "ምዝገባ ተዓወተ",
+    "loginSuccess": "ምእታው ተዓወተ"
+  },
+  "manufacturing": {
+    "workOrder": "ትእዛዝ ስራሕ",
+    "bom": "ዝርዝር ንዋት",
+    "production": "ፍርያት",
+    "qualityControl": "ቁጽጽር ጽሬት",
+    "workstation": "ቦታ ስራሕ",
+    "operation": "ስራሕ",
+    "routing": "መንገዲ"
+  },
+  "ethiopian": {
+    "calendar": "ዘመን ኣቆጻጸራ ኢትዮጵያ",
+    "timezone": "ሰዓት ኢትዮጵያ (EAT)",
+    "currency": "ብር ኢትዮጵያ (ETB)",
+    "languages": {
+      "amharic": "ኣምሓርኛ",
+      "tigrinya": "ትግርኛ",
+      "oromo": "ኣፋን ኦሮሞ",
+      "english": "እንግሊዝኛ"
+    }
+  }
+}

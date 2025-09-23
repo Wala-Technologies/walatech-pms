@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Organization Settings Save</title>
+</head>
+<body>
+    <h1>Test Organization Settings Save</h1>
+    <button onclick="testSave()">Test Save Settings</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSave() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Get token from localStorage
+                const token = localStorage.getItem('token');
+                console.log('Token from localStorage:', token);
+                
+                if (!token) {
+                    resultDiv.innerHTML = '<p style="color: red;">No token found in localStorage. Please log in first.</p>';
+                    return;
+                }
+                
+                // Test settings data
+                const testSettings = {
+                    settings: {
+                        general: {
+                            name: "Test Organization",
+                            description: "Test Description",
+                            website: "",
+                            logo: "",
+                            timezone: "UTC",
+                            dateFormat: "YYYY-MM-DD",
+                            currency: "USD"
+                        }
+                    }
+                };
+                
+                console.log('Sending test settings:', testSettings);
+                
+                // Make API call
+                const response = await fetch('http://localhost:3001/api/tenants/5daae00b-4580-485d-8851-554b1689e806/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testSettings)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Success response:', data);
+                    resultDiv.innerHTML = '<p style="color: green;">Settings saved successfully!</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorData = await response.text();
+                    console.error('Error response:', errorData);
+                    resultDiv.innerHTML = `<p style="color: red;">Error ${response.status}: ${errorData}</p>`;
+                }
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Check token on page load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('result').innerHTML = '<p style="color: blue;">Token found in localStorage. Ready to test.</p>';
+            } else {
+                document.getElementById('result').innerHTML = '<p style="color: orange;">No token found. Please log in to the main app first.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
