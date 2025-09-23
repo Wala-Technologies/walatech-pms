@@ -15,7 +15,7 @@ export const CurrentUserId = createParamDecorator(
   },
 );
 
-export const CurrentUserTenantId = createParamDecorator(
+export const CurrentUsertenant_id = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const request = ctx.switchToHttp().getRequest();
     return request.user?.tenant_id;

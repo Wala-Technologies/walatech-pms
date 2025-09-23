@@ -57,6 +57,66 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Tenant Isolation & Super Admin Model
+
+The platform enforces strict multi-tenant isolation:
+
+- Regular tenant users (e.g. `admin@arfasa.com`) can only access their own tenant context.
+- A single super admin (tenant with subdomain `walatech`) can enumerate and provision tenants.
+- Sensitive endpoints (`GET /tenants`, `POST /tenants`, status / plan mutation routes) are protected by `JwtAuthGuard` + `SuperAdminGuard`.
+- A user-scoped endpoint `GET /tenants/user/tenants` returns only the calling user’s active tenants.
+
+### Runtime Enforcement
+
+`JwtTenantMiddleware` attaches the resolved tenant and a computed `isSuperAdmin` flag to each authenticated request. The `SuperAdminGuard` accepts any of:
+
+1. `request.user.isSuperAdmin`
+2. `request.isSuperAdmin`
+3. `request.tenant.subdomain === 'walatech'`
+
+### Automated Test Coverage
+
+The E2E spec `test/tenant-isolation.e2e-spec.ts` validates:
+
+- Super admin can list all tenants (`GET /tenants`).
+- Regular tenant receives `403` on `GET /tenants`.
+- Regular tenant can call `GET /tenants/user/tenants` and only sees its own subdomain.
+- Regular tenant cannot create a tenant (`POST /tenants` returns `403`).
+- Super admin can successfully create a tenant (201 Created).
+
+### Default Tenant Status
+
+The database enum for `status` allows only `active | inactive | suspended`. The earlier code referenced a `trial` status that was not in the DB enum; this has been removed to prevent insert warnings. New tenants default to `active`. To reintroduce a trial phase later, first add the value to the database enum via a migration, then re-add it to the `TenantStatus` TypeScript enum.
+
+### MySQL Auth Plugin Warning
+
+The previous hardcoded `authPlugin: 'mysql_native_password'` option generated a mysql2 warning. It is now only applied if `DB_AUTH_PLUGIN` is set. If you need a specific auth plugin:
+
+```bash
+export DB_AUTH_PLUGIN=mysql_native_password
+```
+
+### SUPER_ADMIN_SUBDOMAIN
+
+Configure which tenant subdomain is treated as the platform super admin:
+
+Environment variable:
+
+```bash
+SUPER_ADMIN_SUBDOMAIN=walatech
+```
+
+If omitted, the system defaults to `walatech`. Both `JwtTenantMiddleware` and `SuperAdminGuard` now derive super admin status from this value.
+
+### Quick Isolation Test Run
+
+```bash
+cd backend
+npm run test:e2e -- tenant-isolation.e2e-spec.ts
+```
+
+All tests should pass (7/7). If credentials or seeds change, update the password candidate list in the spec accordingly.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
@@ -64,8 +124,8 @@ When you're ready to deploy your NestJS application to production, there are som
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install -g @nestjs/mau
+mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.

@@ -9,10 +9,10 @@ import type { UploadFile, UploadProps } from 'antd';
 interface LogoUploadProps {
   value?: string;
   onChange?: (logoUrl: string | null) => void;
-  tenantId?: string;
+  tenant_id?: string;
 }
 
-export default function LogoUpload({ value, onChange, tenantId }: LogoUploadProps) {
+export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
 
@@ -33,7 +33,7 @@ export default function LogoUpload({ value, onChange, tenantId }: LogoUploadProp
   }, [value]);
 
   const handleUpload = async (file: File) => {
-    if (!tenantId) {
+    if (!tenant_id) {
       message.error('No organization selected');
       return false;
     }
@@ -44,7 +44,7 @@ export default function LogoUpload({ value, onChange, tenantId }: LogoUploadProp
       const formData = new FormData();
       formData.append('logo', file);
       
-      const response = await apiClient.post(`/tenants/${tenantId}/logo`, formData);
+      const response = await apiClient.post(`/tenants/${tenant_id}/logo`, formData);
       
       if (response.error) {
         throw new Error(response.error);
@@ -102,7 +102,7 @@ export default function LogoUpload({ value, onChange, tenantId }: LogoUploadProp
           <Button 
             icon={<UploadOutlined />} 
             loading={uploading}
-            disabled={!tenantId}
+            disabled={!tenant_id}
           >
             {uploading ? 'Uploading...' : 'Upload Logo'}
           </Button>

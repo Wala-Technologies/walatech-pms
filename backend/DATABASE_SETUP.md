@@ -1,11 +1,13 @@
 # Database Setup and Migration Guide
 
 ## Overview
+
 This multi-tenant SaaS application follows ERPNext patterns with a microservices architecture and SOLID principles. The database structure supports tenant isolation and follows ERPNext naming conventions.
 
 ## Database Schema
 
 ### Core Tables
+
 1. **tabTenant** - Multi-tenant isolation
 2. **tabUser** - User management with tenant association
 3. **tabProductionOrder** - Production planning and tracking
@@ -13,6 +15,7 @@ This multi-tenant SaaS application follows ERPNext patterns with a microservices
 5. **tabWorkOrderTask** - Task-level tracking
 
 ### ERPNext Conventions
+
 - All tables prefixed with `tab` (e.g., `tabUser`, `tabTenant`)
 - Standard fields: `docstatus`, `idx`, `owner`, `modified_by`
 - Multi-tenant isolation via `tenant_id` foreign key
@@ -21,6 +24,7 @@ This multi-tenant SaaS application follows ERPNext patterns with a microservices
 ## Migration Commands
 
 ### Development Setup
+
 ```bash
 # Run migrations
 npm run migration:run
@@ -36,6 +40,7 @@ npm run migration:revert
 ```
 
 ### Production Setup
+
 ```bash
 # Build the application
 npm run build
@@ -47,6 +52,7 @@ NODE_ENV=production npm run migration:run
 ## Database Configuration
 
 ### Environment Variables
+
 ```env
 DB_HOST=localhost
 DB_PORT=3306
@@ -57,6 +63,7 @@ NODE_ENV=development
 ```
 
 ### Migration vs Synchronize
+
 - **Development**: Uses `synchronize: false` with manual migrations
 - **Production**: Uses `migrationsRun: true` for automatic migration execution
 - **Never use synchronize in production** - it can cause data loss
@@ -64,40 +71,46 @@ NODE_ENV=development
 ## Multi-Tenant Architecture
 
 ### Tenant Isolation
+
 - Each tenant has a unique `id` and `subdomain`
 - All business entities include `tenant_id` for data isolation
 - Application-level filtering ensures tenant data separation
 
 ### Data Access Patterns
+
 ```typescript
 // Always filter by tenant in queries
 const orders = await this.productionOrderRepository.find({
-  where: { tenant: { id: tenant_id } }
+  where: { tenant: { id: tenant_id } },
 });
 ```
 
 ## Initial Data Setup
 
 ### Creating a Tenant
+
 ```sql
-INSERT INTO tabTenant (id, name, subdomain, status, plan) 
+INSERT INTO tabTenant (id, name, subdomain, status, plan)
 VALUES (UUID(), 'Demo Company', 'demo', 'active', 'basic');
 ```
 
 ### Creating Admin User
+
 ```sql
-INSERT INTO tabUser (id, email, first_name, last_name, password, tenant_id) 
+INSERT INTO tabUser (id, email, first_name, last_name, password, tenant_id)
 VALUES (UUID(), 'admin@demo.com', 'Admin', 'User', 'hashed_password', 'tenant_id');
 ```
 
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Migration fails**: Check database connection and permissions
 2. **Foreign key errors**: Ensure proper entity relationships
 3. **Tenant isolation**: Verify all queries include tenant filtering
 
 ### Database Reset (Development Only)
+
 ```bash
 # Drop all tables and recreate
 npm run schema:drop
@@ -116,6 +129,7 @@ npm run migration:run
 ## ERPNext Compatibility
 
 This schema follows ERPNext patterns:
+
 - Document-based architecture with `docstatus`
 - Audit trail with `owner`, `modified_by`
 - Flexible indexing with `idx` field

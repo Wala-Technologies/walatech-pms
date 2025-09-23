@@ -2,15 +2,15 @@ const mysql = require('mysql2/promise');
 
 async function checkInventoryTables() {
   let connection;
-  
+
   try {
     // Create connection
     connection = await mysql.createConnection({
       host: 'localhost',
-      port: 3300,
+      port: parseInt(process.env.DB_PORT || '3306', 10),
       user: 'root',
       password: 'walatech-pms',
-      database: 'wala_pms'
+      database: 'wala_pms',
     });
 
     console.log('✅ Connected to database successfully');
@@ -18,25 +18,27 @@ async function checkInventoryTables() {
     // Check if inventory tables exist
     const tables = [
       'warehouses',
-      'bins', 
+      'bins',
       'batches',
       'serial_numbers',
       'stock_entries',
       'stock_entry_details',
-      'stock_ledger_entries'
+      'stock_ledger_entries',
     ];
 
     console.log('\n📋 Checking inventory tables...');
-    
+
     for (const table of tables) {
       try {
         const [rows] = await connection.execute(`SHOW TABLES LIKE '${table}'`);
         if (rows.length > 0) {
           console.log(`✅ Table '${table}' exists`);
-          
+
           // Get table structure
           const [columns] = await connection.execute(`DESCRIBE ${table}`);
-          console.log(`   Columns: ${columns.map(col => col.Field).join(', ')}`);
+          console.log(
+            `   Columns: ${columns.map((col) => col.Field).join(', ')}`,
+          );
         } else {
           console.log(`❌ Table '${table}' does not exist`);
         }
@@ -48,10 +50,9 @@ async function checkInventoryTables() {
     // Check existing tables
     console.log('\n📋 All tables in database:');
     const [allTables] = await connection.execute('SHOW TABLES');
-    allTables.forEach(table => {
+    allTables.forEach((table) => {
       console.log(`   - ${Object.values(table)[0]}`);
     });
-
   } catch (error) {
     console.error('❌ Database connection error:', error.message);
   } finally {

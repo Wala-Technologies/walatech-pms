@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey } from 'typeorm';
 
-export class AddTenantIdToUser1758295800000 implements MigrationInterface {
-  name = 'AddTenantIdToUser1758295800000';
+export class Addtenant_idToUser1758295800000 implements MigrationInterface {
+  name = 'Addtenant_idToUser1758295800000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add tenant_id column to tabUser table

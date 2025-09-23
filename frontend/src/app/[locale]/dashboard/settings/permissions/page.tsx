@@ -61,8 +61,12 @@ export default function PermissionsPage() {
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
-  const [activeTab, setActiveTab] = useState<'permissions' | 'roles'>('permissions');
+  const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>(
+    []
+  );
+  const [activeTab, setActiveTab] = useState<'permissions' | 'roles'>(
+    'permissions'
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [form] = Form.useForm();
@@ -150,12 +154,12 @@ export default function PermissionsPage() {
           enabled: true,
         },
       ];
-      
+
       setPermissions(mockPermissions);
-      
+
       // Group permissions by module
       const groups = mockPermissions.reduce((acc, permission) => {
-        const existingGroup = acc.find(g => g.module === permission.module);
+        const existingGroup = acc.find((g) => g.module === permission.module);
         if (existingGroup) {
           existingGroup.permissions.push(permission);
         } else {
@@ -166,7 +170,7 @@ export default function PermissionsPage() {
         }
         return acc;
       }, [] as PermissionGroup[]);
-      
+
       setPermissionGroups(groups);
     } catch (error) {
       message.error('Failed to fetch permissions');
@@ -209,7 +213,7 @@ export default function PermissionsPage() {
           userCount: 10,
         },
       ];
-      
+
       setRoles(mockRoles);
     } catch (error) {
       message.error('Failed to fetch roles');
@@ -217,28 +221,31 @@ export default function PermissionsPage() {
     }
   };
 
-  const handlePermissionToggle = async (permissionId: string, enabled: boolean) => {
+  const handlePermissionToggle = async (
+    permissionId: string,
+    enabled: boolean
+  ) => {
     try {
       // TODO: Implement actual API call when backend endpoint is ready
       // await apiClient.patch(`/permissions/${permissionId}`, { enabled });
-      
-      setPermissions(prev => 
-        prev.map(p => 
-          p.id === permissionId ? { ...p, enabled } : p
-        )
+
+      setPermissions((prev) =>
+        prev.map((p) => (p.id === permissionId ? { ...p, enabled } : p))
       );
-      
+
       // Update permission groups
-      setPermissionGroups(prev => 
-        prev.map(group => ({
+      setPermissionGroups((prev) =>
+        prev.map((group) => ({
           ...group,
-          permissions: group.permissions.map(p => 
+          permissions: group.permissions.map((p) =>
             p.id === permissionId ? { ...p, enabled } : p
           ),
         }))
       );
-      
-      message.success(`Permission ${enabled ? 'enabled' : 'disabled'} successfully`);
+
+      message.success(
+        `Permission ${enabled ? 'enabled' : 'disabled'} successfully`
+      );
     } catch (error) {
       message.error('Failed to update permission');
       console.error('Error updating permission:', error);
@@ -272,29 +279,25 @@ export default function PermissionsPage() {
       if (editingRole) {
         // TODO: Implement actual API call when backend endpoint is ready
         // await apiClient.patch(`/roles/${editingRole.id}`, roleData);
-        
-        setRoles(prev => 
-          prev.map(r => 
-            r.id === editingRole.id 
-              ? { ...r, ...roleData }
-              : r
-          )
+
+        setRoles((prev) =>
+          prev.map((r) => (r.id === editingRole.id ? { ...r, ...roleData } : r))
         );
         message.success('Role updated successfully');
       } else {
         // TODO: Implement actual API call when backend endpoint is ready
         // const response = await apiClient.post('/roles', roleData);
-        
+
         const newRole: Role = {
           id: Date.now().toString(),
           ...roleData,
           userCount: 0,
         };
-        
-        setRoles(prev => [...prev, newRole]);
+
+        setRoles((prev) => [...prev, newRole]);
         message.success('Role created successfully');
       }
-      
+
       setModalVisible(false);
       form.resetFields();
     } catch (error) {
@@ -307,8 +310,8 @@ export default function PermissionsPage() {
     try {
       // TODO: Implement actual API call when backend endpoint is ready
       // await apiClient.delete(`/roles/${roleId}`);
-      
-      setRoles(prev => prev.filter(r => r.id !== roleId));
+
+      setRoles((prev) => prev.filter((r) => r.id !== roleId));
       message.success('Role deleted successfully');
     } catch (error) {
       message.error('Failed to delete role');
@@ -377,14 +380,12 @@ export default function PermissionsPage() {
       key: 'permissions',
       render: (permissionIds: string[]) => (
         <div className="flex flex-wrap gap-1">
-          {permissionIds.slice(0, 3).map(id => {
-            const permission = permissions.find(p => p.id === id);
-            return permission ? (
-              <Tag key={id} size="small">{permission.name}</Tag>
-            ) : null;
+          {permissionIds.slice(0, 3).map((id) => {
+            const permission = permissions.find((p) => p.id === id);
+            return permission ? <Tag key={id}>{permission.name}</Tag> : null;
           })}
           {permissionIds.length > 3 && (
-            <Tag size="small">+{permissionIds.length - 3} more</Tag>
+            <Tag>+{permissionIds.length - 3} more</Tag>
           )}
         </div>
       ),
@@ -403,7 +404,7 @@ export default function PermissionsPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Role) => (
+      render: (value: unknown, record: Role) => (
         <Space>
           <Button
             type="text"
@@ -462,7 +463,7 @@ export default function PermissionsPage() {
 
       {activeTab === 'permissions' && (
         <div>
-          {permissionGroups.map(group => (
+          {permissionGroups.map((group) => (
             <Card key={group.module} title={group.module} className="mb-4">
               <Table
                 dataSource={group.permissions}
@@ -505,11 +506,7 @@ export default function PermissionsPage() {
         footer={null}
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSaveRole}
-        >
+        <Form form={form} layout="vertical" onFinish={handleSaveRole}>
           <Form.Item
             label="Role Name"
             name="name"
@@ -526,16 +523,13 @@ export default function PermissionsPage() {
             <Input.TextArea placeholder="Enter role description" rows={3} />
           </Form.Item>
 
-          <Form.Item
-            label="Permissions"
-            name="permissions"
-          >
+          <Form.Item label="Permissions" name="permissions">
             <div className="max-h-60 overflow-y-auto border rounded p-3">
-              {permissionGroups.map(group => (
+              {permissionGroups.map((group) => (
                 <div key={group.module} className="mb-4">
                   <Title level={5}>{group.module}</Title>
                   <Row gutter={[16, 8]}>
-                    {group.permissions.map(permission => (
+                    {group.permissions.map((permission) => (
                       <Col span={12} key={permission.id}>
                         <Form.Item
                           name={['permissions', permission.id]}
@@ -557,9 +551,7 @@ export default function PermissionsPage() {
 
           <Form.Item className="mb-0 text-right">
             <Space>
-              <Button onClick={() => setModalVisible(false)}>
-                Cancel
-              </Button>
+              <Button onClick={() => setModalVisible(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit">
                 {editingRole ? 'Update' : 'Create'} Role
               </Button>

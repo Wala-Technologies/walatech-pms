@@ -1,8 +1,16 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Tenant, TenantStatus, TenantPlan } from '../../../entities/tenant.entity';
+import {
+  Tenant,
+  TenantStatus,
+  TenantPlan,
+} from '../../../entities/tenant.entity';
 import { CreateTenantDto } from '../dto/create-tenant.dto';
 import { UpdateTenantDto } from '../dto/update-tenant.dto';
 
@@ -26,7 +34,8 @@ export class TenantsService {
     const tenant = this.tenantRepository.create({
       id: uuidv4(),
       ...createTenantDto,
-      status: createTenantDto.status || TenantStatus.TRIAL,
+      // Use ACTIVE as default since DB enum does not include 'trial'
+      status: createTenantDto.status || TenantStatus.ACTIVE,
       plan: createTenantDto.plan || TenantPlan.BASIC,
       docstatus: 0,
     });
@@ -68,7 +77,10 @@ export class TenantsService {
     const tenant = await this.findOne(id);
 
     // Check subdomain uniqueness if being updated
-    if (updateTenantDto.subdomain && updateTenantDto.subdomain !== tenant.subdomain) {
+    if (
+      updateTenantDto.subdomain &&
+      updateTenantDto.subdomain !== tenant.subdomain
+    ) {
       const existingTenant = await this.tenantRepository.findOne({
         where: { subdomain: updateTenantDto.subdomain },
       });

@@ -1,19 +1,41 @@
 const mysql = require('mysql2/promise');
+const { config } = require('dotenv');
+config();
+
+async function createConnection() {
+  const host = process.env.DB_HOST || 'localhost';
+  const port = parseInt(process.env.DB_PORT || '3306', 10);
+  const user = process.env.DB_USERNAME || 'root';
+  const password = process.env.DB_PASSWORD || '';
+  const database = process.env.DB_DATABASE || 'wala_pms';
+  console.log(
+    `Attempting DB connection -> host=${host} port=${port} user=${user} db=${database}`,
+  );
+  try {
+    return await mysql.createConnection({
+      host,
+      port,
+      user,
+      password,
+      database,
+    });
+  } catch (err) {
+    if (err && err.code === 'AUTH_SWITCH_PLUGIN_ERROR') {
+      console.error('\n⚠️  Authentication plugin mismatch for user', user);
+      console.error('Run ALTER USER to set mysql_native_password.');
+    }
+    throw err;
+  }
+}
 
 async function addArfasaTenant() {
-  const connection = await mysql.createConnection({
-    host: 'localhost',
-    port: 3300,
-    user: 'wala_user',
-    password: 'walatech-pass',
-    database: 'wala_pms'
-  });
+  const connection = await createConnection();
 
   try {
     // Check if arfasa tenant already exists
     const [existingTenant] = await connection.execute(
       'SELECT id FROM tabTenant WHERE subdomain = ?',
-      ['arfasa']
+      ['arfasa'],
     );
 
     if (existingTenant.length === 0) {
@@ -40,7 +62,7 @@ async function addArfasaTenant() {
     // Check if arfasa admin user already exists
     const [existingUser] = await connection.execute(
       'SELECT id FROM tabUser WHERE email = ?',
-      ['admin@arfasa.com']
+      ['admin@arfasa.com'],
     );
 
     if (existingUser.length === 0) {
@@ -69,11 +91,11 @@ async function addArfasaTenant() {
     // Verify data
     const [tenants] = await connection.execute(
       'SELECT name, subdomain, status FROM tabTenant WHERE subdomain = ?',
-      ['arfasa']
+      ['arfasa'],
     );
     const [users] = await connection.execute(
       'SELECT email, first_name, last_name, enabled FROM tabUser WHERE email = ?',
-      ['admin@arfasa.com']
+      ['admin@arfasa.com'],
     );
 
     console.log('\n📊 Verification:');
@@ -82,16 +104,17 @@ async function addArfasaTenant() {
 
     // Show all tenants
     const [allTenants] = await connection.execute(
-      'SELECT name, subdomain, status FROM tabTenant ORDER BY subdomain'
+      'SELECT name, subdomain, status FROM tabTenant ORDER BY subdomain',
     );
-    
+
     console.log('\n🏢 All Tenants:');
-    allTenants.forEach(tenant => {
+    allTenants.forEach((tenant) => {
       console.log(`  - ${tenant.subdomain}: ${tenant.name} (${tenant.status})`);
     });
-
   } catch (error) {
     console.error('❌ Error adding arfasa tenant:', error.message);
+    if (error.stack)
+      console.error(error.stack.split('\n').slice(0, 5).join('\n'));
   } finally {
     await connection.end();
   }

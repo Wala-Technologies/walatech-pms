@@ -271,7 +271,7 @@ export class UsersService extends TenantScopedService<User> {
       .createQueryBuilder('user')
       .select('user.role_profile_name', 'role')
       .addSelect('COUNT(*)', 'count')
-      .where('user.tenant_id = :tenantId', { tenantId: this.getTenantId() })
+      .where('user.tenant_id = :tenant_id', { tenant_id: this.gettenant_id() })
       .groupBy('user.role_profile_name')
       .getRawMany();
 
@@ -316,7 +316,7 @@ export class UsersService extends TenantScopedService<User> {
 
   async getUsersByRole(role: string): Promise<User[]> {
     const queryBuilder = this.createQueryBuilder('user')
-      .where('user.tenant_id = :tenantId', { tenantId: this.getTenantId() })
+      .where('user.tenant_id = :tenant_id', { tenant_id: this.gettenant_id() })
       .andWhere('user.role_profile_name = :role', { role })
       .orderBy('user.first_name', 'ASC');
 

@@ -218,21 +218,21 @@ export class TenantProvisioningService {
     }
   }
 
-  async deprovisionTenant(tenantId: string): Promise<void> {
+  async deprovisionTenant(tenant_id: string): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       // Step 1: Deactivate tenant
-      await queryRunner.manager.update(Tenant, tenantId, {
+      await queryRunner.manager.update(Tenant, tenant_id, {
         status: TenantStatus.SUSPENDED,
         updatedAt: new Date(),
       });
 
       // Step 2: Disable all users
       await queryRunner.manager.update(User, 
-        { tenant_id: tenantId },
+        { tenant_id: tenant_id },
         { enabled: false, modified: new Date() }
       );
 
@@ -248,13 +248,13 @@ export class TenantProvisioningService {
     }
   }
 
-  async getTenantProvisioningStatus(tenantId: string): Promise<{
+  async getTenantProvisioningStatus(tenant_id: string): Promise<{
     tenant: Tenant;
     userCount: number;
     isFullyProvisioned: boolean;
   }> {
     const tenant = await this.tenantRepository.findOne({
-      where: { id: tenantId },
+      where: { id: tenant_id },
     });
 
     if (!tenant) {
@@ -262,7 +262,7 @@ export class TenantProvisioningService {
     }
 
     const userCount = await this.userRepository.count({
-      where: { tenant_id: tenantId },
+      where: { tenant_id: tenant_id },
     });
 
     const isFullyProvisioned = tenant.status === TenantStatus.ACTIVE && userCount > 0;

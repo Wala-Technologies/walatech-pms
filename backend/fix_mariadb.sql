@@ -1,8 +1,16 @@
 -- Check current users and their authentication methods
 SELECT user, host, plugin FROM mysql.user WHERE user='root';
 
--- Create a new user with mysql_native_password authentication
-CREATE USER 'wala_user'@'localhost' IDENTIFIED BY 'walatech-pass';
+-- Create a new user with explicit mysql_native_password authentication
+-- MySQL 8.x syntax:
+--   CREATE USER 'wala_user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'walatech-pass';
+-- MariaDB syntax (both forms generally work depending on version):
+--   CREATE USER 'wala_user'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('walatech-pass');
+-- We'll prefer the MySQL style first; if it errors on MariaDB, comment it out and use the VIA form below.
+CREATE USER 'wala_user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'walatech-pass';
+
+-- For MariaDB fallback (uncomment if needed):
+-- CREATE USER 'wala_user'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('walatech-pass');
 
 -- Grant all privileges to the new user
 GRANT ALL PRIVILEGES ON *.* TO 'wala_user'@'localhost' WITH GRANT OPTION;
@@ -18,3 +26,8 @@ FLUSH PRIVILEGES;
 
 -- Show the new user
 SELECT user, host, plugin FROM mysql.user WHERE user='wala_user';
+
+-- If the plugin column is not mysql_native_password, adjust with:
+--   ALTER USER 'wala_user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'walatech-pass';
+-- or for MariaDB:
+--   ALTER USER 'wala_user'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('walatech-pass');

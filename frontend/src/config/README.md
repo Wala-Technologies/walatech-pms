@@ -22,6 +22,8 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_API_TIMEOUT=10000
 ```
 
+Important: Do NOT include `/api` in `NEXT_PUBLIC_API_BASE_URL`. The application automatically prefixes `/api` when constructing requests. If you previously used `http://localhost:3001/api`, remove the trailing `/api` to avoid double-prefix issues.
+
 ## Usage
 
 ### Basic API Calls
@@ -35,7 +37,7 @@ const response = await apiClient.get(apiConfig.endpoints.production.orders);
 // POST request
 const response = await apiClient.post(apiConfig.endpoints.auth.login, {
   email: 'user@example.com',
-  password: 'password'
+  password: 'password',
 });
 
 // PATCH request
@@ -51,7 +53,7 @@ const response = await apiClient.patch(
 const params = {
   page: '1',
   limit: '10',
-  status: 'active'
+  status: 'active',
 };
 
 const response = await apiClient.get(

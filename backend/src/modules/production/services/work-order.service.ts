@@ -17,7 +17,7 @@ export class WorkOrderService {
   async findAll(
     page: number = 1,
     limit: number = 10,
-    tenantId: string,
+    tenant_id: string,
     search?: string,
     status?: WorkOrderStatus,
     productionOrderId?: string,
@@ -29,7 +29,7 @@ export class WorkOrderService {
       .leftJoinAndSelect('workOrder.productionOrder', 'productionOrder')
       .leftJoinAndSelect('workOrder.createdBy', 'createdBy')
       .leftJoinAndSelect('workOrder.assignedTo', 'assignedTo')
-      .where('workOrder.tenant_id = :tenantId', { tenantId })
+      .where('workOrder.tenant_id = :tenant_id', { tenant_id })
       .skip(skip)
       .take(limit)
       .orderBy('workOrder.createdAt', 'DESC');
@@ -51,9 +51,9 @@ export class WorkOrderService {
     return { data, total, page, limit };
   }
 
-  async findOne(id: string, tenantId: string): Promise<WorkOrder> {
+  async findOne(id: string, tenant_id: string): Promise<WorkOrder> {
     const workOrder = await this.workOrderRepository.findOne({
-      where: { id, tenant: { id: tenantId } },
+      where: { id, tenant: { id: tenant_id } },
       relations: ['productionOrder', 'createdBy', 'assignedTo', 'tasks'],
     });
 
@@ -64,8 +64,8 @@ export class WorkOrderService {
     return workOrder;
   }
 
-  async updateStatus(id: string, status: WorkOrderStatus, tenantId: string): Promise<WorkOrder> {
-    const workOrder = await this.findOne(id, tenantId);
+  async updateStatus(id: string, status: WorkOrderStatus, tenant_id: string): Promise<WorkOrder> {
+    const workOrder = await this.findOne(id, tenant_id);
 
     if (!this.isValidStatusTransition(workOrder.status, status)) {
       throw new BadRequestException(
@@ -85,12 +85,12 @@ export class WorkOrderService {
     return await this.workOrderRepository.save(workOrder);
   }
 
-  async updateProgress(id: string, progressPercentage: number, tenantId: string): Promise<WorkOrder> {
+  async updateProgress(id: string, progressPercentage: number, tenant_id: string): Promise<WorkOrder> {
     if (progressPercentage < 0 || progressPercentage > 100) {
       throw new BadRequestException('Progress percentage must be between 0 and 100');
     }
 
-    const workOrder = await this.findOne(id, tenantId);
+    const workOrder = await this.findOne(id, tenant_id);
     workOrder.progressPercentage = progressPercentage;
 
     // Auto-update status based on progress
@@ -107,25 +107,25 @@ export class WorkOrderService {
     return await this.workOrderRepository.save(workOrder);
   }
 
-  async getStatistics(tenantId: string): Promise<{
+  async getStatistics(tenant_id: string): Promise<{
     total: number;
     byStatus: Record<WorkOrderStatus, number>;
     averageCompletionTime: number;
   }> {
     const total = await this.workOrderRepository.count({
-      where: { tenant: { id: tenantId } },
+      where: { tenant: { id: tenant_id } },
     });
     
     const byStatus = {} as Record<WorkOrderStatus, number>;
     for (const status of Object.values(WorkOrderStatus)) {
       byStatus[status as WorkOrderStatus] = await this.workOrderRepository.count({
-        where: { status, tenant: { id: tenantId } },
+        where: { status, tenant: { id: tenant_id } },
       });
     }
 
     // Calculate average completion time for completed work orders
     const completedOrders = await this.workOrderRepository.find({
-      where: { status: WorkOrderStatus.COMPLETED, tenant: { id: tenantId } },
+      where: { status: WorkOrderStatus.COMPLETED, tenant: { id: tenant_id } },
       select: ['actualStartTime', 'actualEndTime'],
     });
 

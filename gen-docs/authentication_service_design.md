@@ -1,14 +1,17 @@
 # Authentication Service Design
 
 ## Overview
+
 This document outlines the design of the centralized authentication service that will handle identity and access management across all microservices.
 
 ## Base URL
+
 ```
 https://auth.yourdomain.com/v1
 ```
 
 ## Technology Stack
+
 - **Language**: Node.js with TypeScript
 - **Framework**: NestJS
 - **Database**: MariaDB for user data, Redis for sessions
@@ -20,11 +23,13 @@ https://auth.yourdomain.com/v1
 ### 1. Authentication
 
 #### Login
+
 ```http
 POST /auth/login
 ```
 
 **Request Body:**
+
 ```json
 {
   "username": "user@example.com",
@@ -33,6 +38,7 @@ POST /auth/login
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -49,11 +55,13 @@ POST /auth/login
 ```
 
 #### Refresh Token
+
 ```http
 POST /auth/refresh
 ```
 
 **Request Body:**
+
 ```json
 {
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -63,11 +71,13 @@ POST /auth/refresh
 ### 2. User Management
 
 #### Create User
+
 ```http
 POST /users
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "new.user@example.com",
@@ -79,6 +89,7 @@ POST /users
 ```
 
 #### Get User Profile
+
 ```http
 GET /users/me
 Authorization: Bearer <access_token>
@@ -87,12 +98,14 @@ Authorization: Bearer <access_token>
 ### 3. Role-Based Access Control (RBAC)
 
 #### Get All Roles
+
 ```http
 GET /roles
 Authorization: Bearer <access_token>
 ```
 
 #### Assign Role to User
+
 ```http
 POST /users/{userId}/roles
 Authorization: Bearer <admin_token>
@@ -105,25 +118,30 @@ Authorization: Bearer <admin_token>
 ## Security Implementation
 
 ### JWT Structure
+
 ```typescript
 interface JwtPayload {
-  sub: string;        // User ID
-  email: string;      // User email
-  roles: string[];    // User roles
-  iat: number;        // Issued at
-  exp: number;        // Expiration time
-  jti: string;        // JWT ID for revocation
+  sub: string; // User ID
+  email: string; // User email
+  roles: string[]; // User roles
+  iat: number; // Issued at
+  exp: number; // Expiration time
+  jti: string; // JWT ID for revocation
 }
 ```
 
 ### Password Hashing
+
 ```typescript
 async function hashPassword(password: string): Promise<string> {
   const saltRounds = 10;
   return bcrypt.hash(password, saltRounds);
 }
 
-async function validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+async function validatePassword(
+  plainPassword: string,
+  hashedPassword: string
+): Promise<boolean> {
   return bcrypt.compare(plainPassword, hashedPassword);
 }
 ```
@@ -135,13 +153,14 @@ async function validatePassword(plainPassword: string, hashedPassword: string): 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later'
+  message: 'Too many requests from this IP, please try again later',
 });
 ```
 
 ## Error Handling
 
 ### Error Response Format
+
 ```json
 {
   "statusCode": 400,
@@ -155,7 +174,8 @@ const limiter = rateLimit({
 ## Database Schema
 
 ### Users Table
-```sql
+
+````sql
 CREATE TABLE users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -253,9 +273,10 @@ MYSQL_URI=mysql://user:password@localhost:3306/auth_service
 REDIS_URL=redis://localhost:6379
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=100
-```
+````
 
 ### Docker Compose
+
 ```yaml
 version: '3.8'
 
@@ -263,7 +284,7 @@ services:
   auth-service:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET}
@@ -296,6 +317,7 @@ volumes:
 ## Testing
 
 ### Unit Tests
+
 ```typescript
 describe('AuthService', () => {
   let service: AuthService;
@@ -327,11 +349,13 @@ describe('AuthService', () => {
 ## Monitoring
 
 ### Health Check Endpoint
+
 ```http
 GET /health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",

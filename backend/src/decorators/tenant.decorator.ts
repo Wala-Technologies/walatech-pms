@@ -8,9 +8,9 @@ export const CurrentTenant = createParamDecorator(
   },
 );
 
-export const TenantId = createParamDecorator(
+export const tenant_id = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string | undefined => {
     const request = ctx.switchToHttp().getRequest();
-    return request.tenantId;
+    return request.tenant_id;
   },
 );

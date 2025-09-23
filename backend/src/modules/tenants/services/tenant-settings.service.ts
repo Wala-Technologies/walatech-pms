@@ -87,9 +87,9 @@ export class TenantSettingsService {
   /**
    * Get tenant settings
    */
-  async getTenantSettings(tenantId: string): Promise<TenantSettings> {
+  async getTenantSettings(tenant_id: string): Promise<TenantSettings> {
     const tenant = await this.tenantRepository.findOne({
-      where: { id: tenantId },
+      where: { id: tenant_id },
     });
 
     if (!tenant) {
@@ -141,11 +141,11 @@ export class TenantSettingsService {
    * Update tenant settings
    */
   async updateTenantSettings(
-    tenantId: string,
+    tenant_id: string,
     updateDto: UpdateTenantSettingsDto,
   ): Promise<TenantSettings> {
     const tenant = await this.tenantRepository.findOne({
-      where: { id: tenantId },
+      where: { id: tenant_id },
     });
 
     if (!tenant) {
@@ -173,9 +173,9 @@ export class TenantSettingsService {
   /**
    * Reset tenant settings to defaults
    */
-  async resetTenantSettings(tenantId: string): Promise<TenantSettings> {
+  async resetTenantSettings(tenant_id: string): Promise<TenantSettings> {
     const tenant = await this.tenantRepository.findOne({
-      where: { id: tenantId },
+      where: { id: tenant_id },
     });
 
     if (!tenant) {
@@ -197,10 +197,10 @@ export class TenantSettingsService {
    * Get specific setting value
    */
   async getSettingValue<T = any>(
-    tenantId: string,
+    tenant_id: string,
     settingPath: string,
   ): Promise<T | undefined> {
-    const settings = await this.getTenantSettings(tenantId);
+    const settings = await this.getTenantSettings(tenant_id);
     return this.getNestedValue(settings, settingPath);
   }
 
@@ -208,14 +208,14 @@ export class TenantSettingsService {
    * Update specific setting value
    */
   async updateSettingValue(
-    tenantId: string,
+    tenant_id: string,
     settingPath: string,
     value: any,
   ): Promise<TenantSettings> {
-    const currentSettings = await this.getTenantSettings(tenantId);
+    const currentSettings = await this.getTenantSettings(tenant_id);
     const updatedSettings = this.setNestedValue(currentSettings, settingPath, value);
     
-    return this.updateTenantSettings(tenantId, { settings: updatedSettings });
+    return this.updateTenantSettings(tenant_id, { settings: updatedSettings });
   }
 
   /**

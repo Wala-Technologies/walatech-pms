@@ -5,6 +5,7 @@
 Before setting up the development environment, ensure you have the following installed:
 
 ### Required Software
+
 - **Node.js** (v18.0.0 or higher)
 - **npm** (v9.0.0 or higher) or **yarn** (v1.22.0 or higher)
 - **Docker** (v20.0.0 or higher)
@@ -14,6 +15,7 @@ Before setting up the development environment, ensure you have the following ins
 - **Redis** (v7.0.0 or higher) - for caching and sessions
 
 ### Development Tools (Recommended)
+
 - **Visual Studio Code** with extensions:
   - TypeScript and JavaScript Language Features
   - ESLint
@@ -255,17 +257,17 @@ npm run dev
 
 ### Service Ports
 
-| Service | Port | URL |
-|---------|------|-----|
-| API Gateway | 3000 | http://localhost:3000 |
-| Auth Service | 3001 | http://localhost:3001 |
-| Core Data Service | 3002 | http://localhost:3002 |
+| Service            | Port | URL                   |
+| ------------------ | ---- | --------------------- |
+| API Gateway        | 3000 | http://localhost:3000 |
+| Auth Service       | 3001 | http://localhost:3001 |
+| Core Data Service  | 3002 | http://localhost:3002 |
 | Production Service | 3001 | http://localhost:3001 |
-| Stock Service | 3004 | http://localhost:3004 |
-| Quality Service | 3005 | http://localhost:3005 |
-| Frontend | 3100 | http://localhost:3100 |
-| MariaDB | 3306 | localhost:3306 |
-| Redis | 6379 | localhost:6379 |
+| Stock Service      | 3004 | http://localhost:3004 |
+| Quality Service    | 3005 | http://localhost:3005 |
+| Frontend           | 3100 | http://localhost:3100 |
+| MariaDB            | 3306 | localhost:3306        |
+| Redis              | 6379 | localhost:6379        |
 
 ## Development Commands
 
@@ -402,6 +404,7 @@ npm run test:visual
 ### Linting Configuration
 
 **.eslintrc.js (Backend):**
+
 ```javascript
 module.exports = {
   parser: '@typescript-eslint/parser',
@@ -411,10 +414,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint/eslint-plugin'],
-  extends: [
-    '@typescript-eslint/recommended',
-    'prettier',
-  ],
+  extends: ['@typescript-eslint/recommended', 'prettier'],
   root: true,
   env: {
     node: true,
@@ -433,6 +433,7 @@ module.exports = {
 ### Pre-commit Hooks
 
 **package.json:**
+
 ```json
 {
   "husky": {
@@ -442,15 +443,8 @@ module.exports = {
     }
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ],
-    "*.{json,md}": [
-      "prettier --write",
-      "git add"
-    ]
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write", "git add"],
+    "*.{json,md}": ["prettier --write", "git add"]
   }
 }
 ```
@@ -460,6 +454,7 @@ module.exports = {
 ### Swagger Setup
 
 Access API documentation at:
+
 - **API Gateway:** http://localhost:3000/api/docs
 - **Auth Service:** http://localhost:3001/api/docs
 - **Core Data Service:** http://localhost:3002/api/docs
@@ -479,6 +474,7 @@ npx @openapitools/openapi-generator-cli generate \
 ### Backend Debugging (VS Code)
 
 **.vscode/launch.json:**
+
 ```json
 {
   "version": "0.2.0",
@@ -530,6 +526,7 @@ docker-compose -f docker/monitoring/docker-compose.yml up -d
 ### Common Issues
 
 #### Database Connection Issues
+
 ```bash
 # Check if MariaDB is running
 sudo systemctl status mariadb
@@ -542,6 +539,7 @@ npm run db:refresh
 ```
 
 #### Redis Connection Issues
+
 ```bash
 # Check if Redis is running
 redis-cli ping
@@ -551,6 +549,7 @@ redis-cli FLUSHALL
 ```
 
 #### Port Conflicts
+
 ```bash
 # Check what's using a port
 lsof -i :3000
@@ -560,6 +559,7 @@ kill -9 $(lsof -t -i:3000)
 ```
 
 #### Node Modules Issues
+
 ```bash
 # Clear node modules and reinstall
 rm -rf node_modules package-lock.json
@@ -588,6 +588,7 @@ After completing the setup:
 5. **Document changes:** Update documentation for any new features or changes
 
 For detailed implementation guidelines, refer to:
+
 - [Implementation Plan](./IMPLEMENTATION_PLAN.md)
 - [Technical Architecture](./TECHNICAL_ARCHITECTURE.md)
 - [API Documentation](./gen-docs/)

@@ -57,7 +57,7 @@ export class TenantProvisioningController {
     return this.tenantProvisioningService.provisionTenant(provisionDto);
   }
 
-  @Get(':tenantId/status')
+  @Get(':tenant_id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get tenant provisioning status' })
@@ -83,18 +83,18 @@ export class TenantProvisioningController {
     }
   })
   @ApiResponse({ status: 404, description: 'Tenant not found' })
-  async getTenantProvisioningStatus(@Param('tenantId') tenantId: string) {
-    return this.tenantProvisioningService.getTenantProvisioningStatus(tenantId);
+  async getTenantProvisioningStatus(@Param('tenant_id') tenant_id: string) {
+    return this.tenantProvisioningService.getTenantProvisioningStatus(tenant_id);
   }
 
-  @Delete(':tenantId/deprovision')
+  @Delete(':tenant_id/deprovision')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deprovision a tenant (suspend and cleanup)' })
   @ApiResponse({ status: 204, description: 'Tenant deprovisioned successfully' })
   @ApiResponse({ status: 404, description: 'Tenant not found' })
-  async deprovisionTenant(@Param('tenantId') tenantId: string): Promise<void> {
-    return this.tenantProvisioningService.deprovisionTenant(tenantId);
+  async deprovisionTenant(@Param('tenant_id') tenant_id: string): Promise<void> {
+    return this.tenantProvisioningService.deprovisionTenant(tenant_id);
   }
 }

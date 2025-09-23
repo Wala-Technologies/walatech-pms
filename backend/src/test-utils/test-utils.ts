@@ -20,7 +20,9 @@ export const getTestDatabaseConfig = () => ({
 });
 
 // Mock Repository Factory
-export const createMockRepository = <T extends Record<string, any> = any>(): Partial<Repository<T>> => ({
+export const createMockRepository = <
+  T extends Record<string, any> = any,
+>(): Partial<Repository<T>> => ({
   find: jest.fn(),
   findOne: jest.fn(),
   findOneBy: jest.fn(),
@@ -30,20 +32,23 @@ export const createMockRepository = <T extends Record<string, any> = any>(): Par
   delete: jest.fn(),
   remove: jest.fn(),
   count: jest.fn(),
-  createQueryBuilder: jest.fn(() => ({
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    leftJoinAndSelect: jest.fn().mockReturnThis(),
-    innerJoinAndSelect: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
-    getOne: jest.fn(),
-    getManyAndCount: jest.fn(),
-    getCount: jest.fn(),
-  } as any)),
+  createQueryBuilder: jest.fn(
+    () =>
+      ({
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        innerJoinAndSelect: jest.fn().mockReturnThis(),
+        getMany: jest.fn(),
+        getOne: jest.fn(),
+        getManyAndCount: jest.fn(),
+        getCount: jest.fn(),
+      }) as any,
+  ),
 });
 
 // Test Data Factories
@@ -155,7 +160,12 @@ export class TestModuleBuilder {
     controllers?: any[];
     entities?: any[];
   }): Promise<TestingModule> {
-    const { providers = [], imports = [], controllers = [], entities = [] } = options;
+    const {
+      providers = [],
+      imports = [],
+      controllers = [],
+      entities = [],
+    } = options;
 
     const moduleBuilder = Test.createTestingModule({
       imports: [
@@ -176,7 +186,7 @@ export class TestModuleBuilder {
       controllers,
       providers: [
         ...providers,
-        ...entities.map(entity => ({
+        ...entities.map((entity) => ({
           provide: getRepositoryToken(entity),
           useValue: createMockRepository(),
         })),
@@ -191,7 +201,7 @@ export class TestModuleBuilder {
 export class DatabaseTestHelper {
   static async cleanDatabase(dataSource: DataSource): Promise<void> {
     const entities = dataSource.entityMetadatas;
-    
+
     for (const entity of entities) {
       const repository = dataSource.getRepository(entity.name);
       await repository.clear();

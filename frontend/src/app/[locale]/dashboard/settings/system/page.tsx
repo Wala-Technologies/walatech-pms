@@ -17,10 +17,7 @@ import {
   Divider,
   InputNumber,
 } from 'antd';
-import {
-  SaveOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
+import { SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiClient } from '../../../../../lib/api-client';
 
 const { Title, Text } = Typography;
@@ -101,7 +98,7 @@ export default function SystemSettingsPage() {
           compressionEnabled: true,
         },
       };
-      
+
       setSettings(defaultSettings);
       form.setFieldsValue({
         ...defaultSettings.general,
@@ -120,7 +117,7 @@ export default function SystemSettingsPage() {
   const handleSaveSettings = async (values: any) => {
     try {
       setSaving(true);
-      
+
       const updatedSettings: SystemSettings = {
         general: {
           systemName: values.systemName,
@@ -153,7 +150,7 @@ export default function SystemSettingsPage() {
 
       // TODO: Implement actual API call when backend endpoint is ready
       // await apiClient.put('/system-settings', { settings: updatedSettings });
-      
+
       setSettings(updatedSettings);
       message.success('System settings updated successfully');
     } catch (error: any) {
@@ -176,12 +173,7 @@ export default function SystemSettingsPage() {
         </Text>
       </div>
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSaveSettings}
-        loading={loading}
-      >
+      <Form form={form} layout="vertical" onFinish={handleSaveSettings}>
         <Row gutter={[24, 24]}>
           <Col span={24}>
             <Card title="General Settings" className="mb-6">
@@ -190,7 +182,9 @@ export default function SystemSettingsPage() {
                   <Form.Item
                     label="System Name"
                     name="systemName"
-                    rules={[{ required: true, message: 'Please enter system name' }]}
+                    rules={[
+                      { required: true, message: 'Please enter system name' },
+                    ]}
                   >
                     <Input placeholder="Enter system name" />
                   </Form.Item>
@@ -199,7 +193,12 @@ export default function SystemSettingsPage() {
                   <Form.Item
                     label="System Version"
                     name="systemVersion"
-                    rules={[{ required: true, message: 'Please enter system version' }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please enter system version',
+                      },
+                    ]}
                   >
                     <Input placeholder="Enter system version" disabled />
                   </Form.Item>
@@ -233,7 +232,9 @@ export default function SystemSettingsPage() {
                   <Form.Item
                     label="SMTP Host"
                     name="smtpHost"
-                    rules={[{ required: true, message: 'Please enter SMTP host' }]}
+                    rules={[
+                      { required: true, message: 'Please enter SMTP host' },
+                    ]}
                   >
                     <Input placeholder="smtp.gmail.com" />
                   </Form.Item>
@@ -242,24 +243,25 @@ export default function SystemSettingsPage() {
                   <Form.Item
                     label="SMTP Port"
                     name="smtpPort"
-                    rules={[{ required: true, message: 'Please enter SMTP port' }]}
+                    rules={[
+                      { required: true, message: 'Please enter SMTP port' },
+                    ]}
                   >
-                    <InputNumber placeholder="587" min={1} max={65535} style={{ width: '100%' }} />
+                    <InputNumber
+                      placeholder="587"
+                      min={1}
+                      max={65535}
+                      style={{ width: '100%' }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="SMTP Username"
-                    name="smtpUser"
-                  >
+                  <Form.Item label="SMTP Username" name="smtpUser">
                     <Input placeholder="Enter SMTP username" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="SMTP Password"
-                    name="smtpPassword"
-                  >
+                  <Form.Item label="SMTP Password" name="smtpPassword">
                     <Input.Password placeholder="Enter SMTP password" />
                   </Form.Item>
                 </Col>
@@ -267,16 +269,15 @@ export default function SystemSettingsPage() {
                   <Form.Item
                     label="From Email"
                     name="fromEmail"
-                    rules={[{ type: 'email', message: 'Please enter valid email' }]}
+                    rules={[
+                      { type: 'email', message: 'Please enter valid email' },
+                    ]}
                   >
                     <Input placeholder="noreply@walatech.com" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="From Name"
-                    name="fromName"
-                  >
+                  <Form.Item label="From Name" name="fromName">
                     <Input placeholder="WalaTech PMS" />
                   </Form.Item>
                 </Col>
@@ -306,10 +307,7 @@ export default function SystemSettingsPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="Backup Frequency"
-                    name="backupFrequency"
-                  >
+                  <Form.Item label="Backup Frequency" name="backupFrequency">
                     <Select placeholder="Select frequency">
                       <Option value="hourly">Hourly</Option>
                       <Option value="daily">Daily</Option>
@@ -319,18 +317,17 @@ export default function SystemSettingsPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="Retention Days"
-                    name="retentionDays"
-                  >
-                    <InputNumber placeholder="30" min={1} max={365} style={{ width: '100%' }} />
+                  <Form.Item label="Retention Days" name="retentionDays">
+                    <InputNumber
+                      placeholder="30"
+                      min={1}
+                      max={365}
+                      style={{ width: '100%' }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="Backup Location"
-                    name="backupLocation"
-                  >
+                  <Form.Item label="Backup Location" name="backupLocation">
                     <Input placeholder="/backups" />
                   </Form.Item>
                 </Col>
@@ -355,15 +352,22 @@ export default function SystemSettingsPage() {
                     label="Session Timeout (minutes)"
                     name="sessionTimeout"
                   >
-                    <InputNumber placeholder="480" min={5} max={1440} style={{ width: '100%' }} />
+                    <InputNumber
+                      placeholder="480"
+                      min={5}
+                      max={1440}
+                      style={{ width: '100%' }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    label="Max File Size (MB)"
-                    name="maxFileSize"
-                  >
-                    <InputNumber placeholder="10" min={1} max={100} style={{ width: '100%' }} />
+                  <Form.Item label="Max File Size (MB)" name="maxFileSize">
+                    <InputNumber
+                      placeholder="10"
+                      min={1}
+                      max={100}
+                      style={{ width: '100%' }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -381,7 +385,7 @@ export default function SystemSettingsPage() {
         </Row>
 
         <Divider />
-        
+
         <Space>
           <Button
             type="primary"
@@ -392,10 +396,7 @@ export default function SystemSettingsPage() {
           >
             Save Settings
           </Button>
-          <Button
-            onClick={() => form.resetFields()}
-            size="large"
-          >
+          <Button onClick={() => form.resetFields()} size="large">
             Reset
           </Button>
         </Space>

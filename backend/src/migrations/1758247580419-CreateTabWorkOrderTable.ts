@@ -6,9 +6,9 @@ export class CreateTabWorkOrderTable1758247580419 implements MigrationInterface 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE \`tabUser\` (\`id\` varchar(36) NOT NULL, \`email\` varchar(140) NOT NULL, \`first_name\` varchar(140) NOT NULL, \`last_name\` varchar(140) NULL, \`password\` varchar(255) NOT NULL, \`enabled\` tinyint NOT NULL DEFAULT 1, \`language\` varchar(10) NOT NULL DEFAULT 'en', \`time_zone\` varchar(50) NOT NULL DEFAULT 'Africa/Addis_Ababa', \`mobile_no\` varchar(140) NULL, \`role_profile_name\` varchar(140) NULL, \`creation\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`modified\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`modified_by\` varchar(140) NULL, \`owner\` varchar(140) NULL, UNIQUE INDEX \`IDX_5dd4caf3cc4f6cb6647fc1f1e7\` (\`email\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`tabTenant\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(255) NOT NULL, \`subdomain\` varchar(100) NOT NULL, \`status\` enum ('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active', \`plan\` enum ('basic', 'premium', 'enterprise') NOT NULL DEFAULT 'basic', \`settings\` longtext NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`docstatus\` int NOT NULL DEFAULT '0', \`idx\` varchar(140) NULL, \`owner\` varchar(140) NULL, \`modified_by\` varchar(140) NULL, UNIQUE INDEX \`IDX_a2e29961f7f743293fff382608\` (\`subdomain\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`ALTER TABLE \`items\` DROP COLUMN \`tenantId\``);
-        await queryRunner.query(`ALTER TABLE \`work_orders\` DROP COLUMN \`tenantId\``);
-        await queryRunner.query(`ALTER TABLE \`production_plans\` DROP COLUMN \`tenantId\``);
+        await queryRunner.query(`ALTER TABLE \`items\` DROP COLUMN \`tenant_id\``);
+        await queryRunner.query(`ALTER TABLE \`work_orders\` DROP COLUMN \`tenant_id\``);
+        await queryRunner.query(`ALTER TABLE \`production_plans\` DROP COLUMN \`tenant_id\``);
         await queryRunner.query(`ALTER TABLE \`items\` ADD \`valuationMethod\` varchar(20) NULL`);
         await queryRunner.query(`ALTER TABLE \`items\` ADD \`standardSellingRate\` decimal(18,6) NULL`);
         await queryRunner.query(`ALTER TABLE \`items\` ADD \`maxDiscount\` decimal(18,6) NULL`);
@@ -316,9 +316,9 @@ export class CreateTabWorkOrderTable1758247580419 implements MigrationInterface 
         await queryRunner.query(`ALTER TABLE \`items\` DROP COLUMN \`maxDiscount\``);
         await queryRunner.query(`ALTER TABLE \`items\` DROP COLUMN \`standardSellingRate\``);
         await queryRunner.query(`ALTER TABLE \`items\` DROP COLUMN \`valuationMethod\``);
-        await queryRunner.query(`ALTER TABLE \`production_plans\` ADD \`tenantId\` varchar(255) NOT NULL`);
-        await queryRunner.query(`ALTER TABLE \`work_orders\` ADD \`tenantId\` varchar(255) NOT NULL`);
-        await queryRunner.query(`ALTER TABLE \`items\` ADD \`tenantId\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`production_plans\` ADD \`tenant_id\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`work_orders\` ADD \`tenant_id\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`items\` ADD \`tenant_id\` varchar(255) NOT NULL`);
         await queryRunner.query(`DROP INDEX \`IDX_a2e29961f7f743293fff382608\` ON \`tabTenant\``);
         await queryRunner.query(`DROP TABLE \`tabTenant\``);
         await queryRunner.query(`DROP INDEX \`IDX_5dd4caf3cc4f6cb6647fc1f1e7\` ON \`tabUser\``);

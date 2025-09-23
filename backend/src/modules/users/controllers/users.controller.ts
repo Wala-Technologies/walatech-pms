@@ -20,7 +20,7 @@ import { UserQueryDto } from '../dto/user-query.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { User } from '../../../entities/user.entity';
-import { CurrentTenant, TenantId } from '../../../decorators/tenant.decorator';
+import { CurrentTenant, tenant_id } from '../../../decorators/tenant.decorator';
 
 @ApiTags('users')
 @Controller({ path: 'users', scope: Scope.REQUEST })

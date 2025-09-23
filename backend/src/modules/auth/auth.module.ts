@@ -9,6 +9,7 @@ import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { TenantsModule } from '../tenants/tenants.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
       }),
       inject: [ConfigService],
     }),
+    TenantsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],

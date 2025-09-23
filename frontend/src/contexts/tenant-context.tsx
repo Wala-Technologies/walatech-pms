@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '../lib/api-client';
 
@@ -29,7 +35,9 @@ export interface TenantContextType {
   isLoading: boolean;
   error: string | null;
   refreshTenant: () => Promise<void>;
-  updateTenantSettings: (settings: Partial<Tenant['settings']>) => Promise<void>;
+  updateTenantSettings: (
+    settings: Partial<Tenant['settings']>
+  ) => Promise<void>;
   switchTenant: (subdomain: string) => void;
 }
 
@@ -40,7 +48,10 @@ export interface TenantProviderProps {
   initialTenant?: Tenant | null;
 }
 
-export function TenantProvider({ children, initialTenant }: TenantProviderProps) {
+export function TenantProvider({
+  children,
+  initialTenant,
+}: TenantProviderProps) {
   const [tenant, setTenant] = useState<Tenant | null>(initialTenant || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,29 +60,29 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
   // Get tenant subdomain from cookie or URL
   const getTenantSubdomain = (): string | null => {
     if (typeof window === 'undefined') return null;
-    
+
     // Try to get from cookie first
     const cookies = document.cookie.split(';');
-    const tenantCookie = cookies.find(cookie => 
+    const tenantCookie = cookies.find((cookie) =>
       cookie.trim().startsWith('tenant-subdomain=')
     );
-    
+
     if (tenantCookie) {
       return tenantCookie.split('=')[1];
     }
-    
+
     // Fallback to extracting from hostname
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
-    
+
     if (hostname.endsWith('.localhost') && parts.length >= 2) {
       return parts[0];
     }
-    
+
     if (parts.length >= 3 && !hostname.startsWith('www.')) {
       return parts[0];
     }
-    
+
     return null;
   };
 
@@ -80,25 +91,30 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
     try {
       setIsLoading(true);
       setError(null);
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3001/api`;
-      const response = await fetch(`${apiUrl}/tenants/by-subdomain/${subdomain}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-tenant-subdomain': subdomain,
-        },
-        credentials: 'include',
-      });
-      
+
+      const base = (
+        process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3001`
+      ).replace(/\/$/, '');
+      const response = await fetch(
+        `${base}/api/tenants/by-subdomain/${subdomain}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-subdomain': subdomain,
+          },
+          credentials: 'include',
+        }
+      );
+
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Tenant not found');
         }
         throw new Error('Failed to fetch tenant data');
       }
-      
+
       const tenantData = await response.json();
-      
+
       // Parse settings if they exist as a JSON string
       if (tenantData.settings && typeof tenantData.settings === 'string') {
         try {
@@ -108,7 +124,7 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
           tenantData.settings = {};
         }
       }
-      
+
       return tenantData;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -130,30 +146,36 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
   };
 
   // Update tenant settings
-  const updateTenantSettings = async (settings: Partial<Tenant['settings']>): Promise<void> => {
+  const updateTenantSettings = async (
+    settings: Partial<Tenant['settings']>
+  ): Promise<void> => {
     if (!tenant) {
       throw new Error('No tenant context available');
     }
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Set tenant context for the API client
       apiClient.setTenantContext(tenant.subdomain);
-      
+
       // Use the API client which handles authentication automatically
       const response = await apiClient.updateTenantSettings(settings);
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       // Update local state with the response data
-      setTenant(prev => prev ? {
-        ...prev,
-        settings: { ...prev.settings, ...response.data }
-      } : null);
+      setTenant((prev) =>
+        prev
+          ? {
+              ...prev,
+              settings: { ...prev.settings, ...response.data },
+            }
+          : null
+      );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
@@ -167,12 +189,14 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
   // Switch to different tenant
   const switchTenant = (subdomain: string): void => {
     // Update cookie
-    document.cookie = `tenant-subdomain=${subdomain}; path=/; max-age=${60 * 60 * 24 * 30}`;
-    
+    document.cookie = `tenant-subdomain=${subdomain}; path=/; max-age=${
+      60 * 60 * 24 * 30
+    }`;
+
     // Redirect to new subdomain
     const protocol = window.location.protocol;
     const port = window.location.port ? `:${window.location.port}` : '';
-    
+
     if (window.location.hostname === 'localhost') {
       // For development
       window.location.href = `${protocol}//${subdomain}.localhost${port}`;
@@ -191,7 +215,8 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
         fetchTenant(subdomain).then(setTenant);
       }
     }
-  }, []);
+    // Only depends on tenant state; helper functions are stable
+  }, [tenant]);
 
   // Apply tenant branding and theme
   useEffect(() => {
@@ -199,40 +224,23 @@ export function TenantProvider({ children, initialTenant }: TenantProviderProps)
       // Apply branding colors (legacy support)
       if (tenant.settings.branding) {
         const { primaryColor, secondaryColor } = tenant.settings.branding;
-        
+
         if (primaryColor) {
-          document.documentElement.style.setProperty('--tenant-primary-color', primaryColor);
+          document.documentElement.style.setProperty(
+            '--tenant-primary-color',
+            primaryColor
+          );
         }
-        
+
         if (secondaryColor) {
-          document.documentElement.style.setProperty('--tenant-secondary-color', secondaryColor);
-        }
-      }
-      
-      // Apply theme settings (new structure)
-      if (tenant.settings.theme) {
-        const { primaryColor, secondaryColor, sidebarStyle, headerStyle } = tenant.settings.theme;
-        
-        if (primaryColor) {
-          document.documentElement.style.setProperty('--tenant-primary-color', primaryColor);
-          document.documentElement.style.setProperty('--ant-primary-color', primaryColor);
-        }
-        
-        if (secondaryColor) {
-          document.documentElement.style.setProperty('--tenant-secondary-color', secondaryColor);
-        }
-        
-        // Apply sidebar and header styles
-        if (sidebarStyle) {
-          document.documentElement.style.setProperty('--tenant-sidebar-style', sidebarStyle);
-        }
-        
-        if (headerStyle) {
-          document.documentElement.style.setProperty('--tenant-header-style', headerStyle);
+          document.documentElement.style.setProperty(
+            '--tenant-secondary-color',
+            secondaryColor
+          );
         }
       }
     }
-  }, [tenant?.settings?.branding, tenant?.settings?.theme]);
+  }, [tenant?.settings]);
 
   const contextValue: TenantContextType = {
     tenant,
@@ -262,12 +270,12 @@ export function useTenant(): TenantContextType {
 // Hook to get tenant subdomain
 export function useTenantSubdomain(): string | null {
   const [subdomain, setSubdomain] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const parts = hostname.split('.');
-      
+
       if (hostname.endsWith('.localhost') && parts.length >= 2) {
         setSubdomain(parts[0]);
       } else if (parts.length >= 3 && !hostname.startsWith('www.')) {
@@ -275,7 +283,7 @@ export function useTenantSubdomain(): string | null {
       }
     }
   }, []);
-  
+
   return subdomain;
 }
 

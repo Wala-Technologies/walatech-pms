@@ -15,8 +15,8 @@ export abstract class TenantScopedService<T extends TenantScopedEntity> {
     this.tenantScopedRepository = new TenantScopedRepository(repository, request);
   }
 
-  protected getTenantId(): string | undefined {
-    return this.request.tenantId;
+  protected gettenant_id(): string | undefined {
+    return this.request.tenant_id;
   }
 
   protected getTenant() {

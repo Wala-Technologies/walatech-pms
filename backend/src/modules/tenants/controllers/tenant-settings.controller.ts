@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { TenantSettingsService, TenantSettings } from '../services/tenant-settings.service';
 import type { UpdateTenantSettingsDto } from '../services/tenant-settings.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { CurrentUserTenantId } from '../../../decorators/current-user.decorator';
+import { CurrentUsertenant_id } from '../../../decorators/current-user.decorator';
 
 @ApiTags('tenant-settings')
 @Controller('tenant-settings')
@@ -37,9 +37,9 @@ export class TenantSettingsController {
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   @ApiResponse({ status: 403, description: 'Tenant is not active' })
   async getTenantSettings(
-    @CurrentUserTenantId() tenantId: string,
+    @CurrentUsertenant_id() tenant_id: string,
   ): Promise<TenantSettings> {
-    return this.tenantSettingsService.getTenantSettings(tenantId);
+    return this.tenantSettingsService.getTenantSettings(tenant_id);
   }
 
   @Put()
@@ -56,10 +56,10 @@ export class TenantSettingsController {
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   @ApiResponse({ status: 403, description: 'Tenant is not active' })
   async updateTenantSettings(
-    @CurrentUserTenantId() tenantId: string,
+    @CurrentUsertenant_id() tenant_id: string,
     @Body() updateDto: UpdateTenantSettingsDto,
   ): Promise<TenantSettings> {
-    return this.tenantSettingsService.updateTenantSettings(tenantId, updateDto);
+    return this.tenantSettingsService.updateTenantSettings(tenant_id, updateDto);
   }
 
   @Post('reset')
@@ -76,9 +76,9 @@ export class TenantSettingsController {
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   @ApiResponse({ status: 403, description: 'Tenant is not active' })
   async resetTenantSettings(
-    @CurrentUserTenantId() tenantId: string,
+    @CurrentUsertenant_id() tenant_id: string,
   ): Promise<TenantSettings> {
-    return this.tenantSettingsService.resetTenantSettings(tenantId);
+    return this.tenantSettingsService.resetTenantSettings(tenant_id);
   }
 
   @Get('setting/:path')
@@ -96,10 +96,10 @@ export class TenantSettingsController {
   })
   @ApiResponse({ status: 404, description: 'Tenant or setting not found' })
   async getSettingValue(
-    @CurrentUserTenantId() tenantId: string,
+    @CurrentUsertenant_id() tenant_id: string,
     @Param('path') path: string,
   ): Promise<{ path: string; value: any }> {
-    const value = await this.tenantSettingsService.getSettingValue(tenantId, path);
+    const value = await this.tenantSettingsService.getSettingValue(tenant_id, path);
     return { path, value };
   }
 
@@ -116,10 +116,10 @@ export class TenantSettingsController {
   @ApiResponse({ status: 400, description: 'Invalid setting value' })
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   async updateSettingValue(
-    @CurrentUserTenantId() tenantId: string,
+    @CurrentUsertenant_id() tenant_id: string,
     @Param('path') path: string,
     @Body() body: { value: any },
   ): Promise<TenantSettings> {
-    return this.tenantSettingsService.updateSettingValue(tenantId, path, body.value);
+    return this.tenantSettingsService.updateSettingValue(tenant_id, path, body.value);
   }
 }

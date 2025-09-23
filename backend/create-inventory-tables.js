@@ -5,23 +5,29 @@ const path = require('path');
 async function createInventoryTables() {
   const connection = await mysql.createConnection({
     host: 'localhost',
-    port: 3300,
+    // Use DB_PORT env var with fallback for local dev
+    port: parseInt(process.env.DB_PORT || '3306', 10),
     user: 'root',
     password: 'walatech-pms',
-    database: 'wala_pms'
+    database: 'wala_pms',
   });
 
   try {
     console.log('🔗 Connected to database');
-    
+
     // Read the SQL file
-    const sqlContent = fs.readFileSync(path.join(__dirname, 'create-inventory-tables.sql'), 'utf8');
-    
+    const sqlContent = fs.readFileSync(
+      path.join(__dirname, 'create-inventory-tables.sql'),
+      'utf8',
+    );
+
     // Split by semicolon and execute each statement
-    const statements = sqlContent.split(';').filter(stmt => stmt.trim().length > 0);
-    
+    const statements = sqlContent
+      .split(';')
+      .filter((stmt) => stmt.trim().length > 0);
+
     console.log(`📝 Executing ${statements.length} SQL statements...`);
-    
+
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i].trim();
       if (statement) {
@@ -29,13 +35,14 @@ async function createInventoryTables() {
           await connection.execute(statement);
           console.log(`✅ Statement ${i + 1} executed successfully`);
         } catch (error) {
-          console.log(`⚠️  Statement ${i + 1} failed (might already exist): ${error.message}`);
+          console.log(
+            `⚠️  Statement ${i + 1} failed (might already exist): ${error.message}`,
+          );
         }
       }
     }
-    
+
     console.log('🎉 Inventory tables creation completed!');
-    
   } catch (error) {
     console.error('❌ Error:', error.message);
   } finally {

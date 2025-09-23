@@ -21,27 +21,25 @@ class ApiClient {
     this.tenantSubdomain = config.tenantSubdomain;
     this.token = config.token;
     this.baseUrl = this.buildBaseUrl(config.baseUrl);
+    // TODO: Replace broad 'any' usages with specific interfaces incrementally.
+    // Temporary eslint disable for unavoidable generics during refactor.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
   }
 
-  // Set tenant context
+  // Set tenant context (for backward compatibility, but not used for URL building)
   setTenantContext(subdomain: string): void {
     this.tenantSubdomain = subdomain;
-    this.baseUrl = this.buildBaseUrl();
+    // Note: Tenant context is handled via JWT token, not URL modification
   }
 
   private buildBaseUrl(customBaseUrl?: string): string {
     if (customBaseUrl) {
       return customBaseUrl;
     }
-    
-    const defaultUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-    
-    // If we have a tenant subdomain, include it in the URL
-    if (this.tenantSubdomain) {
-      return defaultUrl.replace('localhost:3001', `${this.tenantSubdomain}.localhost:3001`);
-    }
-    
-    return defaultUrl;
+
+    // Always use the base API URL - tenant context is handled via JWT token
+    const raw = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+    return raw.replace(/\/$/, ''); // ensure no trailing slash
   }
 
   // Set authentication token
@@ -56,29 +54,29 @@ class ApiClient {
     }
 
     if (typeof window === 'undefined') return null;
-    
+
     // Try to get from cookie first
     const cookies = document.cookie.split(';');
-    const tenantCookie = cookies.find(cookie => 
+    const tenantCookie = cookies.find((cookie) =>
       cookie.trim().startsWith('tenant-subdomain=')
     );
-    
+
     if (tenantCookie) {
       return tenantCookie.split('=')[1];
     }
-    
+
     // Fallback to extracting from hostname
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
-    
+
     if (hostname.endsWith('.localhost') && parts.length >= 2) {
       return parts[0];
     }
-    
+
     if (parts.length >= 3 && !hostname.startsWith('www.')) {
       return parts[0];
     }
-    
+
     return null;
   }
 
@@ -89,28 +87,34 @@ class ApiClient {
     }
 
     if (typeof window === 'undefined') return null;
-    
+
     // Try localStorage first - check both 'token' and 'auth_token' keys
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    const token =
+      localStorage.getItem('token') || localStorage.getItem('auth_token');
     if (token) {
       return token;
     }
-    
+
     // Try cookie as fallback
     const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => 
-      cookie.trim().startsWith('auth_token=') || cookie.trim().startsWith('token=')
+    const tokenCookie = cookies.find(
+      (cookie) =>
+        cookie.trim().startsWith('auth_token=') ||
+        cookie.trim().startsWith('token=')
     );
-    
+
     if (tokenCookie) {
       return tokenCookie.split('=')[1];
     }
-    
+
     return null;
   }
 
   // Build headers with tenant and auth context
-  private buildHeaders(customHeaders: Record<string, string> = {}, skipContentType = false): Record<string, string> {
+  private buildHeaders(
+    customHeaders: Record<string, string> = {},
+    skipContentType = false
+  ): Record<string, string> {
     const headers: Record<string, string> = {
       ...customHeaders,
     };
@@ -136,6 +140,7 @@ class ApiClient {
   }
 
   // Generic request method
+  // Generic request (typed later per call site)
   private async request<T = any>(
     endpoint: string,
     options: RequestInit = {}
@@ -150,11 +155,20 @@ class ApiClient {
     skipContentType = false
   ): Promise<ApiResponse<T>> {
     try {
-      const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-      
+      // Normalize endpoint & ensure /api prefix only once
+      let ep = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      const baseHasApi = /\/api$/.test(this.baseUrl);
+      if (!ep.startsWith('/api/')) {
+        ep = baseHasApi ? ep : `/api${ep}`;
+      }
+      const url = `${this.baseUrl}${ep}`;
+
       const response = await fetch(url, {
         ...options,
-        headers: this.buildHeaders(options.headers as Record<string, string>, skipContentType),
+        headers: this.buildHeaders(
+          options.headers as Record<string, string>,
+          skipContentType
+        ),
         credentials: 'include',
       });
 
@@ -169,7 +183,9 @@ class ApiClient {
 
       if (!response.ok) {
         return {
-          error: data.message || data.error || `HTTP ${response.status}: ${response.statusText}`,
+          error:
+            (data && (data.message || data.error)) ||
+            `HTTP ${response.status}: ${response.statusText}`,
         };
       }
 
@@ -183,7 +199,10 @@ class ApiClient {
   }
 
   // HTTP methods
-  async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  async get<T = any>(
+    endpoint: string,
+    params?: Record<string, any>
+  ): Promise<ApiResponse<T>> {
     let url = endpoint;
     if (params) {
       const searchParams = new URLSearchParams();
@@ -194,25 +213,29 @@ class ApiClient {
       });
       url += `?${searchParams.toString()}`;
     }
-    
+
     return this.request<T>(url, { method: 'GET' });
   }
 
-  async post<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async post<T = any>(
+    endpoint: string,
+    data?: any,
+    options?: RequestInit
+  ): Promise<ApiResponse<T>> {
     const requestOptions: RequestInit = {
       method: 'POST',
       ...options,
     };
-    
+
     const isFormData = data instanceof FormData;
-    
+
     // Handle FormData differently - don't stringify it
     if (isFormData) {
       requestOptions.body = data;
     } else if (data) {
       requestOptions.body = JSON.stringify(data);
     }
-    
+
     return this.requestWithContentType<T>(endpoint, requestOptions, isFormData);
   }
 
@@ -239,7 +262,9 @@ class ApiClient {
     return this.get<Tenant>(`/tenants/by-subdomain/${subdomain}`);
   }
 
-  async validateTenant(subdomain: string): Promise<ApiResponse<{ valid: boolean }>> {
+  async validateTenant(
+    subdomain: string
+  ): Promise<ApiResponse<{ valid: boolean }>> {
     return this.get<{ valid: boolean }>(`/tenants/validate/${subdomain}`);
   }
 
@@ -256,28 +281,34 @@ class ApiClient {
   }
 
   // Authentication methods
-  async login(email: string, password: string): Promise<ApiResponse<{ user: any; token: string }>> {
+  async login(
+    email: string,
+    password: string
+  ): Promise<ApiResponse<{ user: any; access_token: string }>> {
     return this.post('/auth/login', { email, password });
   }
 
-  async register(userData: any): Promise<ApiResponse<{ user: any; token: string }>> {
+  async register(
+    userData: any
+  ): Promise<ApiResponse<{ user: any; access_token: string }>> {
     return this.post('/auth/register', userData);
   }
 
   async logout(): Promise<ApiResponse<void>> {
     const response = await this.post('/auth/logout');
-    
+
     // Clear stored token regardless of response
     this.token = undefined;
-    
+
     // Clear local storage and cookies
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('auth_token');
-      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+      document.cookie =
+        'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
       document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
     }
-    
+
     return response;
   }
 
@@ -319,10 +350,10 @@ export function handleApiResponse<T>(
     }
     return false;
   }
-  
+
   if (response.data && onSuccess) {
     onSuccess(response.data);
   }
-  
+
   return true;
 }

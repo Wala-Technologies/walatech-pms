@@ -14,20 +14,20 @@ export class WorkOrderTaskService {
     private readonly taskRepository: Repository<WorkOrderTask>,
   ) {}
 
-  async findByWorkOrder(workOrderId: string, tenantId: string): Promise<WorkOrderTask[]> {
+  async findByWorkOrder(workOrderId: string, tenant_id: string): Promise<WorkOrderTask[]> {
     return await this.taskRepository.find({
       where: { 
         workOrder: { id: workOrderId },
-        tenant: { id: tenantId }
+        tenant: { id: tenant_id }
       },
       relations: ['workOrder', 'createdBy', 'assignedTo'],
       order: { createdAt: 'ASC' },
     });
   }
 
-  async findOne(id: string, tenantId: string): Promise<WorkOrderTask> {
+  async findOne(id: string, tenant_id: string): Promise<WorkOrderTask> {
     const task = await this.taskRepository.findOne({
-      where: { id, tenant: { id: tenantId } },
+      where: { id, tenant: { id: tenant_id } },
       relations: ['workOrder', 'createdBy', 'assignedTo'],
     });
 
@@ -38,8 +38,8 @@ export class WorkOrderTaskService {
     return task;
   }
 
-  async updateStatus(id: string, status: TaskStatus, tenantId: string): Promise<WorkOrderTask> {
-    const task = await this.findOne(id, tenantId);
+  async updateStatus(id: string, status: TaskStatus, tenant_id: string): Promise<WorkOrderTask> {
+    const task = await this.findOne(id, tenant_id);
     task.status = status;
     
     if (status === TaskStatus.COMPLETED) {
@@ -51,8 +51,8 @@ export class WorkOrderTaskService {
     return await this.taskRepository.save(task);
   }
 
-  async updateProgress(id: string, progressPercentage: number, tenantId: string): Promise<WorkOrderTask> {
-    const task = await this.findOne(id, tenantId);
+  async updateProgress(id: string, progressPercentage: number, tenant_id: string): Promise<WorkOrderTask> {
+    const task = await this.findOne(id, tenant_id);
     task.progressPercentage = progressPercentage;
     
     // Auto-update status based on progress
@@ -67,24 +67,24 @@ export class WorkOrderTaskService {
     return await this.taskRepository.save(task);
   }
 
-  async addNotes(id: string, notes: string, tenantId: string): Promise<WorkOrderTask> {
-    const task = await this.findOne(id, tenantId);
+  async addNotes(id: string, notes: string, tenant_id: string): Promise<WorkOrderTask> {
+    const task = await this.findOne(id, tenant_id);
     task.notes = notes;
     return await this.taskRepository.save(task);
   }
 
-  async addCompletionNotes(id: string, completionNotes: string, tenantId: string): Promise<WorkOrderTask> {
-    const task = await this.findOne(id, tenantId);
+  async addCompletionNotes(id: string, completionNotes: string, tenant_id: string): Promise<WorkOrderTask> {
+    const task = await this.findOne(id, tenant_id);
     task.completionNotes = completionNotes;
     return await this.taskRepository.save(task);
   }
 
-  async getTaskStatistics(workOrderId?: string, tenantId?: string): Promise<{
+  async getTaskStatistics(workOrderId?: string, tenant_id?: string): Promise<{
     total: number;
     byStatus: Record<TaskStatus, number>;
     averageCompletionTime: number;
   }> {
-    const where: any = { tenant: { id: tenantId } };
+    const where: any = { tenant: { id: tenant_id } };
     if (workOrderId) {
       where.workOrder = { id: workOrderId };
     }

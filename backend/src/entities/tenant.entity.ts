@@ -1,6 +1,5 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -11,7 +10,6 @@ export enum TenantStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   SUSPENDED = 'suspended',
-  TRIAL = 'trial',
 }
 
 export enum TenantPlan {

@@ -20,10 +20,10 @@ export class ProductionOrderService {
   async create(
     createDto: CreateProductionOrderDto,
     createdById: string,
-    tenantId: string,
+    tenant_id: string,
   ): Promise<ProductionOrder> {
     // Generate unique order number
-    const orderNumber = await this.generateOrderNumber(tenantId);
+    const orderNumber = await this.generateOrderNumber(tenant_id);
 
     // Validate dates
     const plannedStart = new Date(createDto.plannedStartDate);
@@ -40,7 +40,7 @@ export class ProductionOrderService {
       orderNumber,
       plannedStartDate: plannedStart,
       plannedEndDate: plannedEnd,
-      tenant_id: tenantId,
+      tenant_id: tenant_id,
       createdBy: { id: createdById } as any,
       assignedTo: createDto.assignedTo ? { id: createDto.assignedTo } as any : undefined,
     });
@@ -53,11 +53,11 @@ export class ProductionOrderService {
     limit: number = 10,
     search?: string,
     status?: ProductionOrderStatus,
-    tenantId?: string,
+    tenant_id?: string,
   ): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
     const skip = (page - 1) * limit;
     const where: FindOptionsWhere<ProductionOrder> = {
-      tenant: { id: tenantId },
+      tenant: { id: tenant_id },
     };
 
     if (search) {
@@ -79,9 +79,9 @@ export class ProductionOrderService {
     return { data, total, page, limit };
   }
 
-  async findOne(id: string, tenantId: string): Promise<ProductionOrder> {
+  async findOne(id: string, tenant_id: string): Promise<ProductionOrder> {
     const productionOrder = await this.productionOrderRepository.findOne({
-      where: { id, tenant: { id: tenantId } },
+      where: { id, tenant: { id: tenant_id } },
       relations: ['createdBy', 'assignedTo', 'workOrders'],
     });
 
@@ -92,37 +92,37 @@ export class ProductionOrderService {
     return productionOrder;
   }
 
-  async update(id: string, updateDto: Partial<ProductionOrder>, tenantId: string): Promise<ProductionOrder> {
-    const productionOrder = await this.findOne(id, tenantId);
+  async update(id: string, updateDto: Partial<ProductionOrder>, tenant_id: string): Promise<ProductionOrder> {
+    const productionOrder = await this.findOne(id, tenant_id);
     
     Object.assign(productionOrder, updateDto);
     return await this.productionOrderRepository.save(productionOrder);
   }
 
-  async remove(id: string, tenantId: string): Promise<void> {
-    const productionOrder = await this.findOne(id, tenantId);
+  async remove(id: string, tenant_id: string): Promise<void> {
+    const productionOrder = await this.findOne(id, tenant_id);
     await this.productionOrderRepository.remove(productionOrder);
   }
 
-  async getStatistics(tenantId: string): Promise<{
+  async getStatistics(tenant_id: string): Promise<{
     total: number;
     byStatus: Record<ProductionOrderStatus, number>;
     averageCompletionTime: number;
   }> {
     const total = await this.productionOrderRepository.count({
-      where: { tenant: { id: tenantId } },
+      where: { tenant: { id: tenant_id } },
     });
 
     const byStatus: Record<ProductionOrderStatus, number> = {} as any;
     for (const status of Object.values(ProductionOrderStatus)) {
       byStatus[status as ProductionOrderStatus] = await this.productionOrderRepository.count({
-        where: { status, tenant: { id: tenantId } },
+        where: { status, tenant: { id: tenant_id } },
       });
     }
 
     // Calculate average completion time for completed production orders
     const completedOrders = await this.productionOrderRepository.find({
-      where: { status: ProductionOrderStatus.COMPLETED, tenant: { id: tenantId } },
+      where: { status: ProductionOrderStatus.COMPLETED, tenant: { id: tenant_id } },
       select: ['actualStartDate', 'actualEndDate'],
     });
 
@@ -141,7 +141,7 @@ export class ProductionOrderService {
     return { total, byStatus, averageCompletionTime };
   }
 
-  private async generateOrderNumber(tenantId: string): Promise<string> {
+  private async generateOrderNumber(tenant_id: string): Promise<string> {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -150,7 +150,7 @@ export class ProductionOrderService {
     const lastOrder = await this.productionOrderRepository.findOne({
       where: { 
         orderNumber: Like(`${prefix}%`),
-        tenant_id: tenantId,
+        tenant_id: tenant_id,
       },
       order: { orderNumber: 'DESC' },
     });

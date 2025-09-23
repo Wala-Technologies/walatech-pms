@@ -16,7 +16,7 @@ import {
   ShoppingCartOutlined,
   ToolOutlined,
   FileTextOutlined,
-  SafetyOutlined
+  SafetyOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -29,7 +29,10 @@ interface DashboardLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
-export default function DashboardLayout({ children, params }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  params,
+}: DashboardLayoutProps) {
   const { locale } = use(params);
   const [collapsed, setCollapsed] = useState(false);
   const t = useTranslations('navigation');
@@ -39,16 +42,14 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
   // Get logo URL from multiple possible locations
   const getLogoUrl = () => {
     if (!tenant?.settings) return undefined;
-    
+
     // Check multiple possible locations for the logo
     const logoSources = [
       tenant.settings.companyLogo,
-      tenant.settings.general?.logo,
-      tenant.settings.logo,
-      tenant.settings.branding?.logoUrl
+      tenant.settings.branding?.logoUrl,
     ];
-    
-    return logoSources.find(url => url && url.trim() !== '');
+
+    return logoSources.find((url) => url && url.trim() !== '');
   };
 
   // Helper function to convert relative logo URLs to absolute URLs
@@ -77,15 +78,27 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'work-orders',
-          label: <Link href={`/${locale}/dashboard/production/work-orders`}>Work Orders</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/production/work-orders`}>
+              Work Orders
+            </Link>
+          ),
         },
         {
           key: 'bom',
-          label: <Link href={`/${locale}/dashboard/production/bom`}>Bill of Materials</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/production/bom`}>
+              Bill of Materials
+            </Link>
+          ),
         },
         {
           key: 'routing',
-          label: <Link href={`/${locale}/dashboard/production/routing`}>Routing</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/production/routing`}>
+              Routing
+            </Link>
+          ),
         },
       ],
     },
@@ -96,15 +109,25 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'items',
-          label: <Link href={`/${locale}/dashboard/inventory/items`}>Items</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/inventory/items`}>Items</Link>
+          ),
         },
         {
           key: 'stock',
-          label: <Link href={`/${locale}/dashboard/inventory/stock`}>Stock Levels</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/inventory/stock`}>
+              Stock Levels
+            </Link>
+          ),
         },
         {
           key: 'warehouses',
-          label: <Link href={`/${locale}/dashboard/inventory/warehouses`}>Warehouses</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/inventory/warehouses`}>
+              Warehouses
+            </Link>
+          ),
         },
       ],
     },
@@ -115,11 +138,19 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'inspections',
-          label: <Link href={`/${locale}/dashboard/quality/inspections`}>Inspections</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/quality/inspections`}>
+              Inspections
+            </Link>
+          ),
         },
         {
           key: 'procedures',
-          label: <Link href={`/${locale}/dashboard/quality/procedures`}>Procedures</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/quality/procedures`}>
+              Procedures
+            </Link>
+          ),
         },
       ],
     },
@@ -130,11 +161,17 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'schedules',
-          label: <Link href={`/${locale}/dashboard/maintenance/schedules`}>Schedules</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/maintenance/schedules`}>
+              Schedules
+            </Link>
+          ),
         },
         {
           key: 'assets',
-          label: <Link href={`/${locale}/dashboard/maintenance/assets`}>Assets</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/maintenance/assets`}>Assets</Link>
+          ),
         },
       ],
     },
@@ -145,15 +182,25 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'production-reports',
-          label: <Link href={`/${locale}/dashboard/reports/production`}>Production</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/reports/production`}>
+              Production
+            </Link>
+          ),
         },
         {
           key: 'inventory-reports',
-          label: <Link href={`/${locale}/dashboard/reports/inventory`}>Inventory</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/reports/inventory`}>
+              Inventory
+            </Link>
+          ),
         },
         {
           key: 'quality-reports',
-          label: <Link href={`/${locale}/dashboard/reports/quality`}>Quality</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/reports/quality`}>Quality</Link>
+          ),
         },
       ],
     },
@@ -164,11 +211,15 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'employees',
-          label: <Link href={`/${locale}/dashboard/hr/employees`}>Employees</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/hr/employees`}>Employees</Link>
+          ),
         },
         {
           key: 'attendance',
-          label: <Link href={`/${locale}/dashboard/hr/attendance`}>Attendance</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/hr/attendance`}>Attendance</Link>
+          ),
         },
         {
           key: 'payroll',
@@ -183,11 +234,19 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
       children: [
         {
           key: 'document-procedures',
-          label: <Link href={`/${locale}/dashboard/documents/procedures`}>Procedures</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/documents/procedures`}>
+              Procedures
+            </Link>
+          ),
         },
         {
           key: 'specifications',
-          label: <Link href={`/${locale}/dashboard/documents/specifications`}>Specifications</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/documents/specifications`}>
+              Specifications
+            </Link>
+          ),
         },
       ],
     },
@@ -214,19 +273,33 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
         },
         {
           key: 'system',
-          label: <Link href={`/${locale}/dashboard/settings/system`}>System</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/settings/system`}>System</Link>
+          ),
         },
         {
           key: 'permissions',
-          label: <Link href={`/${locale}/dashboard/settings/permissions`}>Permissions</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/settings/permissions`}>
+              Permissions
+            </Link>
+          ),
         },
         {
           key: 'tenants',
-          label: <Link href={`/${locale}/dashboard/settings/tenants`}>Organization Management</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/settings/tenants`}>
+              Organization Management
+            </Link>
+          ),
         },
         {
           key: 'organization',
-          label: <Link href={`/${locale}/dashboard/settings/organization`}>Organization Settings</Link>,
+          label: (
+            <Link href={`/${locale}/dashboard/settings/organization`}>
+              Organization Settings
+            </Link>
+          ),
         },
       ],
     },
@@ -266,15 +339,17 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
         <div className="p-4 border-b">
           <div className="flex items-center space-x-2">
             {getLogoUrl() ? (
-              <img 
-                src={getAbsoluteLogoUrl(getLogoUrl())} 
-                alt="Company Logo" 
+              <img
+                src={getAbsoluteLogoUrl(getLogoUrl())}
+                alt="Company Logo"
                 className="w-8 h-8 object-contain rounded"
               />
             ) : (
               <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">
-                  {tenant?.settings?.companyName?.[0] || tenant?.name?.[0] || 'W'}
+                  {tenant?.settings?.companyName?.[0] ||
+                    tenant?.name?.[0] ||
+                    'W'}
                 </span>
               </div>
             )}
@@ -296,7 +371,7 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
           className="border-none"
         />
       </Sider>
-      
+
       <Layout>
         <Header className="bg-white shadow-sm px-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -307,11 +382,15 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
               className="text-gray-600"
             />
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Production Dashboard</h2>
-              <p className="text-sm text-gray-500">Welcome back, Administrator</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Production Dashboard
+              </h2>
+              <p className="text-sm text-gray-500">
+                Welcome back, Administrator
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Badge count={5}>
               <Button
@@ -320,7 +399,7 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
                 className="text-gray-600"
               />
             </Badge>
-            
+
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
@@ -329,17 +408,17 @@ export default function DashboardLayout({ children, params }: DashboardLayoutPro
               <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
                 <Avatar icon={<UserOutlined />} />
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">Admin User</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    Admin User
+                  </p>
                   <p className="text-xs text-gray-500">System Administrator</p>
                 </div>
               </div>
             </Dropdown>
           </div>
         </Header>
-        
-        <Content className="bg-gray-50">
-          {children}
-        </Content>
+
+        <Content className="bg-gray-50">{children}</Content>
       </Layout>
     </Layout>
   );

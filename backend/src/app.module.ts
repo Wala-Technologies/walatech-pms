@@ -8,8 +8,12 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { ProductionModule } from './modules/production/production.module';
 import { ProductionModule as ProductionOrderModule } from './modules/production/production.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { AccountingModule } from './modules/accounting/accounting.module';
 import { DatabaseConfigService } from './config/database.config';
 import { JwtTenantMiddleware } from './middleware/jwt-tenant.middleware';
+import { TenantResolutionMiddleware } from './middleware/tenant-resolution.middleware';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -29,13 +33,30 @@ import { JwtTenantMiddleware } from './middleware/jwt-tenant.middleware';
     ProductionModule,
     ProductionOrderModule,
     TenantsModule,
+    AccountingModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Apply tenant resolution for auth routes (register & login) so subdomain-based tenant context is available during login
+    consumer
+      .apply(TenantResolutionMiddleware)
+      .forRoutes('/auth/register', '/auth/login');
+
+    // Apply JWT tenant validation for protected routes
     consumer
       .apply(JwtTenantMiddleware)
-      .exclude('/health', '/metrics', '/auth/login', '/auth/register') // Exclude health check, metrics, and auth endpoints
-      .forRoutes('*'); // Apply to all routes
+      .exclude(
+        '/health',
+        '/metrics',
+        '/auth/login',
+        '/auth/register',
+        '/auth/refresh',
+        '/tenants/by-subdomain/(.*)',
+        '/tenants/validate/(.*)',
+      ) // Exclude health check, metrics, auth endpoints, and public tenant endpoints (global prefix applied automatically)
+      .forRoutes('*');
   }
 }

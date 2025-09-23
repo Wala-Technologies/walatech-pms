@@ -18,6 +18,9 @@ import { SerialNo } from '../modules/inventory/entities/serial-no.entity';
 import { StockEntry } from '../modules/inventory/entities/stock-entry.entity';
 import { StockEntryDetail } from '../modules/inventory/entities/stock-entry-detail.entity';
 import { StockLedgerEntry } from '../modules/inventory/entities/stock-ledger-entry.entity';
+import { Account } from '../modules/accounting/entities/account.entity';
+import { JournalEntry } from '../modules/accounting/entities/journal-entry.entity';
+import { JournalEntryLine } from '../modules/accounting/entities/journal-entry-line.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
@@ -32,15 +35,15 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       password: this.configService.get('DB_PASSWORD', ''),
       database: this.configService.get('DB_DATABASE', 'wala_pms'),
       entities: [
-        User, 
-        Tenant, 
-        ProductionPlan, 
-        ProductionPlanItem, 
-        ModuleWorkOrder, 
-        ModuleWorkOrderTask, 
-        WorkOrder, 
-        WorkOrderTask, 
-        Item, 
+        User,
+        Tenant,
+        ProductionPlan,
+        ProductionPlanItem,
+        ModuleWorkOrder,
+        ModuleWorkOrderTask,
+        WorkOrder,
+        WorkOrderTask,
+        Item,
         ProductionOrder,
         Warehouse,
         Bin,
@@ -48,7 +51,10 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         SerialNo,
         StockEntry,
         StockEntryDetail,
-        StockLedgerEntry
+        StockLedgerEntry,
+        Account,
+        JournalEntry,
+        JournalEntryLine,
       ],
       synchronize: false,
       migrationsRun: this.configService.get('NODE_ENV') === 'production',
@@ -56,7 +62,9 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       logging: this.configService.get('NODE_ENV') === 'development',
       timezone: '+03:00', // Ethiopian timezone
       extra: {
-        authPlugin: 'mysql_native_password',
+        ...(this.configService.get('DB_AUTH_PLUGIN')
+          ? { authPlugin: String(this.configService.get('DB_AUTH_PLUGIN')) }
+          : {}),
       },
     };
   }
