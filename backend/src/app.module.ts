@@ -4,11 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { CustomersModule } from './modules/customers/customers.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { ProductionModule } from './modules/production/production.module';
 import { ProductionModule as ProductionOrderModule } from './modules/production/production.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { AccountingModule } from './modules/accounting/accounting.module';
+import { HrModule } from './modules/hr/hr.module';
 import { DatabaseConfigService } from './config/database.config';
 import { JwtTenantMiddleware } from './middleware/jwt-tenant.middleware';
 import { TenantResolutionMiddleware } from './middleware/tenant-resolution.middleware';
@@ -29,11 +31,13 @@ import { AppService } from './app.service';
     }),
     AuthModule,
     UsersModule,
+    CustomersModule,
     InventoryModule,
     ProductionModule,
     ProductionOrderModule,
     TenantsModule,
     AccountingModule,
+    HrModule,
   ],
   controllers: [AppController],
   providers: [AppService],

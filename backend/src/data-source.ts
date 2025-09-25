@@ -14,6 +14,13 @@ import { GLEntry } from './modules/accounting/entities/gl-entry.entity';
 import { CostCenter } from './modules/accounting/entities/cost-center.entity';
 import { FiscalYear } from './modules/accounting/entities/fiscal-year.entity';
 import { PaymentEntry } from './modules/accounting/entities/payment-entry.entity';
+import { Employee } from './modules/hr/entities/employee.entity';
+import { Department } from './modules/hr/entities/department.entity';
+import { Designation } from './modules/hr/entities/designation.entity';
+import { Attendance } from './modules/hr/entities/attendance.entity';
+import { LeaveApplication } from './modules/hr/entities/leave-application.entity';
+import { LeaveType } from './modules/hr/entities/leave-type.entity';
+import { ShiftType } from './modules/hr/entities/shift-type.entity';
 
 // Load environment variables
 config();
@@ -42,6 +49,13 @@ export const AppDataSource = new DataSource({
     CostCenter,
     FiscalYear,
     PaymentEntry,
+    Employee,
+    Department,
+    Designation,
+    Attendance,
+    LeaveApplication,
+    LeaveType,
+    ShiftType,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

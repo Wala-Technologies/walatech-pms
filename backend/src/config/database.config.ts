@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Tenant } from '../entities/tenant.entity';
+import { Customer } from '../entities/customer.entity';
 import { ProductionPlan } from '../modules/production/entities/production-plan.entity';
 import { ProductionPlanItem } from '../modules/production/entities/production-plan-item.entity';
 import { WorkOrder as ModuleWorkOrder } from '../modules/production/entities/work-order.entity';
@@ -21,6 +22,13 @@ import { StockLedgerEntry } from '../modules/inventory/entities/stock-ledger-ent
 import { Account } from '../modules/accounting/entities/account.entity';
 import { JournalEntry } from '../modules/accounting/entities/journal-entry.entity';
 import { JournalEntryLine } from '../modules/accounting/entities/journal-entry-line.entity';
+import { Employee } from '../modules/hr/entities/employee.entity';
+import { Department } from '../modules/hr/entities/department.entity';
+import { Designation } from '../modules/hr/entities/designation.entity';
+import { Attendance } from '../modules/hr/entities/attendance.entity';
+import { LeaveApplication } from '../modules/hr/entities/leave-application.entity';
+import { LeaveType } from '../modules/hr/entities/leave-type.entity';
+import { ShiftType } from '../modules/hr/entities/shift-type.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
@@ -37,6 +45,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       entities: [
         User,
         Tenant,
+        Customer,
         ProductionPlan,
         ProductionPlanItem,
         ModuleWorkOrder,
@@ -55,6 +64,13 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         Account,
         JournalEntry,
         JournalEntryLine,
+        Employee,
+        Department,
+        Designation,
+        Attendance,
+        LeaveApplication,
+        LeaveType,
+        ShiftType,
       ],
       synchronize: false,
       migrationsRun: this.configService.get('NODE_ENV') === 'production',
