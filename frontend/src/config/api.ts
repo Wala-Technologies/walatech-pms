@@ -38,6 +38,16 @@ export const apiConfig = {
       roles: '/api/users/roles',
       permissions: '/api/users/permissions',
     },
+    customers: {
+      list: '/api/customers',
+      create: '/api/customers',
+      update: '/api/customers',
+      delete: '/api/customers',
+      stats: '/api/customers/stats',
+      search: '/api/customers/search',
+      byType: '/api/customers/by-type',
+      byCountry: '/api/customers/by-country',
+    },
   },
 };
 

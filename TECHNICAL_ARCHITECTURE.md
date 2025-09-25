@@ -192,6 +192,131 @@ interface WorkCenter {
 - Quality metrics tracking
 - Corrective action management
 
+### 6. Human Resources Service
+
+**Responsibilities:**
+- Employee lifecycle management
+- Department and designation management
+- Leave management and tracking
+- Attendance monitoring
+- Payroll processing
+- HR analytics and reporting
+
+**Key Features:**
+- Multi-tenant employee data isolation
+- Comprehensive employee profiles
+- Hierarchical department structure
+- Flexible leave policies
+- Real-time attendance tracking
+- Role-based access control
+- Multi-language support
+
+**Key Entities:**
+```typescript
+interface Employee {
+  id: string;
+  tenant_id: string;
+  employee_code: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  department_id: string;
+  designation_id: string;
+  hire_date: Date;
+  status: 'active' | 'inactive' | 'terminated';
+  salary?: number;
+  address?: string;
+  emergency_contact?: string;
+  is_active: boolean;
+}
+
+interface Department {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  parent_id?: string;
+  manager_id?: string;
+  is_active: boolean;
+}
+
+interface Designation {
+  id: string;
+  tenant_id: string;
+  title: string;
+  description?: string;
+  department_id?: string;
+  level: number;
+  is_active: boolean;
+}
+
+interface LeaveRequest {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  leave_type: 'annual' | 'sick' | 'maternity' | 'paternity' | 'emergency' | 'other';
+  start_date: Date;
+  end_date: Date;
+  days_requested: number;
+  reason?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approved_by?: string;
+  approved_at?: Date;
+}
+
+interface AttendanceRecord {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  date: Date;
+  check_in?: Date;
+  check_out?: Date;
+  hours_worked?: number;
+  status: 'present' | 'absent' | 'late' | 'half_day';
+  notes?: string;
+}
+```
+
+**API Endpoints:**
+```typescript
+// Employee Management
+GET /hr/employees
+POST /hr/employees
+GET /hr/employees/:id
+PUT /hr/employees/:id
+DELETE /hr/employees/:id
+
+// Department Management
+GET /hr/departments
+POST /hr/departments
+GET /hr/departments/:id
+PUT /hr/departments/:id
+DELETE /hr/departments/:id
+
+// Designation Management
+GET /hr/designations
+POST /hr/designations
+GET /hr/designations/:id
+PUT /hr/designations/:id
+DELETE /hr/designations/:id
+
+// Leave Management
+GET /hr/leave-requests
+POST /hr/leave-requests
+GET /hr/leave-requests/:id
+PUT /hr/leave-requests/:id
+PUT /hr/leave-requests/:id/approve
+PUT /hr/leave-requests/:id/reject
+
+// Attendance Management
+GET /hr/attendance
+POST /hr/attendance
+GET /hr/attendance/:id
+PUT /hr/attendance/:id
+GET /hr/attendance/employee/:employeeId
+```
+
 ## Frontend Architecture
 
 ### Technology Stack

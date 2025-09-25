@@ -18,6 +18,7 @@ import {
   FileTextOutlined,
   SafetyOutlined,
   AccountBookOutlined,
+  ContactsOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -73,15 +74,54 @@ export default function DashboardLayout({
       label: <Link href={`/${locale}/dashboard`}>Dashboard</Link>,
     },
     {
+      key: 'customers',
+      icon: <ContactsOutlined />,
+      label: 'Customers',
+      children: [
+        {
+          key: 'customers-list',
+          label: (
+            <Link href={`/${locale}/dashboard/customers`}>
+              Customers
+            </Link>
+          ),
+        },
+        {
+          key: 'customer-reports',
+          label: (
+            <Link href={`/${locale}/dashboard/customers/reports`}>
+              Reports
+            </Link>
+          ),
+        },
+      ],
+    },
+    {
       key: 'production',
       icon: <LineChartOutlined />,
       label: 'Production',
       children: [
         {
+          key: 'production-overview',
+          label: (
+            <Link href={`/${locale}/dashboard/production`}>
+              Production Overview
+            </Link>
+          ),
+        },
+        {
           key: 'work-orders',
           label: (
             <Link href={`/${locale}/dashboard/production/work-orders`}>
               Work Orders
+            </Link>
+          ),
+        },
+        {
+          key: 'tasks',
+          label: (
+            <Link href={`/${locale}/dashboard/production/tasks`}>
+              Tasks
             </Link>
           ),
         },
@@ -108,6 +148,14 @@ export default function DashboardLayout({
       icon: <ShoppingCartOutlined />,
       label: 'Inventory',
       children: [
+        {
+          key: 'inventory-overview',
+          label: (
+            <Link href={`/${locale}/dashboard/inventory`}>
+              Inventory Overview
+            </Link>
+          ),
+        },
         {
           key: 'items',
           label: (
@@ -211,9 +259,33 @@ export default function DashboardLayout({
       label: 'Human Resources',
       children: [
         {
+          key: 'hr-overview',
+          label: (
+            <Link href={`/${locale}/dashboard/hr`}>HR Overview</Link>
+          ),
+        },
+        {
           key: 'employees',
           label: (
             <Link href={`/${locale}/dashboard/hr/employees`}>Employees</Link>
+          ),
+        },
+        {
+          key: 'departments',
+          label: (
+            <Link href={`/${locale}/dashboard/hr/departments`}>Departments</Link>
+          ),
+        },
+        {
+          key: 'designations',
+          label: (
+            <Link href={`/${locale}/dashboard/hr/designations`}>Designations</Link>
+          ),
+        },
+        {
+          key: 'leave-management',
+          label: (
+            <Link href={`/${locale}/dashboard/hr/leave`}>Leave Management</Link>
           ),
         },
         {
