@@ -29,12 +29,29 @@ import { Attendance } from '../modules/hr/entities/attendance.entity';
 import { LeaveApplication } from '../modules/hr/entities/leave-application.entity';
 import { LeaveType } from '../modules/hr/entities/leave-type.entity';
 import { ShiftType } from '../modules/hr/entities/shift-type.entity';
+import { SalesOrder } from '../entities/sales-order.entity';
+import { SalesOrderItem } from '../entities/sales-order-item.entity';
+import { Supplier } from '../entities/supplier.entity';
+import { SupplierGroup } from '../entities/supplier-group.entity';
+import {
+  SupplierQuotation,
+  SupplierQuotationItem,
+} from '../entities/supplier-quotation.entity';
+import {
+  SupplierScorecard,
+  SupplierScorecardCriteria,
+  SupplierScorecardPeriod,
+} from '../entities/supplier-scorecard.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
   constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const nodeEnv = this.configService.get('NODE_ENV', 'development');
+    const forceSync = this.configService.get('DB_SYNCHRONIZE', 'false') === 'true';
+    
     return {
       type: 'mysql',
       host: this.configService.get('DB_HOST', 'localhost'),
@@ -42,6 +59,10 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       username: this.configService.get('DB_USERNAME', 'root'),
       password: this.configService.get('DB_PASSWORD', ''),
       database: this.configService.get('DB_DATABASE', 'wala_pms'),
+      // Test strategy: rebuild schema fresh via synchronize+dropSchema for speed & to avoid drift.
+      // Non-test: rely on migrations; synchronize only if forceSync explicitly enabled.
+      synchronize: isTestEnv ? true : forceSync,
+      dropSchema: isTestEnv,
       entities: [
         User,
         Tenant,
@@ -71,9 +92,17 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         LeaveApplication,
         LeaveType,
         ShiftType,
+        SalesOrder,
+        SalesOrderItem,
+        Supplier,
+        SupplierGroup,
+        SupplierQuotation,
+        SupplierQuotationItem,
+        SupplierScorecard,
+        SupplierScorecardCriteria,
+        SupplierScorecardPeriod,
       ],
-      synchronize: false,
-      migrationsRun: this.configService.get('NODE_ENV') === 'production',
+      migrationsRun: nodeEnv === 'production',
       migrations: ['dist/migrations/*.js'],
       logging: this.configService.get('NODE_ENV') === 'development',
       timezone: '+03:00', // Ethiopian timezone

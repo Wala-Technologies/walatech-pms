@@ -14,7 +14,7 @@ export class DepartmentsService {
     @Inject(REQUEST) private request: any,
   ) {}
 
-  private get tenantId(): string {
+  private get tenant_id(): string {
     return this.request.tenant_id || this.request.user?.tenant_id;
   }
 
@@ -23,7 +23,7 @@ export class DepartmentsService {
     const existingDepartment = await this.departmentRepository.findOne({
       where: {
         name: createDepartmentDto.name,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -33,7 +33,7 @@ export class DepartmentsService {
 
     const department = this.departmentRepository.create({
       ...createDepartmentDto,
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -42,7 +42,7 @@ export class DepartmentsService {
 
   async findAll(): Promise<Department[]> {
     return this.departmentRepository.find({
-      where: { tenant_id: this.tenantId },
+      where: { tenant_id: this.tenant_id },
       relations: ['employees'],
       order: { department_name: 'ASC' },
     });
@@ -50,7 +50,7 @@ export class DepartmentsService {
 
   async findOne(id: string): Promise<Department> {
     const department = await this.departmentRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
       relations: ['employees'],
     });
 
@@ -63,7 +63,7 @@ export class DepartmentsService {
 
   async findByName(name: string): Promise<Department> {
     const department = await this.departmentRepository.findOne({
-      where: { name, tenant_id: this.tenantId },
+      where: { name, tenant_id: this.tenant_id },
       relations: ['employees'],
     });
 
@@ -82,7 +82,7 @@ export class DepartmentsService {
       const existingDepartment = await this.departmentRepository.findOne({
         where: {
           name: updateDepartmentDto.name,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -112,7 +112,7 @@ export class DepartmentsService {
     return this.departmentRepository.find({
       where: {
         disabled: false,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
       order: { department_name: 'ASC' },
     });
@@ -120,7 +120,7 @@ export class DepartmentsService {
 
   async getDepartmentHierarchy(): Promise<Department[]> {
     const departments = await this.departmentRepository.find({
-      where: { tenant_id: this.tenantId },
+      where: { tenant_id: this.tenant_id },
       order: { department_name: 'ASC' },
     });
 

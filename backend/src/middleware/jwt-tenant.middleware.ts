@@ -78,6 +78,19 @@ export class JwtTenantMiddleware implements NestMiddleware {
         const superAdminSubdomain =
           process.env.SUPER_ADMIN_SUBDOMAIN || 'walatech';
         const isSuperAdmin = userTenant.subdomain === superAdminSubdomain;
+        
+        // Check for tenant switching via header (only for super admins)
+        const requestedTenantSubdomain = req.get('x-tenant-subdomain');
+        let effectiveTenant = userTenant;
+        
+        if (requestedTenantSubdomain && isSuperAdmin && requestedTenantSubdomain !== userTenant.subdomain) {
+          // Super admin is requesting access to a different tenant
+          const requestedTenant = await this.tenantsService.findBySubdomain(requestedTenantSubdomain);
+          if (requestedTenant && requestedTenant.status === 'active') {
+            effectiveTenant = requestedTenant;
+          }
+        }
+        
         if (
           process.env.NODE_ENV !== 'production' &&
           process.env.E2E_DEBUG === 'true'
@@ -87,14 +100,16 @@ export class JwtTenantMiddleware implements NestMiddleware {
             payload.sub,
             'tenant',
             userTenant.subdomain,
+            'effectiveTenant',
+            effectiveTenant.subdomain,
             'isSuperAdmin',
             isSuperAdmin,
           );
         }
 
         // Add tenant and user info to request context
-        req.tenant = userTenant;
-        req.tenant_id = userTenant.id;
+        req.tenant = effectiveTenant;
+        req.tenant_id = effectiveTenant.id;
         req.user = Object.assign(req.user || {}, {
           id: payload.sub,
           email: payload.email,

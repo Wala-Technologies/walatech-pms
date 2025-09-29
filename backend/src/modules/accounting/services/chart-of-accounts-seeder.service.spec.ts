@@ -9,7 +9,7 @@ describe('ChartOfAccountsSeederService', () => {
   let service: ChartOfAccountsSeederService;
   let accountRepo: jest.Mocked<Repository<Account>>;
 
-  const mockTenantId = 'test-tenant-id';
+  const mocktenant_id = 'test-tenant-id';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +43,7 @@ describe('ChartOfAccountsSeederService', () => {
       accountRepo.create.mockImplementation((data) => ({ ...data, id: 'mock-id' } as any));
       accountRepo.save.mockImplementation((account) => Promise.resolve({ ...account, id: 'mock-id' } as any));
 
-      const result = await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      const result = await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       expect(accountRepo.findOne).toHaveBeenCalled();
       expect(accountRepo.create).toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe('ChartOfAccountsSeederService', () => {
       // Mock that some accounts already exist
       accountRepo.findOne.mockResolvedValue(existingAccount as any);
 
-      const result = await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      const result = await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       expect(accountRepo.findOne).toHaveBeenCalled();
       expect(accountRepo.create).not.toHaveBeenCalled();
@@ -84,7 +84,7 @@ describe('ChartOfAccountsSeederService', () => {
         return Promise.resolve(account as any);
       });
 
-      const result = await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      const result = await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       // Verify that accounts are created with proper structure
       expect(accountRepo.create).toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('ChartOfAccountsSeederService', () => {
       accountRepo.create.mockImplementation((data) => ({ ...data, id: 'mock-id' } as any));
       accountRepo.save.mockImplementation((account) => Promise.resolve(account as any));
 
-      const result = await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      const result = await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       // Check that create was called for major categories
       const createCalls = accountRepo.create.mock.calls;
@@ -139,12 +139,12 @@ describe('ChartOfAccountsSeederService', () => {
       accountRepo.create.mockImplementation((data) => ({ ...data, id: 'mock-id' } as any));
       accountRepo.save.mockImplementation((account) => Promise.resolve(account as any));
 
-      await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       // Verify all create calls include the correct tenant
       const createCalls = accountRepo.create.mock.calls;
       createCalls.forEach(call => {
-        expect(call[0].tenant).toEqual({ id: mockTenantId });
+        expect(call[0].tenant).toEqual({ id: mocktenant_id });
       });
     });
 
@@ -154,7 +154,7 @@ describe('ChartOfAccountsSeederService', () => {
       accountRepo.create.mockImplementation((data) => data as any);
       accountRepo.save.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.seedStandardChartOfAccounts(mockTenantId, mockCompany))
+      await expect(service.seedStandardChartOfAccounts(mocktenant_id, mockCompany))
         .rejects.toThrow('Database error');
     });
 
@@ -165,7 +165,7 @@ describe('ChartOfAccountsSeederService', () => {
       accountRepo.create.mockImplementation((data) => ({ ...data, id: 'mock-id' } as any));
       accountRepo.save.mockImplementation((account) => Promise.resolve(account as any));
 
-      await service.seedStandardChartOfAccounts(mockTenantId, mockCompany);
+      await service.seedStandardChartOfAccounts(mocktenant_id, mockCompany);
 
       // Check specific account types from create calls
       const createCalls = accountRepo.create.mock.calls;

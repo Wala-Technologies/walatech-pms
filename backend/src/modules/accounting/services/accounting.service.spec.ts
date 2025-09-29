@@ -22,7 +22,7 @@ describe('AccountingService', () => {
   let fiscalYearRepo: jest.Mocked<Repository<FiscalYear>>;
   let paymentRepo: jest.Mocked<Repository<PaymentEntry>>;
 
-  const mockTenantId = 'test-tenant-id';
+  const mocktenant_id = 'test-tenant-id';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -83,20 +83,20 @@ describe('AccountingService', () => {
         currency: 'USD',
       };
 
-      const mockAccount = { id: '1', ...createAccountDto, tenant: { id: mockTenantId } };
+      const mockAccount = { id: '1', ...createAccountDto, tenant: { id: mocktenant_id } };
       
       accountRepo.findOne.mockResolvedValue(null);
       accountRepo.create.mockReturnValue(mockAccount as any);
       accountRepo.save.mockResolvedValue(mockAccount as any);
 
-      const result = await service.createAccount(createAccountDto, mockTenantId);
+      const result = await service.createAccount(createAccountDto, mocktenant_id);
 
       expect(accountRepo.findOne).toHaveBeenCalledWith({
-        where: { code: '1000', tenant: { id: mockTenantId } },
+        where: { code: '1000', tenant: { id: mocktenant_id } },
       });
       expect(accountRepo.create).toHaveBeenCalledWith({
         ...createAccountDto,
-        tenant: { id: mockTenantId },
+        tenant: { id: mocktenant_id },
       });
       expect(result).toEqual(mockAccount);
     });
@@ -112,7 +112,7 @@ describe('AccountingService', () => {
 
       accountRepo.findOne.mockResolvedValue({ id: '1' } as any);
 
-      await expect(service.createAccount(createAccountDto, mockTenantId))
+      await expect(service.createAccount(createAccountDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });
@@ -142,7 +142,7 @@ describe('AccountingService', () => {
       jeRepo.save.mockResolvedValue(mockJE as any);
       jelRepo.create.mockReturnValue({} as any);
 
-      const result = await service.createJournalEntry(createJournalEntryDto, mockTenantId);
+      const result = await service.createJournalEntry(createJournalEntryDto, mocktenant_id);
 
       expect(jeRepo.create).toHaveBeenCalled();
       expect(jeRepo.save).toHaveBeenCalled();
@@ -168,7 +168,7 @@ describe('AccountingService', () => {
         ],
       };
 
-      await expect(service.createJournalEntry(createJournalEntryDto, mockTenantId))
+      await expect(service.createJournalEntry(createJournalEntryDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });
@@ -191,10 +191,10 @@ describe('AccountingService', () => {
       glRepo.create.mockReturnValue(mockGLEntry as any);
       glRepo.save.mockResolvedValue(mockGLEntry as any);
 
-      const result = await service.createGLEntry(createGLEntryDto, mockTenantId);
+      const result = await service.createGLEntry(createGLEntryDto, mocktenant_id);
 
       expect(accountRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 'account-1', tenant: { id: mockTenantId } },
+        where: { id: 'account-1', tenant: { id: mocktenant_id } },
       });
       expect(result).toEqual(mockGLEntry);
     });
@@ -211,7 +211,7 @@ describe('AccountingService', () => {
 
       accountRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.createGLEntry(createGLEntryDto, mockTenantId))
+      await expect(service.createGLEntry(createGLEntryDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -228,7 +228,7 @@ describe('AccountingService', () => {
       const mockAccount = { id: 'account-1', name: 'Cash' };
       accountRepo.findOne.mockResolvedValue(mockAccount as any);
 
-      await expect(service.createGLEntry(createGLEntryDto, mockTenantId))
+      await expect(service.createGLEntry(createGLEntryDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });
@@ -245,7 +245,7 @@ describe('AccountingService', () => {
       accountRepo.findOne.mockResolvedValue(mockAccount as any);
       glRepo.find.mockResolvedValue(mockGLEntries as any);
 
-      const result = await service.getAccountBalance('account-1', '2024-01-31', mockTenantId);
+      const result = await service.getAccountBalance('account-1', '2024-01-31', mocktenant_id);
 
       expect(result.balance).toBe(1300); // 1000 + 500 - 200
       expect(result.totalDebit).toBe(1500);
@@ -263,7 +263,7 @@ describe('AccountingService', () => {
       accountRepo.findOne.mockResolvedValue(mockAccount as any);
       glRepo.find.mockResolvedValue(mockGLEntries as any);
 
-      const result = await service.getAccountBalance('account-1', '2024-01-31', mockTenantId);
+      const result = await service.getAccountBalance('account-1', '2024-01-31', mocktenant_id);
 
       expect(result.balance).toBe(1300); // 1000 + 500 - 200
       expect(result.totalDebit).toBe(200);
@@ -311,7 +311,7 @@ describe('AccountingService', () => {
 
       glRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const result = await service.getTrialBalance(query, mockTenantId);
+      const result = await service.getTrialBalance(query, mocktenant_id);
 
       expect(result).toHaveLength(2);
       expect(result[0].balance).toBe(1300); // Asset: debit - credit
@@ -333,10 +333,10 @@ describe('AccountingService', () => {
       costCenterRepo.create.mockReturnValue(mockCostCenter as any);
       costCenterRepo.save.mockResolvedValue(mockCostCenter as any);
 
-      const result = await service.createCostCenter(createCostCenterDto, mockTenantId);
+      const result = await service.createCostCenter(createCostCenterDto, mocktenant_id);
 
       expect(costCenterRepo.findOne).toHaveBeenCalledWith({
-        where: { code: 'CC001', tenant: { id: mockTenantId } },
+        where: { code: 'CC001', tenant: { id: mocktenant_id } },
       });
       expect(result).toEqual(mockCostCenter);
     });
@@ -350,7 +350,7 @@ describe('AccountingService', () => {
 
       costCenterRepo.findOne.mockResolvedValue({ id: '1' } as any);
 
-      await expect(service.createCostCenter(createCostCenterDto, mockTenantId))
+      await expect(service.createCostCenter(createCostCenterDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });
@@ -369,10 +369,10 @@ describe('AccountingService', () => {
       fiscalYearRepo.create.mockReturnValue(mockFiscalYear as any);
       fiscalYearRepo.save.mockResolvedValue(mockFiscalYear as any);
 
-      const result = await service.createFiscalYear(createFiscalYearDto, mockTenantId);
+      const result = await service.createFiscalYear(createFiscalYearDto, mocktenant_id);
 
       expect(fiscalYearRepo.findOne).toHaveBeenCalledWith({
-        where: { name: 'FY 2024', tenant: { id: mockTenantId } },
+        where: { name: 'FY 2024', tenant: { id: mocktenant_id } },
       });
       expect(result).toEqual(mockFiscalYear);
     });
@@ -402,7 +402,7 @@ describe('AccountingService', () => {
       paymentRepo.create.mockReturnValue(mockPaymentEntry as any);
       paymentRepo.save.mockResolvedValue(mockPaymentEntry as any);
 
-      const result = await service.createPaymentEntry(createPaymentEntryDto, mockTenantId);
+      const result = await service.createPaymentEntry(createPaymentEntryDto, mocktenant_id);
 
       expect(accountRepo.findOne).toHaveBeenCalledTimes(2);
       expect(result).toEqual(mockPaymentEntry);
@@ -422,7 +422,7 @@ describe('AccountingService', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ id: 'account-2' } as any);
 
-      await expect(service.createPaymentEntry(createPaymentEntryDto, mockTenantId))
+      await expect(service.createPaymentEntry(createPaymentEntryDto, mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });
@@ -453,10 +453,10 @@ describe('AccountingService', () => {
       jeRepo.findOne.mockResolvedValue(mockJournalEntry as any);
       glRepo.save.mockResolvedValue([{}, {}] as any);
 
-      const result = await service.postJournalEntryToGL('je-1', mockTenantId);
+      const result = await service.postJournalEntryToGL('je-1', mocktenant_id);
 
       expect(jeRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 'je-1', tenant: { id: mockTenantId } },
+        where: { id: 'je-1', tenant: { id: mocktenant_id } },
         relations: ['lines', 'lines.account'],
       });
       expect(glRepo.save).toHaveBeenCalled();
@@ -466,7 +466,7 @@ describe('AccountingService', () => {
     it('should throw error if journal entry not found', async () => {
       jeRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.postJournalEntryToGL('invalid-je', mockTenantId))
+      await expect(service.postJournalEntryToGL('invalid-je', mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -478,7 +478,7 @@ describe('AccountingService', () => {
 
       jeRepo.findOne.mockResolvedValue(mockJournalEntry as any);
 
-      await expect(service.postJournalEntryToGL('je-1', mockTenantId))
+      await expect(service.postJournalEntryToGL('je-1', mocktenant_id))
         .rejects.toThrow(BadRequestException);
     });
   });

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Scope, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Scope, Inject, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindManyOptions, SelectQueryBuilder } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
@@ -6,6 +6,7 @@ import { Customer } from '../../../entities/customer.entity';
 import { CreateCustomerDto } from '../dto/create-customer.dto';
 import { UpdateCustomerDto } from '../dto/update-customer.dto';
 import { CustomerQueryDto } from '../dto/customer-query.dto';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CustomersService {
@@ -13,18 +14,32 @@ export class CustomersService {
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
     @Inject(REQUEST) private request: any,
+    private departmentAccessService: DepartmentAccessService,
   ) {}
 
-  private get tenantId(): string {
+  private get tenant_id(): string {
     return this.request.tenant_id || this.request.user?.tenant_id;
   }
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
+    const userId = this.request.user?.user_id;
+    const departmentId = createCustomerDto.department_id || this.request.user?.default_department_id;
+
+    // Validate department access
+    if (!departmentId) {
+      throw new BadRequestException('Department ID is required');
+    }
+
+    const canAccess = await this.departmentAccessService.canAccessDepartment(userId, departmentId);
+    if (!canAccess) {
+      throw new BadRequestException('You do not have access to create customers in this department');
+    }
+
     // Check if customer with same name already exists for this tenant
     const existingCustomer = await this.customerRepository.findOne({
       where: {
         customer_name: createCustomerDto.customer_name,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -37,7 +52,7 @@ export class CustomersService {
       const existingCode = await this.customerRepository.findOne({
         where: {
           customer_code: createCustomerDto.customer_code,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -48,7 +63,8 @@ export class CustomersService {
 
     const customer = this.customerRepository.create({
       ...createCustomerDto,
-      tenant_id: this.tenantId,
+      department_id: departmentId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -58,10 +74,23 @@ export class CustomersService {
   async findAll(query: CustomerQueryDto): Promise<{ customers: Customer[]; total: number }> {
     const { page = 1, limit = 10, search, sort_by = 'customer_name', sort_order = 'ASC', ...filters } = query;
     const skip = (page - 1) * limit;
+    const userId = this.request.user?.user_id;
 
     const queryBuilder: SelectQueryBuilder<Customer> = this.customerRepository
       .createQueryBuilder('customer')
-      .where('customer.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .where('customer.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
+
+    // Apply department filtering
+    const canAccessAllDepartments = this.departmentAccessService.canAccessAllDepartments(this.request.user);
+    if (!canAccessAllDepartments) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(this.request.user);
+      if (accessibleDepartmentIds !== null) {
+        if (accessibleDepartmentIds.length === 0) {
+          return { customers: [], total: 0 };
+        }
+        queryBuilder.andWhere('customer.department_id IN (:...departmentIds)', { departmentIds: accessibleDepartmentIds });
+      }
+    }
 
     // Apply search
     if (search) {
@@ -91,10 +120,17 @@ export class CustomersService {
 
   async findOne(id: string): Promise<Customer> {
     const customer = await this.customerRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
     });
 
     if (!customer) {
+      throw new NotFoundException('Customer not found');
+    }
+
+    // Validate department access
+    const userId = this.request.user?.user_id;
+    const canAccess = await this.departmentAccessService.canAccessDepartment(userId, customer.department_id);
+    if (!canAccess) {
       throw new NotFoundException('Customer not found');
     }
 
@@ -109,7 +145,7 @@ export class CustomersService {
       const existingCustomer = await this.customerRepository.findOne({
         where: {
           customer_name: updateCustomerDto.customer_name,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -123,7 +159,7 @@ export class CustomersService {
       const existingCode = await this.customerRepository.findOne({
         where: {
           customer_code: updateCustomerDto.customer_code,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -151,9 +187,22 @@ export class CustomersService {
     byType: { [key: string]: number };
     byCountry: { [key: string]: number };
   }> {
+    const userId = this.request.user?.user_id;
     const queryBuilder = this.customerRepository
       .createQueryBuilder('customer')
-      .where('customer.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .where('customer.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
+
+    // Apply department filtering
+    const canAccessAllDepartments = this.departmentAccessService.canAccessAllDepartments(this.request.user);
+    if (!canAccessAllDepartments) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(this.request.user);
+      if (accessibleDepartmentIds !== null) {
+        if (accessibleDepartmentIds.length === 0) {
+          return { total: 0, active: 0, frozen: 0, disabled: 0, byType: {}, byCountry: {} };
+        }
+        queryBuilder.andWhere('customer.department_id IN (:...departmentIds)', { departmentIds: accessibleDepartmentIds });
+      }
+    }
 
     const total = await queryBuilder.getCount();
 
@@ -210,23 +259,51 @@ export class CustomersService {
   }
 
   async getCustomersByType(customerType: string): Promise<Customer[]> {
-    return this.customerRepository.find({
-      where: {
-        customer_type: customerType,
-        tenant_id: this.tenantId,
-      },
-      order: { customer_name: 'ASC' },
-    });
+    const userId = this.request.user?.user_id;
+    const queryBuilder = this.customerRepository
+      .createQueryBuilder('customer')
+      .where('customer.customer_type = :customerType AND customer.tenant_id = :tenant_id', { 
+        customerType, 
+        tenant_id: this.tenant_id 
+      });
+
+    // Apply department filtering
+    const canAccessAllDepartments = this.departmentAccessService.canAccessAllDepartments(this.request.user);
+    if (!canAccessAllDepartments) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(this.request.user);
+      if (accessibleDepartmentIds !== null) {
+        if (accessibleDepartmentIds.length === 0) {
+          return [];
+        }
+        queryBuilder.andWhere('customer.department_id IN (:...departmentIds)', { departmentIds: accessibleDepartmentIds });
+      }
+    }
+
+    return queryBuilder.orderBy('customer.customer_name', 'ASC').getMany();
   }
 
   async getCustomersByCountry(country: string): Promise<Customer[]> {
-    return this.customerRepository.find({
-      where: {
-        country,
-        tenant_id: this.tenantId,
-      },
-      order: { customer_name: 'ASC' },
-    });
+    const userId = this.request.user?.user_id;
+    const queryBuilder = this.customerRepository
+      .createQueryBuilder('customer')
+      .where('customer.country = :country AND customer.tenant_id = :tenant_id', { 
+        country, 
+        tenant_id: this.tenant_id 
+      });
+
+    // Apply department filtering
+    const canAccessAllDepartments = this.departmentAccessService.canAccessAllDepartments(this.request.user);
+    if (!canAccessAllDepartments) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(this.request.user);
+      if (accessibleDepartmentIds !== null) {
+        if (accessibleDepartmentIds.length === 0) {
+          return [];
+        }
+        queryBuilder.andWhere('customer.department_id IN (:...departmentIds)', { departmentIds: accessibleDepartmentIds });
+      }
+    }
+
+    return queryBuilder.orderBy('customer.customer_name', 'ASC').getMany();
   }
 
   async toggleCustomerStatus(id: string): Promise<Customer> {
@@ -255,22 +332,38 @@ export class CustomersService {
         ...updateData,
         modified_by: this.request.user?.email || 'system',
       })
-      .where('id IN (:...ids) AND tenant_id = :tenantId', {
+      .where('id IN (:...ids) AND tenant_id = :tenant_id', {
         ids: customerIds,
-        tenantId: this.tenantId,
+        tenant_id: this.tenant_id,
       })
       .execute();
   }
 
   async searchCustomers(searchTerm: string, limit: number = 10): Promise<Customer[]> {
-    return this.customerRepository.find({
-      where: [
-        { customer_name: Like(`%${searchTerm}%`), tenant_id: this.tenantId },
-        { email: Like(`%${searchTerm}%`), tenant_id: this.tenantId },
-        { customer_code: Like(`%${searchTerm}%`), tenant_id: this.tenantId },
-      ],
-      take: limit,
-      order: { customer_name: 'ASC' },
-    });
+    const userId = this.request.user?.user_id;
+    const queryBuilder = this.customerRepository
+      .createQueryBuilder('customer')
+      .where('customer.tenant_id = :tenant_id', { tenant_id: this.tenant_id })
+      .andWhere(
+        '(customer.customer_name LIKE :search OR customer.email LIKE :search OR customer.customer_code LIKE :search)',
+        { search: `%${searchTerm}%` }
+      );
+
+    // Apply department filtering
+    const canAccessAllDepartments = this.departmentAccessService.canAccessAllDepartments(this.request.user);
+    if (!canAccessAllDepartments) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(this.request.user);
+      if (accessibleDepartmentIds !== null) {
+        if (accessibleDepartmentIds.length === 0) {
+          return [];
+        }
+        queryBuilder.andWhere('customer.department_id IN (:...departmentIds)', { departmentIds: accessibleDepartmentIds });
+      }
+    }
+
+    return queryBuilder
+      .take(limit)
+      .orderBy('customer.customer_name', 'ASC')
+      .getMany();
   }
 }

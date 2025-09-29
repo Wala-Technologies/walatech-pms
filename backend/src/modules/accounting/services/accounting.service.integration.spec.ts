@@ -9,7 +9,7 @@ import { TestTenant } from '../../../test/entities/tenant.test.entity';
 describe('Accounting Integration Tests', () => {
   let module: TestingModule;
   let dataSource: DataSource;
-  let testTenantId: string;
+  let testtenant_id: string;
 
   beforeAll(async () => {
     dataSource = await TestHelpers.setupTestDatabase();
@@ -28,7 +28,7 @@ describe('Accounting Integration Tests', () => {
 
   beforeEach(async () => {
     await TestHelpers.clearDatabase();
-    testTenantId = (await TestHelpers.createTestTenant()).id;
+    testtenant_id = (await TestHelpers.createTestTenant()).id;
   });
 
   afterAll(async () => {
@@ -52,7 +52,7 @@ describe('Accounting Integration Tests', () => {
 
   describe('GL Entry Operations', () => {
     it('should create GL entry successfully', async () => {
-      const savedEntry = await TestHelpers.createTestGLEntry(testTenantId, {
+      const savedEntry = await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '1000',
         accountName: 'Cash',
         debit: 1000,
@@ -72,7 +72,7 @@ describe('Accounting Integration Tests', () => {
       const glRepo = dataSource.getRepository(TestGLEntry);
       
       // Create GL entries for test tenant
-      await TestHelpers.createTestGLEntry(testTenantId, {
+      await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '1000',
         accountName: 'Cash',
         debit: 1000,
@@ -81,7 +81,7 @@ describe('Accounting Integration Tests', () => {
         remarks: 'Test GL Entry 1',
       });
 
-      await TestHelpers.createTestGLEntry(testTenantId, {
+      await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '2000',
         accountName: 'Accounts Payable',
         debit: 0,
@@ -91,7 +91,7 @@ describe('Accounting Integration Tests', () => {
       });
 
       const entries = await glRepo.find({
-        where: { tenant_id: testTenantId },
+        where: { tenant_id: testtenant_id },
       });
 
       expect(entries).toHaveLength(2);
@@ -103,7 +103,7 @@ describe('Accounting Integration Tests', () => {
       const glRepo = dataSource.getRepository(TestGLEntry);
       
       // Create multiple GL entries for the same account
-      await TestHelpers.createTestGLEntry(testTenantId, {
+      await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '1000',
         accountName: 'Cash',
         debit: 1000,
@@ -111,7 +111,7 @@ describe('Accounting Integration Tests', () => {
         voucherNo: 'TEST-001',
       });
 
-      await TestHelpers.createTestGLEntry(testTenantId, {
+      await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '1000',
         accountName: 'Cash',
         debit: 500,
@@ -119,7 +119,7 @@ describe('Accounting Integration Tests', () => {
         voucherNo: 'TEST-002',
       });
 
-      await TestHelpers.createTestGLEntry(testTenantId, {
+      await TestHelpers.createTestGLEntry(testtenant_id, {
         accountCode: '1000',
         accountName: 'Cash',
         debit: 0,
@@ -130,7 +130,7 @@ describe('Accounting Integration Tests', () => {
       // Calculate balance manually (this would be done by the service)
       const entries = await glRepo.find({
         where: { 
-          tenant_id: testTenantId,
+          tenant_id: testtenant_id,
           accountCode: '1000'
         },
       });

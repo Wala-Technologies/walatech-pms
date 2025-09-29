@@ -12,10 +12,10 @@ export class LeaveTypesService {
     private leaveTypeRepository: Repository<LeaveType>,
   ) {}
 
-  async create(createLeaveTypeDto: CreateLeaveTypeDto, tenantId: string, userId: string): Promise<LeaveType> {
+  async create(createLeaveTypeDto: CreateLeaveTypeDto, tenant_id: string, userId: string): Promise<LeaveType> {
     // Check if leave type with same name already exists for this tenant
     const existingLeaveType = await this.leaveTypeRepository.findOne({
-      where: { name: createLeaveTypeDto.name, tenant_id: tenantId },
+      where: { name: createLeaveTypeDto.name, tenant_id: tenant_id },
     });
 
     if (existingLeaveType) {
@@ -24,7 +24,7 @@ export class LeaveTypesService {
 
     const leaveType = this.leaveTypeRepository.create({
       ...createLeaveTypeDto,
-      tenant_id: tenantId,
+      tenant_id: tenant_id,
       owner: userId,
       modified_by: userId,
     });
@@ -32,16 +32,16 @@ export class LeaveTypesService {
     return this.leaveTypeRepository.save(leaveType);
   }
 
-  async findAll(tenantId: string): Promise<LeaveType[]> {
+  async findAll(tenant_id: string): Promise<LeaveType[]> {
     return this.leaveTypeRepository.find({
-      where: { tenant_id: tenantId },
+      where: { tenant_id: tenant_id },
       order: { leave_type_name: 'ASC' },
     });
   }
 
-  async findOne(id: string, tenantId: string): Promise<LeaveType> {
+  async findOne(id: string, tenant_id: string): Promise<LeaveType> {
     const leaveType = await this.leaveTypeRepository.findOne({
-      where: { id, tenant_id: tenantId },
+      where: { id, tenant_id: tenant_id },
     });
 
     if (!leaveType) {
@@ -51,9 +51,9 @@ export class LeaveTypesService {
     return leaveType;
   }
 
-  async findByName(name: string, tenantId: string): Promise<LeaveType> {
+  async findByName(name: string, tenant_id: string): Promise<LeaveType> {
     const leaveType = await this.leaveTypeRepository.findOne({
-      where: { name, tenant_id: tenantId },
+      where: { name, tenant_id: tenant_id },
     });
 
     if (!leaveType) {
@@ -63,13 +63,13 @@ export class LeaveTypesService {
     return leaveType;
   }
 
-  async update(id: string, updateLeaveTypeDto: UpdateLeaveTypeDto, tenantId: string, userId: string): Promise<LeaveType> {
-    const leaveType = await this.findOne(id, tenantId);
+  async update(id: string, updateLeaveTypeDto: UpdateLeaveTypeDto, tenant_id: string, userId: string): Promise<LeaveType> {
+    const leaveType = await this.findOne(id, tenant_id);
 
     // Check if name is being updated and if it conflicts with existing leave type
     if (updateLeaveTypeDto.name && updateLeaveTypeDto.name !== leaveType.name) {
       const existingLeaveType = await this.leaveTypeRepository.findOne({
-        where: { name: updateLeaveTypeDto.name, tenant_id: tenantId },
+        where: { name: updateLeaveTypeDto.name, tenant_id: tenant_id },
       });
 
       if (existingLeaveType) {
@@ -83,15 +83,15 @@ export class LeaveTypesService {
     return this.leaveTypeRepository.save(leaveType);
   }
 
-  async remove(id: string, tenantId: string): Promise<void> {
-    const leaveType = await this.findOne(id, tenantId);
+  async remove(id: string, tenant_id: string): Promise<void> {
+    const leaveType = await this.findOne(id, tenant_id);
 
     // Check if leave type is being used in any leave applications
     const leaveApplicationsCount = await this.leaveTypeRepository
       .createQueryBuilder('leaveType')
       .leftJoin('leaveType.leave_applications', 'leaveApplication')
       .where('leaveType.id = :id', { id })
-      .andWhere('leaveType.tenant_id = :tenantId', { tenantId })
+      .andWhere('leaveType.tenant_id = :tenant_id', { tenant_id })
       .getCount();
 
     if (leaveApplicationsCount > 0) {
@@ -101,7 +101,7 @@ export class LeaveTypesService {
     await this.leaveTypeRepository.remove(leaveType);
   }
 
-  async getLeaveTypesWithStats(tenantId: string): Promise<any[]> {
+  async getLeaveTypesWithStats(tenant_id: string): Promise<any[]> {
     return this.leaveTypeRepository
       .createQueryBuilder('leaveType')
       .leftJoin('leaveType.leave_applications', 'leaveApplication')
@@ -116,7 +116,7 @@ export class LeaveTypesService {
       ])
       .addSelect('COUNT(leaveApplication.id)', 'total_applications')
       .addSelect('COUNT(CASE WHEN leaveApplication.status = \'Approved\' THEN 1 END)', 'approved_applications')
-      .where('leaveType.tenant_id = :tenantId', { tenantId })
+      .where('leaveType.tenant_id = :tenant_id', { tenant_id })
       .groupBy('leaveType.id')
       .getRawMany();
   }

@@ -12,6 +12,7 @@ import { User } from './user.entity';
 import { ProductionOrder } from './production-order.entity';
 import { WorkOrderTask } from './work-order-task.entity';
 import { Tenant } from './tenant.entity';
+import { Department } from '../modules/hr/entities/department.entity';
 
 export enum WorkOrderStatus {
   PENDING = 'pending',
@@ -124,10 +125,20 @@ export class WorkOrder {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Column({ length: 36, nullable: false })
+  tenant_id: string;
+
+  @Column({ length: 36, nullable: true })
+  department_id: string | null;
+
   // Multi-tenant relationship
   @ManyToOne(() => Tenant, { nullable: false })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  departmentEntity: Department;
 
   @Column({ default: 0 })
   docstatus: number;

@@ -23,7 +23,7 @@ export enum TenantPlan {
 // Import User after enum declarations to avoid circular dependency
 import { User } from './user.entity';
 
-@Entity('tabTenant')
+@Entity('tabtenant')
 export class Tenant {
   @Column({ primary: true, length: 36 })
   id: string;

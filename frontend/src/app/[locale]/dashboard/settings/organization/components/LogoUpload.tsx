@@ -82,29 +82,58 @@ export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadPro
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-      <Avatar
-        size={80}
-        src={getAbsoluteLogoUrl(previewUrl)}
-        style={{
-          backgroundColor: '#f0f0f0',
-          border: '2px dashed #d9d9d9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {!previewUrl && 'Logo'}
-      </Avatar>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+      <div style={{ 
+        width: '120px', 
+        height: '120px', 
+        border: '2px dashed #d9d9d9',
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fafafa',
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        {previewUrl ? (
+          <img
+            src={getAbsoluteLogoUrl(previewUrl)}
+            alt="Organization Logo"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              borderRadius: '6px'
+            }}
+            onError={(e) => {
+              console.error('Logo failed to load:', previewUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div style={{
+            color: '#999',
+            fontSize: '14px',
+            textAlign: 'center',
+            padding: '8px'
+          }}>
+            No Logo
+            <br />
+            <small>Upload an image</small>
+          </div>
+        )}
+      </div>
       
-      <Space direction="vertical">
+      <Space direction="vertical" style={{ flex: 1 }}>
         <Upload {...uploadProps}>
           <Button 
             icon={<UploadOutlined />} 
             loading={uploading}
-            disabled={!tenant_id}
+            disabled={uploading}
+            type="primary"
+            ghost
           >
-            {uploading ? 'Uploading...' : 'Upload Logo'}
+            {uploading ? 'Uploading...' : 'Choose Logo'}
           </Button>
         </Upload>
         
@@ -112,18 +141,20 @@ export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadPro
           <Button 
             icon={<DeleteOutlined />} 
             onClick={handleRemove}
-            size="small"
-            type="text"
             danger
+            type="text"
+            size="small"
           >
-            Remove
+            Remove Logo
           </Button>
         )}
         
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          Recommended: 200x200px, max 5MB
+        <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.4' }}>
+          <strong>Recommended:</strong> 200x200px or larger
           <br />
-          Formats: JPG, PNG, GIF, SVG
+          <strong>Formats:</strong> PNG, JPG, SVG (max 5MB)
+          <br />
+          <strong>Best results:</strong> Square images with transparent background
         </div>
       </Space>
     </div>

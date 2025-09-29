@@ -59,9 +59,17 @@ export interface TenantSettings {
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;
+    successColor?: string;
+    warningColor?: string;
+    errorColor?: string;
     logoPosition?: 'left' | 'center';
     sidebarStyle?: 'light' | 'dark';
     headerStyle?: 'light' | 'dark';
+    borderRadius?: number;
+    fontSize?: 'small' | 'medium' | 'large';
+    compactMode?: boolean;
+    animationsEnabled?: boolean;
+    customCss?: string;
   };
   
   // Integration Settings
@@ -258,6 +266,21 @@ export class TenantSettingsService {
       branding: {
         primaryColor: '#007bff',
         secondaryColor: '#6c757d',
+      },
+      theme: {
+        primaryColor: '#1890ff',
+        secondaryColor: '#52c41a',
+        successColor: '#52c41a',
+        warningColor: '#faad14',
+        errorColor: '#ff4d4f',
+        logoPosition: 'left',
+        sidebarStyle: 'light',
+        headerStyle: 'light',
+        borderRadius: 6,
+        fontSize: 'medium',
+        compactMode: false,
+        animationsEnabled: true,
+        customCss: '',
       },
       integrations: {},
     };

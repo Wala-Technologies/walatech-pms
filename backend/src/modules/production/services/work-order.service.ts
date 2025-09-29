@@ -2,17 +2,33 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  Scope,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Like } from 'typeorm';
+import { REQUEST } from '@nestjs/core';
 import { WorkOrder, WorkOrderStatus } from '../../../entities/work-order.entity';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
+import { User } from '../../../entities/user.entity';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class WorkOrderService {
   constructor(
     @InjectRepository(WorkOrder)
     private readonly workOrderRepository: Repository<WorkOrder>,
+    private readonly departmentAccessService: DepartmentAccessService,
+    @Inject(REQUEST) private readonly request: any,
   ) {}
+
+  private get tenant_id(): string {
+    return this.request.tenant_id || this.request.user?.tenant_id;
+  }
+
+  private get user(): User | null {
+    return this.request.user || null;
+  }
 
   async findAll(
     page: number = 1,
@@ -23,16 +39,32 @@ export class WorkOrderService {
     productionOrderId?: string,
   ): Promise<{ data: WorkOrder[]; total: number; page: number; limit: number }> {
     const skip = (page - 1) * limit;
+    const user = this.user;
     
     const queryBuilder = this.workOrderRepository
       .createQueryBuilder('workOrder')
       .leftJoinAndSelect('workOrder.productionOrder', 'productionOrder')
       .leftJoinAndSelect('workOrder.createdBy', 'createdBy')
       .leftJoinAndSelect('workOrder.assignedTo', 'assignedTo')
-      .where('workOrder.tenant_id = :tenant_id', { tenant_id })
+      .leftJoinAndSelect('workOrder.departmentEntity', 'department')
+      .where('workOrder.tenant_id = :tenant_id', { tenant_id: tenant_id || this.tenant_id })
       .skip(skip)
       .take(limit)
       .orderBy('workOrder.createdAt', 'DESC');
+
+    // Apply department filtering
+    if (user) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments !== null) {
+        if (accessibleDepartments.length > 0) {
+          queryBuilder.andWhere('workOrder.department_id IN (:...accessibleDepartments)', { accessibleDepartments });
+        } else {
+          // User has no department access, return empty result
+          queryBuilder.andWhere('1 = 0');
+        }
+      }
+      // If accessibleDepartments is null, user can access all departments (no additional filter needed)
+    }
 
     if (search) {
       queryBuilder.andWhere('workOrder.title LIKE :search', { search: `%${search}%` });
@@ -52,13 +84,35 @@ export class WorkOrderService {
   }
 
   async findOne(id: string, tenant_id: string): Promise<WorkOrder> {
-    const workOrder = await this.workOrderRepository.findOne({
-      where: { id, tenant: { id: tenant_id } },
-      relations: ['productionOrder', 'createdBy', 'assignedTo', 'tasks'],
-    });
+    const user = this.user;
+    
+    const queryBuilder = this.workOrderRepository.createQueryBuilder('workOrder')
+      .leftJoinAndSelect('workOrder.productionOrder', 'productionOrder')
+      .leftJoinAndSelect('workOrder.createdBy', 'createdBy')
+      .leftJoinAndSelect('workOrder.assignedTo', 'assignedTo')
+      .leftJoinAndSelect('workOrder.tasks', 'tasks')
+      .leftJoinAndSelect('workOrder.departmentEntity', 'department')
+      .where('workOrder.id = :id', { id })
+      .andWhere('workOrder.tenant_id = :tenant_id', { tenant_id: tenant_id || this.tenant_id });
+
+    // Apply department filtering
+    if (user) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments !== null) {
+        if (accessibleDepartments.length > 0) {
+          queryBuilder.andWhere('workOrder.department_id IN (:...accessibleDepartments)', { accessibleDepartments });
+        } else {
+          // User has no department access, return not found
+          throw new NotFoundException('Work order not found');
+        }
+      }
+      // If accessibleDepartments is null, user can access all departments (no additional filter needed)
+    }
+
+    const workOrder = await queryBuilder.getOne();
 
     if (!workOrder) {
-      throw new NotFoundException(`Work order with ID ${id} not found`);
+      throw new NotFoundException('Work order not found');
     }
 
     return workOrder;
@@ -112,22 +166,64 @@ export class WorkOrderService {
     byStatus: Record<WorkOrderStatus, number>;
     averageCompletionTime: number;
   }> {
-    const total = await this.workOrderRepository.count({
-      where: { tenant: { id: tenant_id } },
-    });
+    const user = this.user;
+    
+    // Build base query with department filtering
+    const baseQueryBuilder = this.workOrderRepository.createQueryBuilder('workOrder')
+      .where('workOrder.tenant_id = :tenant_id', { tenant_id: tenant_id || this.tenant_id });
+
+    // Apply department filtering
+    if (user) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments !== null) {
+        if (accessibleDepartments.length > 0) {
+          baseQueryBuilder.andWhere('workOrder.department_id IN (:...accessibleDepartments)', { accessibleDepartments });
+        } else {
+          // User has no department access, return zero stats
+          const byStatus = {} as Record<WorkOrderStatus, number>;
+          for (const status of Object.values(WorkOrderStatus)) {
+            byStatus[status as WorkOrderStatus] = 0;
+          }
+          return { total: 0, byStatus, averageCompletionTime: 0 };
+        }
+      }
+      // If accessibleDepartments is null, user can access all departments (no additional filter needed)
+    }
+
+    const total = await baseQueryBuilder.getCount();
     
     const byStatus = {} as Record<WorkOrderStatus, number>;
     for (const status of Object.values(WorkOrderStatus)) {
-      byStatus[status as WorkOrderStatus] = await this.workOrderRepository.count({
-        where: { status, tenant: { id: tenant_id } },
-      });
+      const statusQueryBuilder = this.workOrderRepository.createQueryBuilder('workOrder')
+        .where('workOrder.tenant_id = :tenant_id', { tenant_id: tenant_id || this.tenant_id })
+        .andWhere('workOrder.status = :status', { status });
+
+      // Apply same department filtering for status counts
+      if (user) {
+        const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+        if (accessibleDepartments !== null && accessibleDepartments.length > 0) {
+          statusQueryBuilder.andWhere('workOrder.department_id IN (:...accessibleDepartments)', { accessibleDepartments });
+        }
+      }
+
+      byStatus[status as WorkOrderStatus] = await statusQueryBuilder.getCount();
     }
 
     // Calculate average completion time for completed work orders
-    const completedOrders = await this.workOrderRepository.find({
-      where: { status: WorkOrderStatus.COMPLETED, tenant: { id: tenant_id } },
-      select: ['actualStartTime', 'actualEndTime'],
-    });
+    const completedQueryBuilder = this.workOrderRepository.createQueryBuilder('workOrder')
+      .select(['workOrder.actualStartTime', 'workOrder.actualEndTime'])
+      .where('workOrder.status = :status', { status: WorkOrderStatus.COMPLETED })
+      .andWhere('workOrder.tenant_id = :tenant_id', { tenant_id: tenant_id || this.tenant_id });
+
+    // Apply same department filtering for completed orders
+    if (user) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments !== null && accessibleDepartments.length > 0) {
+        completedQueryBuilder.andWhere('workOrder.department_id IN (:...accessibleDepartments)', { accessibleDepartments });
+      }
+    }
+
+    const completedOrders = await completedQueryBuilder.getMany();
 
     let averageCompletionTime = 0;
     if (completedOrders.length > 0) {

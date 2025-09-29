@@ -1,7 +1,7 @@
-import { IsOptional, IsString, IsNumber, IsEnum, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsEnum, Min, Max, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from './create-user.dto';
+import { UserRole } from '../../../common/enums/user-roles.enum';
 
 export class UserQueryDto {
   @ApiProperty({ required: false, default: 1 })
@@ -36,8 +36,8 @@ export class UserQueryDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
-  department?: string;
+  @IsUUID()
+  department_id?: string;
 
   @ApiProperty({ required: false, default: 'created_at' })
   @IsOptional()

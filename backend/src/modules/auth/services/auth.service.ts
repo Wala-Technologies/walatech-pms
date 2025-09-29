@@ -109,6 +109,8 @@ export class AuthService {
       subdomain?: string;
     };
 
+
+
     // If a tenant context exists (subdomain resolved), restrict lookup to that tenant
     // EXCEPT if the subdomain itself is the super admin subdomain: then we still scope
     // login to that tenant only (prevent cross-tenant login from super admin host) unless
@@ -141,7 +143,10 @@ export class AuthService {
             user = await this.userRepository.findOne({
               where: { email, tenant_id: derivedTenant.id },
             });
-            if (process.env.NODE_ENV !== 'production') {
+            if (
+              process.env.NODE_ENV !== 'production' &&
+              process.env.E2E_DEBUG === 'true'
+            ) {
               console.debug(
                 '[AuthService.login] Used derived subdomain from email:',
                 derived,
@@ -170,13 +175,19 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        process.env.E2E_DEBUG === 'true'
+      ) {
         console.debug('[AuthService.login] Password mismatch for', email);
       }
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.E2E_DEBUG === 'true'
+    ) {
       console.debug('[AuthService.login] Successful login', {
         email,
         tenant_id: user.tenant_id,

@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { WorkOrder } from './work-order.entity';
 import { Tenant } from './tenant.entity';
+import { Department } from '../modules/hr/entities/department.entity';
 
 export enum ProductionOrderStatus {
   DRAFT = 'draft',
@@ -113,6 +114,13 @@ export class ProductionOrder {
 
   @Column({ nullable: false })
   tenant_id: string;
+
+  @Column({ length: 36, nullable: true })
+  department_id: string | null;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 
   @Column({ default: 0 })
   docstatus: number;

@@ -10,6 +10,7 @@ import { GLEntry } from './entities/gl-entry.entity';
 import { CostCenter } from './entities/cost-center.entity';
 import { FiscalYear } from './entities/fiscal-year.entity';
 import { PaymentEntry } from './entities/payment-entry.entity';
+import { DepartmentAccessService } from '../../common/services/department-access.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { PaymentEntry } from './entities/payment-entry.entity';
     ]),
   ],
   controllers: [AccountingController],
-  providers: [AccountingService, ChartOfAccountsSeederService],
+  providers: [AccountingService, ChartOfAccountsSeederService, DepartmentAccessService],
   exports: [AccountingService, ChartOfAccountsSeederService],
 })
 export class AccountingModule {}

@@ -19,7 +19,7 @@ export class ChartOfAccountsSeederService {
     @InjectRepository(Account) private accountRepo: Repository<Account>,
   ) {}
 
-  async seedStandardChartOfAccounts(tenantId: string, company: string) {
+  async seedStandardChartOfAccounts(tenant_id: string, company: string) {
     const standardAccounts: AccountSeed[] = [
       // Assets
       { code: '1000', name: 'Assets', rootType: 'Asset', isGroup: true },
@@ -102,7 +102,7 @@ export class ChartOfAccountsSeederService {
     // First pass: Create all accounts without parent relationships
     for (const accountSeed of standardAccounts) {
       const existingAccount = await this.accountRepo.findOne({
-        where: { code: accountSeed.code, tenant: { id: tenantId } },
+        where: { code: accountSeed.code, tenant: { id: tenant_id } },
       });
 
       if (!existingAccount) {
@@ -113,7 +113,7 @@ export class ChartOfAccountsSeederService {
           isGroup: accountSeed.isGroup,
           currency: accountSeed.currency,
           description: accountSeed.description,
-          tenant: { id: tenantId } as any,
+          tenant: { id: tenant_id } as any,
         });
 
         const savedAccount = await this.accountRepo.save(account);
@@ -139,13 +139,13 @@ export class ChartOfAccountsSeederService {
     return accountMap;
   }
 
-  async seedDefaultCostCenters(tenantId: string, company: string) {
+  async seedDefaultCostCenters(tenant_id: string, company: string) {
     // This would be implemented similarly for cost centers
     // For now, returning empty array
     return [];
   }
 
-  async seedDefaultFiscalYear(tenantId: string) {
+  async seedDefaultFiscalYear(tenant_id: string) {
     // This would create a default fiscal year
     // For now, returning null
     return null;

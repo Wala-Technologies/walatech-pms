@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Tenant } from './tenant.entity';
+import { Department } from '../modules/hr/entities/department.entity';
 
 @Entity('tabCustomer')
 export class Customer {
@@ -120,10 +121,17 @@ export class Customer {
   @Column({ length: 140, nullable: true })
   owner: string;
 
-  @Column({ length: 36, nullable: true })
+  @Column({ length: 36, nullable: false })
   tenant_id: string;
 
-  @ManyToOne(() => Tenant, { nullable: true })
+  @ManyToOne(() => Tenant, { nullable: false })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
+
+  @Column({ length: 36, nullable: true })
+  department_id: string;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 }

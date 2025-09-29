@@ -38,7 +38,10 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Request() req: AuthRequest) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.E2E_DEBUG === 'true'
+    ) {
       // Temporary diagnostic logging
       const diagnostic: Record<string, unknown> = {
         email: loginDto.email,

@@ -1,7 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Tenant } from './tenant.entity';
+import { Department } from '../modules/hr/entities/department.entity';
+import { UserRole } from '../common/enums/user-roles.enum';
 
-@Entity('tabUser')
+@Entity('tabuser')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -33,6 +35,13 @@ export class User {
   @Column({ length: 140, nullable: true })
   role_profile_name: string;
 
+  @Column({ 
+    type: 'enum', 
+    enum: UserRole, 
+    default: UserRole.REGULAR_USER 
+  })
+  role: UserRole;
+
   @CreateDateColumn()
   creation: Date;
 
@@ -48,7 +57,14 @@ export class User {
   @Column({ length: 36, nullable: true })
   tenant_id: string;
 
+  @Column({ length: 36, nullable: true })
+  department_id: string | null;
+
   @ManyToOne(() => Tenant, { nullable: true })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 }

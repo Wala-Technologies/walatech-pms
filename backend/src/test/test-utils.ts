@@ -7,6 +7,7 @@ import { WorkOrder, WorkOrderStatus, WorkOrderType } from '../entities/work-orde
 import { WorkOrderTask, TaskStatus, TaskPriority } from '../entities/work-order-task.entity';
 import { Item } from '../entities/item.entity';
 import { Tenant, TenantStatus, TenantPlan } from '../entities/tenant.entity';
+import { UserRole } from '../common/enums/user-roles.enum';
 
 // Test database configuration
 export const getTestDatabaseConfig = () => ({
@@ -38,25 +39,30 @@ export const cleanupDatabase = async (dataSource: DataSource) => {
 };
 
 // Mock user factory
-export const createMockUser = (overrides: Partial<User> = {}): User => ({
-  id: 'user-uuid',
-  email: 'test@example.com',
-  first_name: 'Test',
-  last_name: 'User',
-  password: 'hashedpassword',
-  enabled: true,
-  language: 'en',
-  time_zone: 'UTC',
-  mobile_no: '',
-  role_profile_name: 'User',
-  creation: new Date(),
-  modified: new Date(),
-  modified_by: '',
-  owner: '',
-  tenant_id: 'tenant-uuid',
-  tenant: null as any,
-  ...overrides,
-});
+export function createMockUser(overrides: Partial<User> = {}): User {
+  return {
+    id: 'user-uuid',
+    email: 'test@example.com',
+    first_name: 'Test',
+    last_name: 'User',
+    password: 'hashedPassword',
+    enabled: true,
+    language: 'en',
+    time_zone: 'Africa/Addis_Ababa',
+    mobile_no: '',
+    role_profile_name: '',
+    role: UserRole.REGULAR_USER,
+    creation: new Date(),
+    modified: new Date(),
+    modified_by: '',
+    owner: '',
+    tenant_id: 'tenant-uuid',
+    department_id: null,
+    tenant: null as any,
+    department: null as any,
+    ...overrides,
+  };
+}
 
 // Mock tenant factory
 export const createMockTenant = (overrides: Partial<Tenant> = {}): Tenant => ({
@@ -100,6 +106,8 @@ export const createMockProductionOrder = (overrides: Partial<ProductionOrder> = 
   workOrders: [],
   tenant: createMockTenant(),
   tenant_id: 'tenant-uuid',
+  department_id: null,
+  department: null as any,
   docstatus: 0,
   idx: '',
   owner: '',
@@ -136,6 +144,9 @@ export const createMockWorkOrder = (overrides: Partial<WorkOrder> = {}): WorkOrd
   assignedTo: createMockUser(),
   tasks: [],
   tenant: createMockTenant(),
+  tenant_id: 'tenant-uuid',
+  department_id: null,
+  departmentEntity: null as any,
   docstatus: 0,
   idx: '',
   owner: '',

@@ -19,6 +19,8 @@ import {
   SafetyOutlined,
   AccountBookOutlined,
   ContactsOutlined,
+  ShoppingOutlined,
+  TruckOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -87,9 +89,111 @@ export default function DashboardLayout({
           ),
         },
         {
+          key: 'customer-groups',
+          label: (
+            <Link href={`/${locale}/dashboard/customers/groups`}>
+              Groups
+            </Link>
+          ),
+        },
+        {
+          key: 'customer-territories',
+          label: (
+            <Link href={`/${locale}/dashboard/customers/territories`}>
+              Territories
+            </Link>
+          ),
+        },
+        {
+          key: 'customer-segments',
+          label: (
+            <Link href={`/${locale}/dashboard/customers/segments`}>
+              Market Segments
+            </Link>
+          ),
+        },
+        {
+          key: 'customer-hierarchy',
+          label: (
+            <Link href={`/${locale}/dashboard/customers/hierarchy`}>
+              Hierarchy
+            </Link>
+          ),
+        },
+        {
           key: 'customer-reports',
           label: (
             <Link href={`/${locale}/dashboard/customers/reports`}>
+              Reports
+            </Link>
+          ),
+        },
+      ],
+    },
+    {
+      key: 'suppliers',
+      icon: <TruckOutlined />,
+      label: 'Suppliers',
+      children: [
+        {
+          key: 'suppliers-dashboard',
+          label: (
+            <Link href={`/${locale}/dashboard/suppliers/dashboard`}>
+              Dashboard
+            </Link>
+          ),
+        },
+        {
+          key: 'suppliers-list',
+          label: (
+            <Link href={`/${locale}/dashboard/suppliers/list`}>
+              Suppliers
+            </Link>
+          ),
+        },
+        {
+          key: 'supplier-groups',
+          label: (
+            <Link href={`/${locale}/dashboard/suppliers/groups`}>
+              Groups
+            </Link>
+          ),
+        },
+        {
+          key: 'supplier-quotations',
+          label: (
+            <Link href={`/${locale}/dashboard/suppliers/quotations`}>
+              Quotations
+            </Link>
+          ),
+        },
+        {
+          key: 'supplier-reports',
+          label: (
+            <Link href={`/${locale}/dashboard/suppliers/reports`}>
+              Reports
+            </Link>
+          ),
+        },
+      ],
+    },
+    {
+      key: 'sales-orders',
+      icon: <ShoppingOutlined />,
+      label: 'Sales Orders',
+      children: [
+        {
+          key: 'sales-orders-list',
+          label: (
+            <Link href={`/${locale}/dashboard/sales-orders`}>
+              Sales Orders
+            </Link>
+          ),
+        },
+        {
+          key: 'sales-orders-reports',
+          label: (
+            <Link href={`/${locale}/dashboard/sales-orders/reports`}>
               Reports
             </Link>
           ),
@@ -411,14 +515,7 @@ export default function DashboardLayout({
             </Link>
           ),
         },
-        {
-          key: 'organization',
-          label: (
-            <Link href={`/${locale}/dashboard/settings/organization`}>
-              Organization Settings
-            </Link>
-          ),
-        },
+
       ],
     },
   ];
