@@ -157,7 +157,7 @@ describe('TenantsController', () => {
       const result = await controller.findAll();
 
       expect(result).toEqual(tenants);
-      expect(tenantsService.findAll).toHaveBeenCalled();
+      expect(tenantsService.findAll).toHaveBeenCalledWith(false, TenantStatus.ACTIVE);
     });
   });
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, use } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Badge } from 'antd';
+import { useState, use, useEffect } from 'react';
+import { Layout, Menu, Avatar, Dropdown, Button, Badge, Spin } from 'antd';
 import {
   DashboardOutlined,
   LineChartOutlined,
@@ -24,7 +24,9 @@ import {
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTenant } from '../../../contexts/tenant-context';
+import { useAuth } from '../../../hooks/useAuth';
 
 const { Header, Sider, Content } = Layout;
 
@@ -42,6 +44,34 @@ export default function DashboardLayout({
   const t = useTranslations('navigation');
   const tCommon = useTranslations('common');
   const { tenant } = useTenant();
+  const { user, isSuperAdmin, loading, isInitialized } = useAuth();
+  const router = useRouter();
+
+  // Authentication guard - redirect to login if not authenticated
+  useEffect(() => {
+    if (isInitialized && !loading && !user) {
+      router.push(`/${locale}/auth/login`);
+    }
+  }, [isInitialized, loading, user, router, locale]);
+
+  // Show loading spinner while checking authentication
+  if (!isInitialized || loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // Don't render anything if user is not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   // Get logo URL from multiple possible locations
   const getLogoUrl = () => {
@@ -476,7 +506,42 @@ export default function DashboardLayout({
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'Settings',
-      children: [
+      children: isSuperAdmin ? [
+        // Super Admin menu items
+        {
+          key: 'tenants',
+          label: (
+            <Link href={`/${locale}/dashboard/settings/tenants`}>
+              Tenant Management
+            </Link>
+          ),
+        },
+        {
+          key: 'system',
+          label: (
+            <Link href={`/${locale}/dashboard/settings/system`}>
+              System Settings
+            </Link>
+          ),
+        },
+        {
+          key: 'global-permissions',
+          label: (
+            <Link href={`/${locale}/dashboard/settings/permissions`}>
+              Global Permissions
+            </Link>
+          ),
+        },
+      ] : [
+        // Regular user menu items
+        {
+          key: 'organization',
+          label: (
+            <Link href={`/${locale}/dashboard/settings/organization`}>
+              Organization Settings
+            </Link>
+          ),
+        },
         {
           key: 'users',
           label: (
@@ -494,12 +559,6 @@ export default function DashboardLayout({
           ),
         },
         {
-          key: 'system',
-          label: (
-            <Link href={`/${locale}/dashboard/settings/system`}>System</Link>
-          ),
-        },
-        {
           key: 'permissions',
           label: (
             <Link href={`/${locale}/dashboard/settings/permissions`}>
@@ -507,15 +566,6 @@ export default function DashboardLayout({
             </Link>
           ),
         },
-        {
-          key: 'tenants',
-          label: (
-            <Link href={`/${locale}/dashboard/settings/tenants`}>
-              Organization Management
-            </Link>
-          ),
-        },
-
       ],
     },
   ];

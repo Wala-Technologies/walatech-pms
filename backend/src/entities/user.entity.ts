@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import { Department } from '../modules/hr/entities/department.entity';
+import { Role } from '../modules/users/entities/role.entity';
 import { UserRole } from '../common/enums/user-roles.enum';
 
 @Entity('tabuser')

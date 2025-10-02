@@ -57,14 +57,12 @@ interface DepartmentFormData {
 
 interface DepartmentManagementProps {
   tenantId?: string;
-  tenantSubdomain?: string;
   departments?: Department[];
   onDepartmentsChange?: (departments: Department[]) => void;
 }
 
 export default function DepartmentManagement({ 
   tenantId, 
-  tenantSubdomain,
   departments: propDepartments, 
   onDepartmentsChange 
 }: DepartmentManagementProps = {}) {
@@ -77,95 +75,46 @@ export default function DepartmentManagement({
   useEffect(() => {
     console.log('DepartmentManagement useEffect triggered');
     console.log('propDepartments:', propDepartments);
-    console.log('tenantSubdomain:', tenantSubdomain);
     
     // Always fetch fresh data to avoid stale data issues
     console.log('Always calling fetchDepartments to ensure fresh data');
     fetchDepartments();
-  }, [tenantSubdomain]);
+  }, []);
 
-  // Helper function to make API calls with specific tenant context
+  // Use standard API client for proper tenant isolation via JWT middleware
   const makeApiCall = async (endpoint: string, options: RequestInit = {}) => {
-    console.log('makeApiCall called with:', { endpoint, method: options.method, tenantSubdomain });
+    console.log('makeApiCall called with:', { endpoint, method: options.method });
     
-    // If no specific tenant subdomain is provided, use the regular API client
-    if (!tenantSubdomain) {
-      console.log('Using regular API client (no tenant subdomain)');
-      const method = options.method || 'GET';
-      const body = options.body ? JSON.parse(options.body as string) : undefined;
-      
-      switch (method.toUpperCase()) {
-        case 'GET':
-          const response = await apiClient.get(endpoint);
-          return response.data;
-        case 'POST':
-          const postResponse = await apiClient.post(endpoint, body);
-          return postResponse.data;
-        case 'PATCH':
-          const patchResponse = await apiClient.patch(endpoint, body);
-          return patchResponse.data;
-        case 'DELETE':
-          console.log('Making DELETE request via apiClient to:', endpoint);
-          const deleteResponse = await apiClient.delete(endpoint);
-          console.log('DELETE response:', deleteResponse);
-          return deleteResponse.data;
-        default:
-          throw new Error(`Unsupported method: ${method}`);
-      }
+    const method = options.method || 'GET';
+    const body = options.body ? JSON.parse(options.body as string) : undefined;
+    
+    switch (method.toUpperCase()) {
+      case 'GET':
+        const response = await apiClient.get(endpoint);
+        return response.data;
+      case 'POST':
+        const postResponse = await apiClient.post(endpoint, body);
+        return postResponse.data;
+      case 'PATCH':
+        const patchResponse = await apiClient.patch(endpoint, body);
+        return patchResponse.data;
+      case 'DELETE':
+        console.log('Making DELETE request via apiClient to:', endpoint);
+        const deleteResponse = await apiClient.delete(endpoint);
+        console.log('DELETE response:', deleteResponse);
+        return deleteResponse.data;
+      default:
+        throw new Error(`Unsupported method: ${method}`);
     }
-    
-    // Use custom fetch with tenant subdomain header for cross-tenant access
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-    const url = `${baseUrl}/api${endpoint}`;
-    
-    // Get auth token
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...((options.headers as Record<string, string>) || {}),
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Use specific tenant subdomain for cross-tenant access
-    headers['x-tenant-subdomain'] = tenantSubdomain;
-    
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      credentials: 'include',
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    // Handle 204 No Content responses (like DELETE operations)
-    if (response.status === 204) {
-      return null;
-    }
-    
-    // Only try to parse JSON if there's content
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return response.json();
-    }
-    
-    return null;
   };
 
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      console.log('Fetching departments for tenant:', tenantSubdomain);
+      console.log('Fetching departments with proper tenant isolation');
       const data = await makeApiCall('/hr/departments');
       const fetchedDepartments = data || [];
       console.log('Fetched departments:', fetchedDepartments);
-      console.log('Department IDs:', fetchedDepartments.map((d: any) => d.id));
       setDepartments(fetchedDepartments);
       onDepartmentsChange?.(fetchedDepartments);
     } catch (error) {
@@ -199,7 +148,6 @@ export default function DepartmentManagement({
   const handleDeleteDepartment = async (departmentId: string) => {
     try {
       console.log('Attempting to delete department:', departmentId);
-      console.log('Using tenant subdomain:', tenantSubdomain);
       
       const result = await makeApiCall(`/hr/departments/${departmentId}`, { method: 'DELETE' });
       console.log('Delete result:', result);
@@ -211,8 +159,7 @@ export default function DepartmentManagement({
       console.error('Error details:', {
         message: error.message,
         stack: error.stack,
-        departmentId,
-        tenantSubdomain
+        departmentId
       });
       message.error(error.message || 'Failed to delete department');
     }

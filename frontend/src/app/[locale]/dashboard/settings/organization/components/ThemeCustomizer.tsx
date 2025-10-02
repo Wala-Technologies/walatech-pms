@@ -68,7 +68,13 @@ const defaultTheme: ThemeSettings = {
 export default function ThemeCustomizer({ value, onChange }: ThemeCustomizerProps) {
   const [theme, setTheme] = useState<ThemeSettings>({ ...defaultTheme, ...value });
   const [previewMode, setPreviewMode] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [form] = Form.useForm();
+
+  // Track when component is mounted to prevent hydration mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (value) {
@@ -90,6 +96,8 @@ export default function ThemeCustomizer({ value, onChange }: ThemeCustomizerProp
   };
 
   const applyThemePreview = (themeSettings: ThemeSettings) => {
+    if (!isMounted) return;
+    
     // Apply CSS custom properties for real-time preview
     const root = document.documentElement;
     root.style.setProperty('--primary-color', themeSettings.primaryColor);
@@ -133,6 +141,8 @@ export default function ThemeCustomizer({ value, onChange }: ThemeCustomizerProp
   };
 
   const togglePreview = () => {
+    if (!isMounted) return;
+    
     const newPreviewMode = !previewMode;
     setPreviewMode(newPreviewMode);
     

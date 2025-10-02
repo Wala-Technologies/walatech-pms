@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .token { word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 3px; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Tool</h1>
+    
+    <div class="section">
+        <h3>Local Storage Tokens</h3>
+        <div id="localStorage-tokens"></div>
+    </div>
+    
+    <div class="section">
+        <h3>Cookies</h3>
+        <div id="cookies"></div>
+    </div>
+    
+    <div class="section">
+        <h3>Test API Endpoints</h3>
+        <button onclick="testAuthMe()">Test /auth/me</button>
+        <button onclick="testTenants()">Test /tenants</button>
+        <div id="api-results"></div>
+    </div>
+
+    <script>
+        // Display localStorage tokens
+        function displayTokens() {
+            const tokensDiv = document.getElementById('localStorage-tokens');
+            const token = localStorage.getItem('token');
+            const authToken = localStorage.getItem('auth_token');
+            
+            tokensDiv.innerHTML = `
+                <p><strong>token:</strong> ${token ? `<div class="token">${token}</div>` : 'Not found'}</p>
+                <p><strong>auth_token:</strong> ${authToken ? `<div class="token">${authToken}</div>` : 'Not found'}</p>
+            `;
+        }
+
+        // Display cookies
+        function displayCookies() {
+            const cookiesDiv = document.getElementById('cookies');
+            const cookies = document.cookie.split(';').map(c => c.trim()).filter(c => c);
+            
+            if (cookies.length === 0) {
+                cookiesDiv.innerHTML = '<p>No cookies found</p>';
+                return;
+            }
+            
+            cookiesDiv.innerHTML = cookies.map(cookie => {
+                const [name, value] = cookie.split('=');
+                return `<p><strong>${name}:</strong> ${value}</p>`;
+            }).join('');
+        }
+
+        // Test /auth/me endpoint
+        async function testAuthMe() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>Testing /auth/me...</p>';
+            
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                const response = await fetch('http://localhost:3001/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { 'Authorization': `Bearer ${token}` })
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="result ${response.ok ? 'success' : 'error'}">
+                        <h4>/auth/me Response (${response.status})</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>/auth/me Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test /tenants endpoint
+        async function testTenants() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>Testing /tenants...</p>';
+            
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                const response = await fetch('http://localhost:3001/tenants', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { 'Authorization': `Bearer ${token}` })
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="result ${response.ok ? 'success' : 'error'}">
+                        <h4>/tenants Response (${response.status})</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>/tenants Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        displayTokens();
+        displayCookies();
+    </script>
+</body>
+</html>

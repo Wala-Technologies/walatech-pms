@@ -41,11 +41,20 @@ export class DepartmentsService {
   }
 
   async findAll(): Promise<Department[]> {
-    return this.departmentRepository.find({
+    console.log('[DepartmentsService] findAll - tenant_id:', this.tenant_id);
+    console.log('[DepartmentsService] findAll - request.user:', this.request.user);
+    console.log('[DepartmentsService] findAll - request.tenant:', this.request.tenant);
+    
+    const departments = await this.departmentRepository.find({
       where: { tenant_id: this.tenant_id },
       relations: ['employees'],
       order: { department_name: 'ASC' },
     });
+    
+    console.log('[DepartmentsService] findAll - found departments:', departments.length, 'departments');
+    console.log('[DepartmentsService] findAll - department tenant_ids:', departments.map(d => ({ name: d.name, tenant_id: d.tenant_id })));
+    
+    return departments;
   }
 
   async findOne(id: string): Promise<Department> {

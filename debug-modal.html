@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Debug Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        .code-block {
+            background: #f6f8fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #40a9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Modal Debug Helper</h1>
+        <p>Follow these steps to identify the persistent modal dialog:</p>
+
+        <div class="step">
+            <h3>Step 1: Open Browser Developer Tools</h3>
+            <p>Press <strong>F12</strong> or right-click and select "Inspect Element"</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Clear All Storage</h3>
+            <p>In Developer Tools:</p>
+            <ol>
+                <li>Go to <strong>Application</strong> tab</li>
+                <li>Under <strong>Storage</strong>, click "Clear storage"</li>
+                <li>Check all boxes and click "Clear site data"</li>
+            </ol>
+            <button class="button" onclick="clearStorage()">Clear Storage (Click Me)</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Find Modal Elements</h3>
+            <p>In the <strong>Console</strong> tab, paste and run this code:</p>
+            <div class="code-block">
+// Find all modal elements
+const modals = document.querySelectorAll('[class*="modal"], [class*="Modal"], .ant-modal, .ant-modal-wrap');
+console.log('Found modals:', modals);
+modals.forEach((modal, index) => {
+    console.log(`Modal ${index}:`, modal);
+    console.log('Visible:', window.getComputedStyle(modal).display !== 'none');
+    console.log('Classes:', modal.className);
+});
+
+// Find elements with modal-related text
+const allElements = document.querySelectorAll('*');
+const modalTexts = [];
+allElements.forEach(el => {
+    if (el.textContent && el.textContent.toLowerCase().includes('modal')) {
+        modalTexts.push(el);
+    }
+});
+console.log('Elements with modal text:', modalTexts);
+            </div>
+            <button class="button" onclick="findModals()">Find Modals (Click Me)</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Check for Ant Design Modals</h3>
+            <p>Run this code to find Ant Design specific modals:</p>
+            <div class="code-block">
+// Check for Ant Design modals specifically
+const antModals = document.querySelectorAll('.ant-modal-root, .ant-modal-wrap, .ant-modal');
+console.log('Ant Design modals:', antModals);
+
+// Check for modal masks
+const masks = document.querySelectorAll('.ant-modal-mask');
+console.log('Modal masks:', masks);
+
+// Check for any visible overlays
+const overlays = document.querySelectorAll('[style*="z-index"]');
+console.log('High z-index elements:', overlays);
+            </div>
+            <button class="button" onclick="findAntModals()">Find Ant Modals (Click Me)</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 5: Navigate to Dashboard</h3>
+            <p>After clearing storage, navigate to:</p>
+            <div class="code-block">http://walatech.localhost:3000/en/dashboard</div>
+            <button class="button" onclick="goToDashboard()">Go to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        function clearStorage() {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                console.log('Storage cleared successfully');
+                alert('Storage cleared! Now refresh the page.');
+            } catch (error) {
+                console.error('Error clearing storage:', error);
+                alert('Error clearing storage. Please do it manually in DevTools.');
+            }
+        }
+
+        function findModals() {
+            const modals = document.querySelectorAll('[class*="modal"], [class*="Modal"], .ant-modal, .ant-modal-wrap');
+            console.log('Found modals:', modals);
+            modals.forEach((modal, index) => {
+                console.log(`Modal ${index}:`, modal);
+                console.log('Visible:', window.getComputedStyle(modal).display !== 'none');
+                console.log('Classes:', modal.className);
+            });
+        }
+
+        function findAntModals() {
+            const antModals = document.querySelectorAll('.ant-modal-root, .ant-modal-wrap, .ant-modal');
+            console.log('Ant Design modals:', antModals);
+            
+            const masks = document.querySelectorAll('.ant-modal-mask');
+            console.log('Modal masks:', masks);
+        }
+
+        function goToDashboard() {
+            window.open('http://walatech.localhost:3000/en/dashboard', '_blank');
+        }
+    </script>
+</body>
+</html>

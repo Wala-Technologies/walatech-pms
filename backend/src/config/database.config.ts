@@ -42,6 +42,7 @@ import {
   SupplierScorecardCriteria,
   SupplierScorecardPeriod,
 } from '../entities/supplier-scorecard.entity';
+import { TenantLifecycleAudit } from '../entities/tenant-lifecycle-audit.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
@@ -101,6 +102,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         SupplierScorecard,
         SupplierScorecardCriteria,
         SupplierScorecardPeriod,
+        TenantLifecycleAudit,
       ],
       migrationsRun: nodeEnv === 'production',
       migrations: ['dist/migrations/*.js'],

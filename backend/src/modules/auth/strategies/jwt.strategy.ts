@@ -25,7 +25,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (!user) {
         throw new UnauthorizedException('Invalid user or tenant');
       }
-      return user;
+      
+      // Determine super admin status based on tenant subdomain
+      const superAdminSubdomain = process.env.SUPER_ADMIN_SUBDOMAIN || 'walatech';
+      const isSuperAdmin = user.tenant?.subdomain === superAdminSubdomain;
+      
+      // Add isSuperAdmin to user object
+      return {
+        ...user,
+        isSuperAdmin,
+      };
     }
     
     // Fallback to regular validation for backward compatibility
@@ -33,6 +42,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    
+    // For backward compatibility, set isSuperAdmin to false if no tenant context
+    return {
+      ...user,
+      isSuperAdmin: false,
+    };
   }
 }

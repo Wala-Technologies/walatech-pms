@@ -113,7 +113,8 @@ class ApiClient {
   // Build headers with tenant and auth context
   private buildHeaders(
     customHeaders: Record<string, string> = {},
-    skipContentType = false
+    skipContentType = false,
+    overrideTenantSubdomain?: string
   ): Record<string, string> {
     const headers: Record<string, string> = {
       ...customHeaders,
@@ -124,8 +125,8 @@ class ApiClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    // Add tenant context
-    const tenantSubdomain = this.getTenantSubdomain();
+    // Add tenant context (use override if provided)
+    const tenantSubdomain = overrideTenantSubdomain || this.getTenantSubdomain();
     if (tenantSubdomain) {
       headers['x-tenant-subdomain'] = tenantSubdomain;
     }
@@ -152,7 +153,8 @@ class ApiClient {
   private async requestWithContentType<T = any>(
     endpoint: string,
     options: RequestInit = {},
-    skipContentType = false
+    skipContentType = false,
+    overrideTenantSubdomain?: string
   ): Promise<ApiResponse<T>> {
     try {
       // Normalize endpoint & ensure /api prefix only once
@@ -167,7 +169,8 @@ class ApiClient {
         ...options,
         headers: this.buildHeaders(
           options.headers as Record<string, string>,
-          skipContentType
+          skipContentType,
+          overrideTenantSubdomain
         ),
         credentials: 'include',
       });
@@ -294,6 +297,51 @@ class ApiClient {
     return this.post('/auth/register', userData);
   }
 
+  // Methods for super admin tenant switching
+  async getWithTenant<T = any>(
+    endpoint: string,
+    tenantSubdomain: string
+  ): Promise<ApiResponse<T>> {
+    return this.requestWithContentType<T>(
+      endpoint,
+      { method: 'GET' },
+      false,
+      tenantSubdomain
+    );
+  }
+
+  async postWithTenant<T = any>(
+    endpoint: string,
+    data: any,
+    tenantSubdomain: string
+  ): Promise<ApiResponse<T>> {
+    return this.requestWithContentType<T>(
+      endpoint,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      false,
+      tenantSubdomain
+    );
+  }
+
+  async putWithTenant<T = any>(
+    endpoint: string,
+    data: any,
+    tenantSubdomain: string
+  ): Promise<ApiResponse<T>> {
+    return this.requestWithContentType<T>(
+      endpoint,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      },
+      false,
+      tenantSubdomain
+    );
+  }
+
   async logout(): Promise<ApiResponse<void>> {
     const response = await this.post('/auth/logout');
 
@@ -313,7 +361,7 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<ApiResponse<any>> {
-    return this.get('/auth/me');
+    return this.get('/auth/profile');
   }
 
   // Tenant provisioning

@@ -125,6 +125,7 @@ describe('TenantsService', () => {
 
       expect(result).toEqual(tenants);
       expect(tenantRepository.find).toHaveBeenCalledWith({
+        where: { status: expect.anything() },
         order: { createdAt: 'DESC' },
       });
     });
