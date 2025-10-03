@@ -851,5 +851,292 @@
     "create": "ፍጠር",
     "update": "አዘምን",
     "cancel": "ሰርዝ"
+  },
+  "organization": {
+    "title": {
+      "full": "የድርጅት አስተዳደር",
+      "short": "ድርጅት"
+    },
+    "description": "የድርጅትዎን ቅንብሮች፣ ክፍሎች፣ ተጠቃሚዎች እና ሌሎችን ያስተዳድሩ",
+    "quickActions": {
+      "needHelp": "እርዳታ ይፈልጋሉ?",
+      "viewDocs": "ሰነዶችን ይመልከቱ"
+    },
+    "tabs": {
+      "general": "አጠቃላይ ቅንብሮች",
+      "generalDesc": "መሰረታዊ የድርጅት መረጃ እና የክልል ቅንብሮች",
+      "departments": "የክፍል አስተዳደር",
+      "departmentsDesc": "የድርጅት ክፍሎችን ይፍጠሩ እና ያስተዳድሩ",
+      "usersRoles": "ተጠቃሚ እና ሚና አስተዳደር",
+      "usersRolesDesc": "ተጠቃሚዎችን፣ ሚናዎችን እና ፈቃዶችን ያስተዳድሩ",
+      "billing": "የሂሳብ አስተዳደር",
+      "billingDesc": "የደንበኝነት እቅዶች፣ ደረሰኞች እና የክፍያ ዘዴዎች",
+      "security": "የደህንነት ቅንብሮች",
+      "securityDesc": "ባለ ሁለት ምክንያት ማረጋገጫ እና የደህንነት ፖሊሲዎች",
+      "integrations": "የትስስር አስተዳደር",
+      "integrationsDesc": "የሶስተኛ ወገን ትስስሮች እና API ቁልፎች",
+      "system": "የስርዓት ቅንብሮች",
+      "systemDesc": "የመጠባበቂያ፣ ጥገና እና የስርዓት ውቅረት"
+    },
+    "general": {
+      "title": "አጠቃላይ ቅንብሮች",
+      "sections": {
+        "companyInfo": "የኩባንያ መረጃ",
+        "regional": "የክልል ቅንብሮች",
+        "branding": "ብራንዲንግ እና ገጽታ"
+      },
+      "fields": {
+        "companyName": "የኩባንያ ስም",
+        "logoUrl": "የሎጎ ዩአርኤል",
+        "description": "መግለጫ",
+        "industry": "ኢንዱስትሪ",
+        "website": "ድረ-ገጽ",
+        "phone": "ስልክ",
+        "email": "ኢሜይል",
+        "street": "የጎዳና አድራሻ",
+        "city": "ከተማ",
+        "state": "ግዛት/ክልል",
+        "country": "ሀገር",
+        "postalCode": "የፖስታ ኮድ",
+        "timezone": "የሰዓት ሰቅ",
+        "language": "ቋንቋ",
+        "currency": "ምንዛሪ",
+        "dateFormat": "የቀን ቅርጸት",
+        "timeFormat": "የሰዓት ቅርጸት",
+        "primaryColor": "ዋና ቀለም",
+        "secondaryColor": "ሁለተኛ ቀለም",
+        "fiscalYearStart": "የገንዘብ ዓመት መጀመሪያ"
+      },
+      "placeholders": {
+        "companyName": "የኩባንያዎን ስም ያስገቡ",
+        "logoUrl": "https://example.com/logo.png",
+        "description": "የኩባንያዎን አጭር መግለጫ",
+        "industry": "ኢንዱስትሪዎን ይምረጡ",
+        "website": "https://example.com",
+        "phone": "+1-234-567-8900",
+        "email": "contact@company.com",
+        "street": "123 ዋና ጎዳና",
+        "city": "ከተማ ያስገቡ",
+        "state": "ግዛት ወይም ክልል ያስገቡ",
+        "country": "ሀገር ይምረጡ",
+        "postalCode": "12345",
+        "timezone": "የሰዓት ሰቅዎን ይምረጡ",
+        "language": "ቋንቋ ይምረጡ",
+        "currency": "ምንዛሪ ይምረጡ",
+        "dateFormat": "የቀን ቅርጸት ይምረጡ"
+      },
+      "validation": {
+        "required": "ይህ መስክ ያስፈልጋል",
+        "email": "ትክክለኛ ኢሜይል አድራሻ ያስገቡ",
+        "url": "ትክክለኛ ዩአርኤል ያስገቡ",
+        "phone": "ትክክለኛ ስልክ ቁጥር ያስገቡ",
+        "minLength": "ይህ መስክ ቢያንስ {min} ቁምፊዎች ሊኖረው ይገባል",
+        "maxLength": "ይህ መስክ {max} ቁምፊዎችን ሊበልጥ አይችልም"
+      },
+      "actions": {
+        "save": "ለውጦችን አስቀምጥ",
+        "cancel": "ሰርዝ"
+      },
+      "messages": {
+        "loading": "እየጫነ ነው...",
+        "saveSuccess": "ቅንብሮች በተሳካ ሁኔታ ተቀምጠዋል",
+        "saveError": "ቅንብሮችን ማስቀመጥ አልተሳካም",
+        "loadError": "ቅንብሮችን መጫን አልተሳካም"
+      }
+    },
+    "users": {
+      "title": "ተጠቃሚ እና ሚና አስተዳደር",
+      "usersTab": "ተጠቃሚዎች",
+      "rolesTab": "ሚናዎች",
+      "inviteUser": "ተጠቃሚ ወደ ስርዓቱ ጋብዝ",
+      "createRole": "ሚና ፍጠር",
+      "email": "ኢሜይል",
+      "firstName": "ስም",
+      "lastName": "የአባት ስም",
+      "role": "ሚና",
+      "status": "ሁኔታ",
+      "lastLogin": "የመጨረሻ ግብት",
+      "actions": "ተግባራት",
+      "active": "ንቁ",
+      "inactive": "ንቁ ያልሆነ",
+      "pending": "በመጠባበቅ ላይ",
+      "edit": "አርም",
+      "delete": "ሰርዝ",
+      "resendInvite": "ግብዣ እንደገና ላክ",
+      "roleName": "የሚና ስም",
+      "description": "መግለጫ",
+      "permissions": "ፈቃዶች",
+      "save": "አስቀምጥ",
+      "cancel": "ሰርዝ"
+    },
+    "billing": {
+      "title": "የሂሳብ አስተዳደር",
+      "currentPlan": "አሁን ያለ እቅድ",
+      "planName": "እቅድ",
+      "price": "ዋጋ",
+      "billingCycle": "የሂሳብ ዑደት",
+      "nextBilling": "ቀጣይ የሂሳብ ቀን",
+      "status": "ሁኔታ",
+      "upgrade": "እቅድ አሻሽል",
+      "downgrade": "እቅድ ዝቅ አድርግ",
+      "cancelSubscription": "ደንበኝነት ሰርዝ",
+      "paymentMethods": "የክፍያ ዘዴዎች",
+      "addPaymentMethod": "የክፍያ ዘዴ አክል",
+      "invoiceHistory": "የደረሰኝ ታሪክ",
+      "date": "ቀን",
+      "amount": "መጠን",
+      "downloadInvoice": "አውርድ",
+      "monthly": "ወርሃዊ",
+      "yearly": "ዓመታዊ",
+      "active": "ንቁ",
+      "cancelled": "ተሰርዟል",
+      "table": {
+        "date": "ቀን",
+        "description": "መግለጫ",
+        "amount": "መጠን",
+        "status": "ሁኔታ",
+        "actions": "ተግባራት"
+      },
+      "status": {
+        "paid": "ተከፍሏል",
+        "pending": "በመጠባበቅ ላይ",
+        "failed": "አልተሳካም"
+      },
+      "actions": {
+        "download": "አውርድ",
+        "upgradePlan": "እቅድ አሻሽል"
+      },
+      "pricing": {
+        "perMonth": "/ወር",
+        "custom": "ብጁ ዋጋ",
+        "contactUs": "ያግኙን"
+      },
+      "features": {
+        "users": "ተጠቃሚዎች",
+        "departments": "ክፍሎች",
+        "storage": "ማከማቻ",
+        "apiCalls": "API ጥሪዎች",
+        "support": "ድጋፍ",
+        "advancedAnalytics": "የላቀ ትንተና",
+        "customIntegrations": "ብጁ ትስስሮች",
+        "whiteLabel": "ነጭ መለያ"
+      },
+      "plans": {
+        "free": "ነፃ",
+        "pro": "ፕሮ",
+        "enterprise": "ኢንተርፕራይዝ"
+      },
+      "stats": {
+        "currentPlan": "አሁን ያለ እቅድ",
+        "monthlyBill": "ወርሃዊ ሂሳብ",
+        "nextBilling": "ቀጣይ ሂሳብ",
+        "userUsage": "የተጠቃሚ አጠቃቀም"
+      },
+      "sections": {
+        "currentPlan": "አሁን ያለ እቅድ",
+        "planComparison": "የእቅድ ማወዳደሪያ",
+        "billingHistory": "የሂሳብ ታሪክ"
+      },
+      "modals": {
+        "upgradePlan": "እቅድ አሻሽል"
+      },
+      "alerts": {
+        "upgradeInfo": "ተጨማሪ ባህሪያት ለማግኘት እና የተጠቃሚ ገደብዎን ለማሳደግ እቅድዎን አሻሽሉ።"
+      },
+      "fields": {
+        "selectPlan": "እቅድ ይምረጡ"
+      },
+      "placeholders": {
+        "selectPlan": "እቅድዎን ይምረጡ"
+      },
+      "terms": {
+        "upgradeTerms": "በማሻሻል የአገልግሎት ውሎቻችንን እና የሂሳብ ውሎቻችንን ይቀበላሉ።"
+      },
+      "messages": {
+        "upgradeSuccess": "እቅድ በተሳካ ሁኔታ ተሻሽሏል",
+        "upgradeFailed": "እቅድ ማሻሻል አልተሳካም",
+        "downloadStarted": "ማውረድ ተጀምሯል",
+        "loadFailed": "የሂሳብ መረጃ መጫን አልተሳካም"
+      },
+      "errors": {
+        "loadFailed": "የሂሳብ መረጃ መጫን አልተሳካም",
+        "upgradeFailed": "እቅድ ማሻሻል አልተሳካም"
+      }
+    },
+    "security": {
+      "title": "የደህንነት ቅንብሮች",
+      "twoFactorAuth": "ባለ ሁለት ምክንያት ማረጋገጫ",
+      "enable2FA": "2FA አንቃ",
+      "sessionManagement": "የክፍለ ጊዜ አስተዳደር",
+      "sessionTimeout": "የክፍለ ጊዜ አብቂያ ጊዜ (ደቂቃዎች)",
+      "maxSessions": "ከፍተኛ ተቀናሽ ክፍለ ጊዜዎች",
+      "passwordPolicy": "የይለፍ ቃል ፖሊሲ",
+      "minLength": "አንጠለጠለ ርዝመት",
+      "requireUppercase": "ትላልቅ ፊደላት ያስፈልጋል",
+      "requireLowercase": "ትናንሽ ፊደላት ያስፈልጋል",
+      "requireNumbers": "ቁጥሮች ያስፈልጋል",
+      "requireSymbols": "ምልክቶች ያስፈልጋል",
+      "loginSecurity": "የግብት ደህንነት",
+      "enableCaptcha": "CAPTCHA አንቃ",
+      "maxLoginAttempts": "ከፍተኛ የግብት ሙከራዎች",
+      "lockoutDuration": "የመቆለፍ ቆይታ (ደቂቃዎች)",
+      "save": "ለውጦችን አስቀምጥ",
+      "cancel": "ሰርዝ"
+    },
+    "integrations": {
+      "title": "የትስስር አስተዳደር",
+      "availableIntegrations": "የሚገኙ ትስስሮች",
+      "connectedIntegrations": "የተገናኙ ትስስሮች",
+      "apiKeys": "API ቁልፎች",
+      "connect": "ያገናኙ",
+      "disconnect": "ያቋርጡ",
+      "configure": "ያዋቅሩ",
+      "connected": "ተገናኝቷል",
+      "notConnected": "አልተገናኘም",
+      "name": "ስም",
+      "type": "አይነት",
+      "created": "የተፈጠረ",
+      "lastUsed": "መጨረሻ ጥቅም",
+      "actions": "ተግባራት",
+      "createApiKey": "API ቁልፍ ፍጠር",
+      "keyName": "የቁልፍ ስም",
+      "permissions": "ፈቃዶች",
+      "save": "አስቀምጥ",
+      "cancel": "ሰርዝ"
+    },
+    "system": {
+      "title": "የስርዓት ቅንብሮች",
+      "backupSettings": "የመጠባበቂያ ቅንብሮች",
+      "enableAutoBackup": "ራስ-ሰር መጠባበቂያ አንቃ",
+      "backupFrequency": "የመጠባበቂያ ድግግሞሽ",
+      "retentionPeriod": "የማቆያ ጊዜ (ቀናት)",
+      "backupLocation": "የመጠባበቂያ አድራሻ",
+      "maintenanceMode": "የጥገና ሁነታ",
+      "enableMaintenance": "የጥገና ሁነታ አንቃ",
+      "maintenanceMessage": "የጥገና መልእክት",
+      "systemConfiguration": "የስርዓት ውቅረት",
+      "maxFileSize": "ከፍተኛ የፋይል ማያያዝ መጠን (MB)",
+      "enableLogging": "የስርዓት መግባት አንቃ",
+      "logLevel": "የመግባት ደረጃ",
+      "backupHistory": "የመጠባበቂያ ታሪክ",
+      "date": "ቀን",
+      "size": "መጠን",
+      "status": "ሁኔታ",
+      "actions": "ተግባራት",
+      "download": "አውርድ",
+      "restore": "እነበረበት መልስ",
+      "delete": "ሰርዝ",
+      "createBackup": "አሁን መጠባበቂያ ፍጠር",
+      "save": "ለውጦችን አስቀምጥ",
+      "cancel": "ሰርዝ",
+      "daily": "ዕለታዊ",
+      "weekly": "ሳምንታዊ",
+      "monthly": "ወርሃዊ"
+    },
+    "breadcrumb": {
+      "dashboard": "ዳሽቦርድ",
+      "settings": "ቅንብሮች",
+      "organization": "ድርጅት"
+    }
   }
 }

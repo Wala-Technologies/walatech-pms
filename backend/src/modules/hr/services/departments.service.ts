@@ -15,7 +15,21 @@ export class DepartmentsService {
   ) {}
 
   private get tenant_id(): string {
-    return this.request.tenant_id || this.request.user?.tenant_id;
+    const tenantId = this.request?.tenant_id || this.request?.user?.tenant_id || this.request?.tenant?.id;
+    
+    if (!tenantId) {
+      console.error('No tenant_id found in request context:', {
+        hasRequest: !!this.request,
+        hasRequestTenantId: !!this.request?.tenant_id,
+        hasRequestUser: !!this.request?.user,
+        hasRequestUserTenantId: !!this.request?.user?.tenant_id,
+        hasRequestTenant: !!this.request?.tenant,
+        requestKeys: this.request ? Object.keys(this.request) : []
+      });
+      throw new Error('No tenant_id found in request context');
+    }
+    
+    return tenantId;
   }
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
@@ -41,18 +55,32 @@ export class DepartmentsService {
   }
 
   async findAll(): Promise<Department[]> {
-    console.log('[DepartmentsService] findAll - tenant_id:', this.tenant_id);
+    const tenantId = this.tenant_id; // This will throw if tenant_id is not found
+    
+    console.log('[DepartmentsService] findAll - tenant_id:', tenantId);
     console.log('[DepartmentsService] findAll - request.user:', this.request.user);
     console.log('[DepartmentsService] findAll - request.tenant:', this.request.tenant);
     
-    const departments = await this.departmentRepository.find({
-      where: { tenant_id: this.tenant_id },
-      relations: ['employees'],
-      order: { department_name: 'ASC' },
-    });
+    // Use query builder for more control and better debugging
+    const query = this.departmentRepository
+      .createQueryBuilder('department')
+      .leftJoinAndSelect('department.employees', 'employees')
+      .where('department.tenant_id = :tenantId', { tenantId })
+      .orderBy('department.department_name', 'ASC');
+    
+    console.log('[DepartmentsService] findAll - SQL Query:', query.getSql());
+    
+    const departments = await query.getMany();
     
     console.log('[DepartmentsService] findAll - found departments:', departments.length, 'departments');
-    console.log('[DepartmentsService] findAll - department tenant_ids:', departments.map(d => ({ name: d.name, tenant_id: d.tenant_id })));
+    if (departments.length > 0) {
+      console.log('[DepartmentsService] findAll - sample department:', {
+        id: departments[0].id,
+        name: departments[0].name,
+        tenant_id: departments[0].tenant_id,
+        employee_count: departments[0].employees?.length
+      });
+    }
     
     return departments;
   }

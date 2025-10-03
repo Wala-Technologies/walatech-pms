@@ -645,6 +645,7 @@ export default function TenantManagement() {
         { text: 'Soft Deleted', value: 'soft_deleted' },
         { text: 'Hard Deleted', value: 'hard_deleted' },
       ],
+      defaultFilteredValue: ['active'],
       onFilter: (value: any, record: Tenant) => record.status === value,
     },
     {

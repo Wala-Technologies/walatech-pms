@@ -59,12 +59,14 @@ interface DepartmentManagementProps {
   tenantId?: string;
   departments?: Department[];
   onDepartmentsChange?: (departments: Department[]) => void;
+  managedTenant?: any;
 }
 
 export default function DepartmentManagement({ 
   tenantId, 
   departments: propDepartments, 
-  onDepartmentsChange 
+  onDepartmentsChange,
+  managedTenant 
 }: DepartmentManagementProps = {}) {
   const [departments, setDepartments] = useState<Department[]>(propDepartments || []);
   const [loading, setLoading] = useState(false);
@@ -75,32 +77,42 @@ export default function DepartmentManagement({
   useEffect(() => {
     console.log('DepartmentManagement useEffect triggered');
     console.log('propDepartments:', propDepartments);
+    console.log('managedTenant:', managedTenant);
     
     // Always fetch fresh data to avoid stale data issues
     console.log('Always calling fetchDepartments to ensure fresh data');
     fetchDepartments();
-  }, []);
+  }, [managedTenant]);
 
   // Use standard API client for proper tenant isolation via JWT middleware
   const makeApiCall = async (endpoint: string, options: RequestInit = {}) => {
-    console.log('makeApiCall called with:', { endpoint, method: options.method });
+    console.log('makeApiCall called with:', { endpoint, method: options.method, managedTenant: managedTenant?.subdomain });
     
     const method = options.method || 'GET';
     const body = options.body ? JSON.parse(options.body as string) : undefined;
+    const tenantSubdomain = managedTenant?.subdomain;
     
     switch (method.toUpperCase()) {
       case 'GET':
-        const response = await apiClient.get(endpoint);
+        const response = tenantSubdomain 
+          ? await apiClient.getWithTenant(endpoint, tenantSubdomain)
+          : await apiClient.get(endpoint);
         return response.data;
       case 'POST':
-        const postResponse = await apiClient.post(endpoint, body);
+        const postResponse = tenantSubdomain
+          ? await apiClient.postWithTenant(endpoint, body, tenantSubdomain)
+          : await apiClient.post(endpoint, body);
         return postResponse.data;
       case 'PATCH':
-        const patchResponse = await apiClient.patch(endpoint, body);
+        const patchResponse = tenantSubdomain
+          ? await apiClient.patchWithTenant(endpoint, body, tenantSubdomain)
+          : await apiClient.patch(endpoint, body);
         return patchResponse.data;
       case 'DELETE':
         console.log('Making DELETE request via apiClient to:', endpoint);
-        const deleteResponse = await apiClient.delete(endpoint);
+        const deleteResponse = tenantSubdomain
+          ? await apiClient.deleteWithTenant(endpoint, tenantSubdomain)
+          : await apiClient.delete(endpoint);
         console.log('DELETE response:', deleteResponse);
         return deleteResponse.data;
       default:
@@ -325,7 +337,7 @@ export default function DepartmentManagement({
         styles={{
           body: { maxHeight: '70vh', overflowY: 'auto' }
         }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

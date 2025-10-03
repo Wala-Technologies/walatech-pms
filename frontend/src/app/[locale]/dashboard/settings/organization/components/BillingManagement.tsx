@@ -172,7 +172,7 @@ export default function BillingManagement() {
 
   const invoiceColumns = [
     {
-      title: t('table.date'),
+      title: 'Date',
       dataIndex: 'date',
       key: 'date',
       render: (date: string) => new Date(date).toLocaleDateString(),

@@ -65,6 +65,16 @@ export interface TenantSettings {
     logoPosition?: 'left' | 'center';
     sidebarStyle?: 'light' | 'dark';
     headerStyle?: 'light' | 'dark';
+    // Header gradient options
+    headerUseGradient?: boolean;
+    headerGradientFrom?: string; // hex
+    headerGradientTo?: string;   // hex
+    headerGradientDirection?: 'to-r' | 'to-b' | 'to-br';
+    // Sidebar custom colors
+    sidebarBgColor?: string;        // hex
+    sidebarTextColor?: string;      // hex
+    sidebarActiveBgColor?: string;  // hex
+    sidebarActiveTextColor?: string; // hex
     borderRadius?: number;
     fontSize?: 'small' | 'medium' | 'large';
     compactMode?: boolean;
@@ -276,6 +286,14 @@ export class TenantSettingsService {
         logoPosition: 'left',
         sidebarStyle: 'light',
         headerStyle: 'light',
+        headerUseGradient: false,
+        headerGradientFrom: '#1890ff',
+        headerGradientTo: '#52c41a',
+        headerGradientDirection: 'to-r',
+        sidebarBgColor: '',
+        sidebarTextColor: '',
+        sidebarActiveBgColor: '',
+        sidebarActiveTextColor: '',
         borderRadius: 6,
         fontSize: 'medium',
         compactMode: false,
@@ -335,6 +353,32 @@ export class TenantSettingsService {
     
     if (settings.branding?.secondaryColor && !this.isValidColor(settings.branding.secondaryColor)) {
       throw new BadRequestException('Invalid secondary color format');
+    }
+
+    // Validate theme color formats if provided
+    const th = settings.theme;
+    if (th) {
+      const colorFields: Array<[string, string | undefined]> = [
+        ['theme.primaryColor', th.primaryColor],
+        ['theme.secondaryColor', th.secondaryColor],
+        ['theme.successColor', th.successColor],
+        ['theme.warningColor', th.warningColor],
+        ['theme.errorColor', th.errorColor],
+        ['theme.headerGradientFrom', th.headerGradientFrom],
+        ['theme.headerGradientTo', th.headerGradientTo],
+        ['theme.sidebarBgColor', th.sidebarBgColor],
+        ['theme.sidebarTextColor', th.sidebarTextColor],
+        ['theme.sidebarActiveBgColor', th.sidebarActiveBgColor],
+        ['theme.sidebarActiveTextColor', th.sidebarActiveTextColor],
+      ];
+      for (const [name, val] of colorFields) {
+        if (val && !this.isValidColor(val)) {
+          throw new BadRequestException(`Invalid color format for ${name}`);
+        }
+      }
+      if (th.headerGradientDirection && !['to-r','to-b','to-br'].includes(th.headerGradientDirection)) {
+        throw new BadRequestException('Invalid headerGradientDirection');
+      }
     }
   }
 

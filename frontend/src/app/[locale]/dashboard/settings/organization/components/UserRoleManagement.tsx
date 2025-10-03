@@ -1,34 +1,31 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Table, 
   Button, 
-  Form, 
   Input, 
   Select,
   Tag, 
   Space, 
   Tabs, 
-  Divider,
-  Avatar,
-  Tooltip,
-  message,
-  Popconfirm,
-  Row,
+  Row, 
   Col,
   Statistic,
-  Badge,
+  Avatar,
+  Switch,
+  Popconfirm,
+  message,
   Dropdown,
   Upload,
-  Switch,
-  DatePicker,
   Progress,
   Alert,
-  Typography,
   Checkbox,
-  Collapse
+  Collapse,
+  Typography,
+  DatePicker,
+  Form,
+  Badge
 } from 'antd';
 import { 
   UserAddOutlined, 
@@ -63,16 +60,19 @@ const { Text, Title } = Typography;
 const { RangePicker } = DatePicker;
 const { Panel } = Collapse;
 
-// Mock data interfaces
+// User interfaces matching backend
 interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  role: string;
-  department: string;
-  status: 'active' | 'inactive' | 'pending';
-  lastLogin: string;
-  avatar?: string;
+  role_profile_name?: string;
+  department_id?: string;
+  enabled: boolean;
+  mobile_no?: string;
+  modified?: string;
+  creation?: string;
+  tenant_id: string;
 }
 
 interface UserRole {
@@ -105,57 +105,163 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   
   const [userForm] = Form.useForm();
   const [inviteForm] = Form.useForm();
   const [roleForm] = Form.useForm();
 
-  // Mock data
+  // Fetch data from API
   useEffect(() => {
-    setUsers([
-      {
-        id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'Admin',
-        department: 'Head Quarter',
-        status: 'active',
-        lastLogin: '2024-01-15 10:30:00'
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'Manager',
-        department: 'Coffee Export',
-        status: 'active',
-        lastLogin: '2024-01-14 15:45:00'
-      }
-    ]);
+    console.log('UserRoleManagement useEffect triggered');
+    console.log('managedTenant:', managedTenant);
+    fetchUsers();
+    fetchDepartments();
+    fetchRoles();
+  }, [managedTenant]);
 
+  // API helper with tenant support
+  const makeApiCall = async (endpoint: string, options: RequestInit = {}) => {
+    console.log('makeApiCall called with:', { endpoint, method: options.method, managedTenant: managedTenant?.subdomain });
+    
+    const method = options.method || 'GET';
+    const body = options.body ? JSON.parse(options.body as string) : undefined;
+    const tenantSubdomain = managedTenant?.subdomain;
+    
+    let response;
+    
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = tenantSubdomain 
+          ? await apiClient.getWithTenant(endpoint, tenantSubdomain)
+          : await apiClient.get(endpoint);
+        break;
+      case 'POST':
+        response = tenantSubdomain
+          ? await apiClient.postWithTenant(endpoint, body, tenantSubdomain)
+          : await apiClient.post(endpoint, body);
+        break;
+      case 'PATCH':
+        response = tenantSubdomain
+          ? await apiClient.patchWithTenant(endpoint, body, tenantSubdomain)
+          : await apiClient.patch(endpoint, body);
+        break;
+      case 'DELETE':
+        response = tenantSubdomain
+          ? await apiClient.deleteWithTenant(endpoint, tenantSubdomain)
+          : await apiClient.delete(endpoint);
+        break;
+      default:
+        throw new Error(`Unsupported method: ${method}`);
+    }
+    
+    // Check for API errors
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data;
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching users with proper tenant isolation');
+      const data = await makeApiCall('/users');
+      const fetchedUsers = data?.users || data || [];
+      console.log('Fetched users:', fetchedUsers);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      message.error('Failed to fetch users');
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      console.log('Fetching departments');
+      const data = await makeApiCall('/hr/departments');
+      const fetchedDepartments = data || [];
+      console.log('Fetched departments:', fetchedDepartments);
+      setDepartments(fetchedDepartments.map((d: any) => ({
+        id: d.id,
+        name: d.department_name || d.name
+      })));
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
+
+  const fetchRoles = async () => {
+    // Roles matching backend UserRole enum
     setRoles([
       {
-        id: '1',
-        name: 'Admin',
-        description: 'Full system access',
+        id: 'super_admin',
+        name: 'super_admin',
+        description: 'Super Administrator - Full system access',
         permissions: ['all'],
-        userCount: 2
+        userCount: 0
       },
       {
-        id: '2',
-        name: 'Manager',
-        description: 'Department management access',
+        id: 'hr',
+        name: 'hr',
+        description: 'HR - Human Resources management',
+        permissions: ['hr:manage', 'users:view'],
+        userCount: 0
+      },
+      {
+        id: 'manager',
+        name: 'manager',
+        description: 'Manager - Department management',
         permissions: ['department:manage', 'users:view'],
-        userCount: 5
+        userCount: 0
+      },
+      {
+        id: 'department_head',
+        name: 'department_head',
+        description: 'Department Head - Department leadership',
+        permissions: ['department:view', 'users:view'],
+        userCount: 0
+      },
+      {
+        id: 'sales',
+        name: 'sales',
+        description: 'Sales - Sales operations',
+        permissions: ['sales:manage'],
+        userCount: 0
+      },
+      {
+        id: 'purchasing',
+        name: 'purchasing',
+        description: 'Purchasing - Procurement operations',
+        permissions: ['purchasing:manage'],
+        userCount: 0
+      },
+      {
+        id: 'production',
+        name: 'production',
+        description: 'Production - Manufacturing operations',
+        permissions: ['production:manage'],
+        userCount: 0
+      },
+      {
+        id: 'accounting',
+        name: 'accounting',
+        description: 'Accounting - Financial operations',
+        permissions: ['accounting:manage'],
+        userCount: 0
+      },
+      {
+        id: 'regular_user',
+        name: 'regular_user',
+        description: 'Regular User - Basic access',
+        permissions: ['dashboard:view', 'profile:edit'],
+        userCount: 0
       }
     ]);
-
-    setDepartments([
-      { id: '1', name: 'Head Quarter' },
-      { id: '2', name: 'Coffee Export' },
-      { id: '3', name: 'Sack Manufacturing' }
-    ]);
-  }, []);
+  };
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -165,32 +271,104 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    userForm.setFieldsValue(user);
+    console.log('[UserRoleManagement] handleEditUser - Editing user:', user);
+
+    // Use the form instance directly
+    userForm.setFieldsValue({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role_profile_name || user.role, // Try both field names
+      department_id: user.department_id,
+      phone: user.mobile_no || user.phone
+    });
     setShowUserForm(true);
   };
 
   const handleSaveUser = async () => {
+    if (saving) return; // Prevent double submission
+
     try {
+      setSaving(true);
       const values = await userForm.validateFields();
+      
+      console.log('[UserRoleManagement] handleSaveUser - Form values:', values);
+      console.log('[UserRoleManagement] handleSaveUser - Editing user:', editingUser);
+      console.log('[UserRoleManagement] handleSaveUser - Managed tenant:', managedTenant);
+      
+      // Map form values to API format
+      const userData: any = {
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        department_id: values.department_id,
+        phone: values.phone
+      };
+
+      // Only include role if it's provided and valid
+      if (values.role && values.role.trim() !== '') {
+        userData.role = values.role;
+      }
+
+      // Only include password for new users
+      if (!editingUser && values.password) {
+        userData.password = values.password;
+      }
+      
+      console.log('[UserRoleManagement] handleSaveUser - User data to send:', userData);
+      console.log('[UserRoleManagement] handleSaveUser - Role value:', userData.role);
+      console.log('[UserRoleManagement] handleSaveUser - Department ID:', userData.department_id);
+      console.log('[UserRoleManagement] handleSaveUser - Available roles:', roles.map(r => r.name));
+      
       if (editingUser) {
         // Update user
-        setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...values } : u));
+        const result = await makeApiCall(`/users/${editingUser.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(userData)
+        });
+        console.log('[UserRoleManagement] handleSaveUser - Update result:', result);
         message.success('User updated successfully');
       } else {
-        // Add new user
-        const newUser: User = {
-          id: Date.now().toString(),
-          ...values,
-          status: 'active',
-          lastLogin: new Date().toISOString()
-        };
-        setUsers([...users, newUser]);
+        // Create new user
+        const result = await makeApiCall('/users', {
+          method: 'POST',
+          body: JSON.stringify(userData)
+        });
+        console.log('[UserRoleManagement] handleSaveUser - Create result:', result);
         message.success('User created successfully');
       }
+      
       setShowUserForm(false);
       userForm.resetFields();
-    } catch (error) {
-      console.error('Error saving user:', error);
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('[UserRoleManagement] handleSaveUser - Error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save user';
+      message.error(errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await makeApiCall(`/users/${userId}`, { method: 'DELETE' });
+      message.success('User deleted successfully');
+      fetchUsers();
+    } catch (error: any) {
+      message.error(error.message || 'Failed to delete user');
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  const handleToggleUserStatus = async (userId: string) => {
+    try {
+      await makeApiCall(`/users/${userId}/toggle-status`, { method: 'PATCH' });
+      message.success('User status updated successfully');
+      fetchUsers();
+    } catch (error: any) {
+      message.error(error.message || 'Failed to update user status');
+      console.error('Error toggling user status:', error);
     }
   };
 
@@ -242,13 +420,13 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
   const userColumns = [
     {
       title: 'User',
-      dataIndex: 'name',
+      dataIndex: 'first_name',
       key: 'name',
-      render: (name: string, record: User) => (
+      render: (_: string, record: User) => (
         <Space>
           <Avatar icon={<UserOutlined />} />
           <div>
-            <div>{name}</div>
+            <div>{`${record.first_name} ${record.last_name}`}</div>
             <Text type="secondary" style={{ fontSize: '12px' }}>{record.email}</Text>
           </div>
         </Space>
@@ -256,29 +434,37 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
     },
     {
       title: 'Role',
-      dataIndex: 'role',
+      dataIndex: 'role_profile_name',
       key: 'role',
-      render: (role: string) => <Tag color="blue">{role}</Tag>,
+      render: (role: string) => role ? <Tag color="blue">{role}</Tag> : <Text type="secondary">No Role</Text>,
     },
     {
       title: 'Department',
-      dataIndex: 'department',
+      dataIndex: 'department_id',
       key: 'department',
+      render: (deptId: string) => {
+        const dept = departments.find(d => d.id === deptId);
+        return dept ? dept.name : <Text type="secondary">No Department</Text>;
+      },
     },
     {
       title: 'Status',
-      dataIndex: 'status',
+      dataIndex: 'enabled',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : status === 'inactive' ? 'red' : 'orange'}>
-          {status}
-        </Tag>
+      render: (enabled: boolean, record: User) => (
+        <Switch 
+          checked={enabled} 
+          onChange={() => handleToggleUserStatus(record.id)}
+          checkedChildren="Active"
+          unCheckedChildren="Inactive"
+        />
       ),
     },
     {
-      title: 'Last Login',
-      dataIndex: 'lastLogin',
-      key: 'lastLogin',
+      title: 'Phone',
+      dataIndex: 'mobile_no',
+      key: 'phone',
+      render: (phone: string) => phone || <Text type="secondary">-</Text>,
     },
     {
       title: 'Actions',
@@ -289,9 +475,20 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
             type="text" 
             icon={<EditOutlined />} 
             onClick={() => handleEditUser(record)}
-          />
-          <Popconfirm title="Are you sure?" onConfirm={() => {}}>
-            <Button type="text" icon={<DeleteOutlined />} danger />
+            size="small"
+          >
+            Edit
+          </Button>
+          <Popconfirm 
+            title="Are you sure you want to delete this user?" 
+            description="This action cannot be undone."
+            onConfirm={() => handleDeleteUser(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="text" icon={<DeleteOutlined />} danger size="small">
+              Delete
+            </Button>
           </Popconfirm>
         </Space>
       ),
@@ -359,17 +556,17 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title="Active Users" value={users.filter(u => u.status === 'active').length} prefix={<CheckCircleOutlined />} />
+                <Statistic title="Active Users" value={users.filter(u => u.enabled).length} prefix={<CheckCircleOutlined />} />
               </Card>
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title="Pending" value={users.filter(u => u.status === 'pending').length} prefix={<ClockCircleOutlined />} />
+                <Statistic title="Inactive" value={users.filter(u => !u.enabled).length} prefix={<ExclamationCircleOutlined />} />
               </Card>
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title="Inactive" value={users.filter(u => u.status === 'inactive').length} prefix={<ExclamationCircleOutlined />} />
+                <Statistic title="With Departments" value={users.filter(u => u.department_id).length} prefix={<TeamOutlined />} />
               </Card>
             </Col>
           </Row>
@@ -404,20 +601,32 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
               <Form form={userForm} layout="vertical">
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="name" label="Full Name" rules={[{ required: true }]}>
-                      <Input placeholder="Enter full name" />
+                    <Form.Item name="first_name" label="First Name" rules={[{ required: true }]}>
+                      <Input placeholder="Enter first name" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-                      <Input placeholder="Enter email address" />
+                    <Form.Item name="last_name" label="Last Name" rules={[{ required: true }]}>
+                      <Input placeholder="Enter last name" />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-                      <Select placeholder="Select role">
+                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+                      <Input placeholder="Enter email address" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="phone" label="Phone Number">
+                      <Input placeholder="Enter phone number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item name="role" label="Role">
+                      <Select placeholder="Select role" allowClear>
                         {roles.map(role => (
                           <Option key={role.id} value={role.name}>{role.name}</Option>
                         ))}
@@ -425,18 +634,31 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="department" label="Department" rules={[{ required: true }]}>
-                      <Select placeholder="Select department">
+                    <Form.Item name="department_id" label="Department">
+                      <Select placeholder="Select department" allowClear>
                         {departments.map(dept => (
-                          <Option key={dept.id} value={dept.name}>{dept.name}</Option>
+                          <Option key={dept.id} value={dept.id}>{dept.name}</Option>
                         ))}
                       </Select>
                     </Form.Item>
                   </Col>
                 </Row>
+                {!editingUser && (
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item 
+                        name="password" 
+                        label="Password" 
+                        rules={[{ required: true, min: 6 }]}
+                      >
+                        <Input.Password placeholder="Enter password" />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                )}
                 <Form.Item>
                   <Space>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveUser}>
+                    <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveUser} loading={saving}>
                       {editingUser ? 'Update User' : 'Create User'}
                     </Button>
                     <Button icon={<CloseOutlined />} onClick={() => setShowUserForm(false)}>
@@ -470,10 +692,10 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
                 </Row>
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="department" label="Department" rules={[{ required: true }]}>
-                      <Select placeholder="Select department">
+                    <Form.Item name="department_id" label="Department">
+                      <Select placeholder="Select department" allowClear>
                         {departments.map(dept => (
-                          <Option key={dept.id} value={dept.name}>{dept.name}</Option>
+                          <Option key={dept.id} value={dept.id}>{dept.name}</Option>
                         ))}
                       </Select>
                     </Form.Item>

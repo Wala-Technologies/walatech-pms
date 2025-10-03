@@ -44,6 +44,7 @@ export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadPro
       const formData = new FormData();
       formData.append('logo', file);
       
+      // Use the tenant ID in the URL path as expected by backend
       const response = await apiClient.post(`/tenants/${tenant_id}/logo`, formData);
       
       if (response.error) {
@@ -106,7 +107,8 @@ export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadPro
               borderRadius: '6px'
             }}
             onError={(e) => {
-              console.error('Logo failed to load:', previewUrl);
+              console.warn('Logo failed to load:', previewUrl);
+              // Hide the broken image instead of showing error
               e.currentTarget.style.display = 'none';
             }}
           />

@@ -24,6 +24,10 @@ export class UsersService extends TenantScopedService<User> {
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { email, password, phone, role, department_id, ...userData } = createUserDto;
 
+    const tenantId = this.gettenant_id();
+    console.log('[UsersService] createUser - tenant_id:', tenantId);
+    console.log('[UsersService] createUser - createUserDto:', { ...createUserDto, password: '***' });
+
     // Check if user already exists within tenant
     const existingUser = await this.findOne({
       where: { email },
@@ -59,6 +63,14 @@ export class UsersService extends TenantScopedService<User> {
 
     const savedUser = await super.create(userDataToCreate);
 
+    console.log('[UsersService] createUser - User created successfully:', {
+      id: savedUser.id,
+      email: savedUser.email,
+      tenant_id: savedUser.tenant_id,
+      first_name: savedUser.first_name,
+      last_name: savedUser.last_name
+    });
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = savedUser;
     return userWithoutPassword as User;
@@ -76,11 +88,15 @@ export class UsersService extends TenantScopedService<User> {
       sortOrder = 'DESC',
     } = query;
 
+    const tenantId = this.gettenant_id();
+    console.log('[UsersService] findAllUsers - tenant_id:', tenantId);
+    console.log('[UsersService] findAllUsers - query params:', query);
+
     const queryBuilder = this.createQueryBuilder('user');
 
     // Search functionality
     if (search) {
-      queryBuilder.where(
+      queryBuilder.andWhere(
         '(user.first_name ILIKE :search OR user.last_name ILIKE :search OR user.email ILIKE :search)',
         { search: `%${search}%` },
       );
@@ -110,6 +126,10 @@ export class UsersService extends TenantScopedService<User> {
     // Pagination
     const offset = (page - 1) * limit;
     queryBuilder.skip(offset).take(limit);
+
+    // Log the SQL query for debugging
+    console.log('[UsersService] findAllUsers - SQL:', queryBuilder.getSql());
+    console.log('[UsersService] findAllUsers - Parameters:', queryBuilder.getParameters());
 
     // Execute query
     const [users, total] = await queryBuilder.getManyAndCount();

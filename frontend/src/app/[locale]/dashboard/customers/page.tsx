@@ -582,7 +582,7 @@ export default function CustomersPage() {
         onCancel={handleAddModalCancel}
         footer={null}
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <CustomerForm
           onSubmit={handleAddCustomerSubmit}

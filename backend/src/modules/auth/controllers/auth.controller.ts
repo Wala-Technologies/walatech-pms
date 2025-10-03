@@ -62,6 +62,24 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body('email') email: string,
+    @Request() req: AuthRequest,
+  ) {
+    const result = await this.authService.forgotPassword(email, req.tenant);
+    return result;
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    const result = await this.authService.resetPasswordWithToken(token, newPassword);
+    return result;
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @UseGuards(JwtAuthGuard)

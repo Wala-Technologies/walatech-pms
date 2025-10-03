@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, use, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Badge, Spin } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Button, Badge, Spin, message } from 'antd';
 import {
   DashboardOutlined,
   LineChartOutlined,
@@ -27,6 +27,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '../../../contexts/tenant-context';
 import { useAuth } from '../../../hooks/useAuth';
+import { apiClient } from '../../../lib/api-client';
+import { apiConfig } from '../../../config/api';
 
 const { Header, Sider, Content } = Layout;
 
@@ -73,6 +75,47 @@ export default function DashboardLayout({
     return null;
   }
 
+  const handleUserMenuClick = async (info: { key: string }) => {
+    if (info.key === 'logout') {
+      try {
+        await apiClient.logout();
+      } catch (e) {
+        // ignore errors; proceed to clean up client-side
+      } finally {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+          } catch {}
+        }
+        message.success('Logged out');
+        const target = `/${locale}/auth/login`;
+        try {
+          router.replace(target);
+        } catch {
+          if (typeof window !== 'undefined') {
+            window.location.href = target;
+          }
+        }
+      }
+    }
+  };
+
+  // Theme helpers from tenant settings
+  const themeSettings = (tenant?.settings as any)?.theme || {};
+  const branding = (tenant?.settings as any)?.branding || {};
+  const siderTheme = themeSettings.sidebarStyle === 'dark' ? 'dark' : 'light';
+  const headerIsDark = themeSettings.headerStyle === 'dark';
+  const headerBg = headerIsDark ? (branding.primaryColor || '#1f1f1f') : '#ffffff';
+  const headerText = headerIsDark ? '#ffffff' : '#1f2937';
+  const logoPosition = themeSettings.logoPosition || 'left';
+  const headerUseGradient = !!themeSettings.headerUseGradient;
+  const headerGradFrom = themeSettings.headerGradientFrom || branding.primaryColor || '#1890ff';
+  const headerGradTo = themeSettings.headerGradientTo || branding.secondaryColor || '#52c41a';
+  const headerGradDir = themeSettings.headerGradientDirection || 'to-r';
+  const sidebarBgCustom = themeSettings.sidebarBgColor as string | undefined;
+  const sidebarTextCustom = themeSettings.sidebarTextColor as string | undefined;
+
   // Get logo URL from multiple possible locations
   const getLogoUrl = () => {
     if (!tenant?.settings) return undefined;
@@ -82,19 +125,16 @@ export default function DashboardLayout({
       tenant.settings.companyLogo,
       tenant.settings.branding?.logoUrl,
     ];
-
     return logoSources.find((url) => url && url.trim() !== '');
   };
 
   // Helper function to convert relative logo URLs to absolute URLs
   const getAbsoluteLogoUrl = (logoUrl: string | undefined) => {
     if (!logoUrl) return undefined;
-    if (logoUrl.startsWith('http')) {
-      return logoUrl; // Already absolute
-    }
-    // For relative URLs starting with /api, prepend the backend server URL
-    if (logoUrl.startsWith('/api')) {
-      return `http://localhost:3001${logoUrl}`;
+    if (/^https?:\/\//i.test(logoUrl)) return logoUrl; // Already absolute
+    // Prepend configured API base URL for any root-relative path
+    if (logoUrl.startsWith('/')) {
+      return `${apiConfig.baseURL}${logoUrl}`;
     }
     return logoUrl;
   };
@@ -589,6 +629,7 @@ export default function DashboardLayout({
       icon: <LogoutOutlined />,
       label: 'Logout',
       danger: true,
+      onClick: () => handleUserMenuClick({ key: 'logout' }),
     },
   ];
 
@@ -599,18 +640,29 @@ export default function DashboardLayout({
         collapsible
         collapsed={collapsed}
         width={250}
-        className="bg-white shadow-lg"
+        theme={siderTheme as 'light' | 'dark'}
+        className={siderTheme === 'dark' ? 'shadow-lg bg-[#141414]' : 'bg-white shadow-lg'}
+        style={{
+          backgroundColor: sidebarBgCustom && sidebarBgCustom.trim() !== '' ? sidebarBgCustom : undefined,
+          color: sidebarTextCustom && sidebarTextCustom.trim() !== '' ? sidebarTextCustom : undefined,
+        }}
       >
-        <div className="p-4 border-b">
-          <div className="flex items-center space-x-2">
+        <div className={siderTheme === 'dark' ? 'p-4 border-b border-[#1f1f1f]' : 'p-4 border-b'}>
+          <div className={`flex ${logoPosition === 'center' ? 'justify-center' : 'justify-start'} items-center space-x-2`}>
             {getLogoUrl() ? (
               <img
                 src={getAbsoluteLogoUrl(getLogoUrl())}
                 alt="Company Logo"
                 className="w-8 h-8 object-contain rounded"
+                onError={(e) => {
+                  // Hide broken image and allow fallback initials to render
+                  e.currentTarget.style.display = 'none';
+                  // Optional: log for debugging
+                  // console.warn('Failed to load logo:', getLogoUrl());
+                }}
               />
             ) : (
-              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+              <div className={`w-8 h-8 ${headerIsDark ? 'bg-white' : 'bg-blue-600'} rounded flex items-center justify-center`}>
                 <span className="text-white font-bold text-sm">
                   {tenant?.settings?.companyName?.[0] ||
                     tenant?.name?.[0] ||
@@ -620,10 +672,10 @@ export default function DashboardLayout({
             )}
             {!collapsed && (
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className={`text-lg font-bold ${siderTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                   {tenant?.settings?.companyName || tenant?.name || 'WalaTech'}
                 </h1>
-                <p className="text-xs text-gray-500">Production MES</p>
+                <p className={`${siderTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'} text-xs`}>Production MES</p>
               </div>
             )}
           </div>
@@ -638,19 +690,33 @@ export default function DashboardLayout({
       </Sider>
 
       <Layout>
-        <Header className="bg-white shadow-sm px-4 flex items-center justify-between">
+        <Header
+          style={
+            headerUseGradient
+              ? {
+                  backgroundImage:
+                    headerGradDir === 'to-b'
+                      ? `linear-gradient(180deg, ${headerGradFrom}, ${headerGradTo})`
+                      : headerGradDir === 'to-br'
+                      ? `linear-gradient(135deg, ${headerGradFrom}, ${headerGradTo})`
+                      : `linear-gradient(90deg, ${headerGradFrom}, ${headerGradTo})`,
+                }
+              : { backgroundColor: headerBg }
+          }
+          className="shadow-sm px-4 flex items-center justify-between"
+        >
           <div className="flex items-center space-x-4">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
-              className="text-gray-600"
+              className={headerIsDark ? 'text-white' : 'text-gray-600'}
             />
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className={`text-lg font-semibold ${headerIsDark ? 'text-white' : 'text-gray-900'}`}>
                 Production Dashboard
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className={`text-sm ${headerIsDark ? 'text-gray-200' : 'text-gray-500'}`}>
                 Welcome back, Administrator
               </p>
             </div>
@@ -661,22 +727,23 @@ export default function DashboardLayout({
               <Button
                 type="text"
                 icon={<BellOutlined />}
-                className="text-gray-600"
+                className={headerIsDark ? 'text-white' : 'text-gray-600'}
               />
             </Badge>
 
             <Dropdown
               menu={{ items: userMenuItems }}
+              trigger={["click"]}
               placement="bottomRight"
               arrow
             >
-              <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+              <div className={`flex items-center space-x-2 cursor-pointer px-2 py-1 rounded ${headerIsDark ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                 <Avatar icon={<UserOutlined />} />
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className={`text-sm font-medium ${headerIsDark ? 'text-white' : 'text-gray-900'}`}>
                     Admin User
                   </p>
-                  <p className="text-xs text-gray-500">System Administrator</p>
+                  <p className={`text-xs ${headerIsDark ? 'text-gray-200' : 'text-gray-500'}`}>System Administrator</p>
                 </div>
               </div>
             </Dropdown>

@@ -297,6 +297,14 @@ class ApiClient {
     return this.post('/auth/register', userData);
   }
 
+  async forgotPassword(email: string): Promise<ApiResponse<{ message: string; reset_token?: string }>> {
+    return this.post('/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
+    return this.post('/auth/reset-password', { token, newPassword });
+  }
+
   // Methods for super admin tenant switching
   async getWithTenant<T = any>(
     endpoint: string,
@@ -337,6 +345,34 @@ class ApiClient {
         method: 'PUT',
         body: JSON.stringify(data),
       },
+      false,
+      tenantSubdomain
+    );
+  }
+
+  async patchWithTenant<T = any>(
+    endpoint: string,
+    data: any,
+    tenantSubdomain: string
+  ): Promise<ApiResponse<T>> {
+    return this.requestWithContentType<T>(
+      endpoint,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+      false,
+      tenantSubdomain
+    );
+  }
+
+  async deleteWithTenant<T = any>(
+    endpoint: string,
+    tenantSubdomain: string
+  ): Promise<ApiResponse<T>> {
+    return this.requestWithContentType<T>(
+      endpoint,
+      { method: 'DELETE' },
       false,
       tenantSubdomain
     );

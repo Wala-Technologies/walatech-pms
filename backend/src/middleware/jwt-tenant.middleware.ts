@@ -167,7 +167,7 @@ export class JwtTenantMiddleware implements NestMiddleware {
     const fullPath = (req.originalUrl || req.url || '').split('?')[0];
     const publicMatchers: RegExp[] = [
       /^\/(?:api\/)?$/, // root or /api root
-      /^\/(?:api\/)?auth\/(login|register|refresh)(?:\/|$)/,
+      /^\/(?:api\/)?auth\/(login|register|refresh|forgot-password|reset-password)(?:\/|$)/,
       /^\/(?:api\/)?tenants\/(by-subdomain|validate)(?:\/|$)/,
       /^\/(?:api\/)?(health|docs|swagger)(?:\/|$)/,
     ];

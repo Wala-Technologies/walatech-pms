@@ -235,4 +235,73 @@ export class AuthService {
 
     return user;
   }
+
+  async forgotPassword(email: string, tenant?: Tenant): Promise<{ message: string; reset_token?: string }> {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    // Find user within tenant scope if provided
+    const where = tenant
+      ? ({ email, tenant_id: tenant.id } as const)
+      : ({ email } as const);
+    const user = await this.userRepository.findOne({ where: where as any });
+
+    // Always return generic response to avoid user enumeration
+    if (!user) {
+      return { message: 'If the email exists, a reset link has been sent' };
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tenant_id: user.tenant_id,
+      purpose: 'password_reset' as const,
+    };
+    // Short-lived token (15 minutes)
+    const reset_token = this.jwtService.sign(payload as any, {
+      expiresIn: '15m',
+    });
+
+    // TODO: Integrate email service to send the reset link containing the token
+    // For now, return the token in response for manual testing
+    return { message: 'Reset link generated', reset_token };
+  }
+
+  async resetPasswordWithToken(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    if (!token || !newPassword) {
+      throw new BadRequestException('Token and new password are required');
+    }
+
+    interface ResetTokenPayload extends JwtPayloadWithTenant {
+      purpose: 'password_reset';
+    }
+
+    let decoded: ResetTokenPayload;
+    try {
+      decoded = this.jwtService.verify<ResetTokenPayload>(token);
+    } catch {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    if (!decoded || decoded.purpose !== 'password_reset' || !decoded.sub) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: decoded.sub, tenant_id: decoded.tenant_id } as any,
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
+
+    return { message: 'Password has been reset successfully' };
+  }
 }

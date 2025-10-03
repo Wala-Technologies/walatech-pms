@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Form, 
   Input, 
@@ -9,27 +9,21 @@ import {
   Card, 
   Row, 
   Col, 
-  Upload, 
-  Avatar, 
-  Divider,
-  Switch,
-  TimePicker,
   message,
   Spin
 } from 'antd';
 import { 
-  UploadOutlined, 
   SaveOutlined, 
   GlobalOutlined,
   BankOutlined,
-  EnvironmentOutlined
+  SettingOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '../../../../../../lib/api-client';
+import { useTenant } from '../../../../../../contexts/tenant-context';
 import LogoUpload from './LogoUpload';
 
 const { Option } = Select;
-const { TextArea } = Input;
 
 // Backend TenantSettings interface
 interface TenantSettings {
@@ -85,13 +79,19 @@ interface TenantSettings {
   integrations?: {
     [key: string]: {
       enabled: boolean;
-      config: Record<string, any>;
+      config: Record<string, unknown>;
     };
   };
 }
 
+interface ManagedTenantRef {
+  id?: string;
+  name?: string;
+  subdomain?: string;
+}
+
 interface GeneralSettingsProps {
-  managedTenant?: any;
+  managedTenant?: ManagedTenantRef;
 }
 
 export default function GeneralSettings({ managedTenant }: GeneralSettingsProps) {
@@ -101,12 +101,11 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
   const [initialLoading, setInitialLoading] = useState(true);
   const [settings, setSettings] = useState<TenantSettings | null>(null);
 
-  // Load current settings
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  // Get tenant info from props (when managing another tenant) or context (for own tenant)
+  const { tenant: currentTenantFromContext } = useTenant();
+  const currentTenant = managedTenant || currentTenantFromContext;
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setInitialLoading(true);
       
@@ -120,26 +119,69 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
       const tenantSettings = response.data;
       setSettings(tenantSettings);
       
-      // Set form values with proper structure
-      form.setFieldsValue({
-        companyName: tenantSettings.companyName || '',
-        timezone: tenantSettings.timezone || 'UTC',
-        dateFormat: tenantSettings.dateFormat || 'YYYY-MM-DD',
-        currency: tenantSettings.currency || 'USD',
-        language: tenantSettings.language || 'en',
-        primaryColor: tenantSettings.branding?.primaryColor || tenantSettings.theme?.primaryColor || '#1890ff',
-        secondaryColor: tenantSettings.branding?.secondaryColor || tenantSettings.theme?.secondaryColor || '#52c41a',
-        logoUrl: tenantSettings.branding?.logoUrl || tenantSettings.companyLogo || '',
-      });
     } catch (error) {
        console.error('Error loading tenant settings:', error);
        message.error(t('messages.loadError') || 'Failed to load settings');
      } finally {
        setInitialLoading(false);
      }
-  };
+  }, [t]);
 
-  const handleSave = async (values: any) => {
+  // Load current settings
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  // Ensure form values are set only after the form is mounted
+  useEffect(() => {
+    if (!initialLoading && settings) {
+      form.setFieldsValue({
+        companyName: settings.companyName || currentTenant?.name || '',
+        timezone: settings.timezone || 'UTC',
+        dateFormat: settings.dateFormat || 'YYYY-MM-DD',
+        currency: settings.currency || 'USD',
+        language: settings.language || 'en',
+        primaryColor: settings.branding?.primaryColor || settings.theme?.primaryColor || '#1890ff',
+        secondaryColor: settings.branding?.secondaryColor || settings.theme?.secondaryColor || '#52c41a',
+        logoUrl: settings.branding?.logoUrl || settings.companyLogo || '',
+        logoPosition: settings.theme?.logoPosition || 'left',
+        sidebarStyle: settings.theme?.sidebarStyle || 'light',
+        headerStyle: settings.theme?.headerStyle || 'light',
+        headerUseGradient: settings.theme?.headerUseGradient || false,
+        headerGradientFrom: settings.theme?.headerGradientFrom || settings.branding?.primaryColor || '#1890ff',
+        headerGradientTo: settings.theme?.headerGradientTo || settings.branding?.secondaryColor || '#52c41a',
+        headerGradientDirection: settings.theme?.headerGradientDirection || 'to-r',
+        sidebarBgColor: settings.theme?.sidebarBgColor || '',
+        sidebarTextColor: settings.theme?.sidebarTextColor || '',
+        sidebarActiveBgColor: settings.theme?.sidebarActiveBgColor || '',
+        sidebarActiveTextColor: settings.theme?.sidebarActiveTextColor || '',
+      });
+    }
+  }, [initialLoading, settings, form, currentTenant]);
+
+  interface GeneralSettingsFormValues {
+    companyName: string;
+    timezone: string;
+    dateFormat: string;
+    currency: string;
+    language: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    logoUrl?: string;
+    logoPosition?: 'left' | 'center';
+    sidebarStyle?: 'light' | 'dark';
+    headerStyle?: 'light' | 'dark';
+    headerUseGradient?: boolean;
+    headerGradientFrom?: string;
+    headerGradientTo?: string;
+    headerGradientDirection?: 'to-r' | 'to-b' | 'to-br';
+    sidebarBgColor?: string;
+    sidebarTextColor?: string;
+    sidebarActiveBgColor?: string;
+    sidebarActiveTextColor?: string;
+  }
+
+  const handleSave = async (values: GeneralSettingsFormValues) => {
     try {
       setLoading(true);
       
@@ -161,6 +203,17 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
             ...settings?.theme,
             primaryColor: values.primaryColor,
             secondaryColor: values.secondaryColor,
+            logoPosition: values.logoPosition || settings?.theme?.logoPosition || 'left',
+            sidebarStyle: values.sidebarStyle || settings?.theme?.sidebarStyle || 'light',
+            headerStyle: values.headerStyle || settings?.theme?.headerStyle || 'light',
+            headerUseGradient: values.headerUseGradient ?? settings?.theme?.headerUseGradient ?? false,
+            headerGradientFrom: values.headerGradientFrom || settings?.theme?.headerGradientFrom,
+            headerGradientTo: values.headerGradientTo || settings?.theme?.headerGradientTo,
+            headerGradientDirection: values.headerGradientDirection || settings?.theme?.headerGradientDirection || 'to-r',
+            sidebarBgColor: values.sidebarBgColor || settings?.theme?.sidebarBgColor,
+            sidebarTextColor: values.sidebarTextColor || settings?.theme?.sidebarTextColor,
+            sidebarActiveBgColor: values.sidebarActiveBgColor || settings?.theme?.sidebarActiveBgColor,
+            sidebarActiveTextColor: values.sidebarActiveTextColor || settings?.theme?.sidebarActiveTextColor,
           }
         }
       };
@@ -206,7 +259,7 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
   if (initialLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Spin size="large" tip={t('messages.loading') || 'Loading...'} />
+        <Spin size="large" />
       </div>
     );
   }
@@ -231,7 +284,7 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
         >
           <Row gutter={24}>
             <Col span={24} className="mb-4">
-              <LogoUpload />
+              <LogoUpload tenant_id={currentTenant?.id} />
             </Col>
             
             <Col xs={24} md={12}>
@@ -458,6 +511,97 @@ export default function GeneralSettings({ managedTenant }: GeneralSettingsProps)
                 label={t('fields.secondaryColor')}
               >
                 <Input type="color" placeholder="#52c41a" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Theme & Layout Settings */}
+        <Card
+          title={
+            <span className="flex items-center gap-2">
+              <SettingOutlined />
+              Theme & Layout
+            </span>
+          }
+          className="mb-6"
+        >
+          <Row gutter={24}>
+            <Col xs={24} md={8}>
+              <Form.Item name="logoPosition" label="Logo Position">
+                <Select>
+                  <Option value="left">Left</Option>
+                  <Option value="center">Center</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="sidebarStyle" label="Sidebar Style">
+                <Select>
+                  <Option value="light">Light</Option>
+                  <Option value="dark">Dark</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="headerStyle" label="Header Style">
+                <Select>
+                  <Option value="light">Light</Option>
+                  <Option value="dark">Dark</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col xs={24} md={8}>
+              <Form.Item name="headerUseGradient" label="Use Header Gradient" valuePropName="checked">
+                <Input type="checkbox" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="headerGradientFrom" label="Header Gradient From">
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="headerGradientTo" label="Header Gradient To">
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col xs={24} md={8}>
+              <Form.Item name="headerGradientDirection" label="Gradient Direction">
+                <Select>
+                  <Option value="to-r">Left → Right</Option>
+                  <Option value="to-b">Top → Bottom</Option>
+                  <Option value="to-br">Top-Left → Bottom-Right</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="sidebarBgColor" label="Sidebar Background (optional)">
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="sidebarTextColor" label="Sidebar Text (optional)">
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col xs={24} md={12}>
+              <Form.Item name="sidebarActiveBgColor" label="Sidebar Active Item BG (optional)">
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="sidebarActiveTextColor" label="Sidebar Active Item Text (optional)">
+                <Input type="color" />
               </Form.Item>
             </Col>
           </Row>
