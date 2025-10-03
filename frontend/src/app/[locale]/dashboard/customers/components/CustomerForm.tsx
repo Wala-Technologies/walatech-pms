@@ -21,6 +21,12 @@ import {
   MailOutlined,
   PhoneOutlined,
   HomeOutlined,
+  BankOutlined,
+  GlobalOutlined,
+  EnvironmentOutlined,
+  TrophyOutlined,
+  StarOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -30,11 +36,21 @@ interface CustomerFormData {
   customer_name: string;
   customer_code?: string;
   customer_type: string;
+  customer_group?: string;
+  territory?: string;
+  market_segment?: string;
+  industry?: string;
+  lead_source?: string;
+  account_manager?: string;
+  default_currency?: string;
+  default_price_list?: string;
+  language?: string;
   email?: string;
   mobile_no?: string;
   phone?: string;
   website?: string;
   tax_id?: string;
+  tax_category?: string;
   billing_address_line1?: string;
   billing_address_line2?: string;
   billing_city?: string;
@@ -48,7 +64,13 @@ interface CustomerFormData {
   shipping_country?: string;
   shipping_pincode?: string;
   credit_limit: number;
+  credit_days?: number;
   payment_terms?: string;
+  default_bank_account?: string;
+  loyalty_program?: string;
+  loyalty_points?: number;
+  customer_portal_access?: boolean;
+  portal_username?: string;
   is_frozen: boolean;
   disabled: boolean;
   notes?: string;
@@ -173,6 +195,178 @@ export default function CustomerForm({
               label="Tax ID"
             >
               <Input placeholder="Enter tax ID" />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="industry"
+              label="Industry"
+            >
+              <Select placeholder="Select industry">
+                <Option value="Technology">Technology</Option>
+                <Option value="Healthcare">Healthcare</Option>
+                <Option value="Finance">Finance</Option>
+                <Option value="Manufacturing">Manufacturing</Option>
+                <Option value="Retail">Retail</Option>
+                <Option value="Education">Education</Option>
+                <Option value="Real Estate">Real Estate</Option>
+                <Option value="Consulting">Consulting</Option>
+                <Option value="Other">Other</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="tax_category"
+              label="Tax Category"
+            >
+              <Select placeholder="Select tax category">
+                <Option value="Standard">Standard</Option>
+                <Option value="Exempt">Tax Exempt</Option>
+                <Option value="Zero Rated">Zero Rated</Option>
+                <Option value="Out of Scope">Out of Scope</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Customer Classification */}
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-4 flex items-center">
+          <TrophyOutlined className="mr-2" />
+          Customer Classification
+        </h3>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="customer_group"
+              label="Customer Group"
+            >
+              <Select placeholder="Select customer group">
+                <Option value="Enterprise">Enterprise</Option>
+                <Option value="SMB">Small & Medium Business</Option>
+                <Option value="Individual">Individual</Option>
+                <Option value="Government">Government</Option>
+                <Option value="Non-Profit">Non-Profit</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="territory"
+              label="Territory"
+            >
+              <Select placeholder="Select territory">
+                <Option value="North America">North America</Option>
+                <Option value="Europe">Europe</Option>
+                <Option value="Asia Pacific">Asia Pacific</Option>
+                <Option value="Latin America">Latin America</Option>
+                <Option value="Middle East & Africa">Middle East & Africa</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="market_segment"
+              label="Market Segment"
+            >
+              <Select placeholder="Select market segment">
+                <Option value="Enterprise Clients">Enterprise Clients</Option>
+                <Option value="SMB Technology">SMB Technology</Option>
+                <Option value="Early Adopters">Early Adopters</Option>
+                <Option value="Cost-Conscious">Cost-Conscious</Option>
+                <Option value="Premium">Premium</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="lead_source"
+              label="Lead Source"
+            >
+              <Select placeholder="Select lead source">
+                <Option value="Website">Website</Option>
+                <Option value="Referral">Referral</Option>
+                <Option value="Social Media">Social Media</Option>
+                <Option value="Trade Show">Trade Show</Option>
+                <Option value="Cold Call">Cold Call</Option>
+                <Option value="Email Campaign">Email Campaign</Option>
+                <Option value="Partner">Partner</Option>
+                <Option value="Advertisement">Advertisement</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="account_manager"
+              label="Account Manager"
+            >
+              <Select placeholder="Select account manager">
+                <Option value="John Smith">John Smith</Option>
+                <Option value="Sarah Johnson">Sarah Johnson</Option>
+                <Option value="Mike Davis">Mike Davis</Option>
+                <Option value="Lisa Wilson">Lisa Wilson</Option>
+                <Option value="Robert Brown">Robert Brown</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Defaults & Preferences */}
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-4 flex items-center">
+          <GlobalOutlined className="mr-2" />
+          Defaults & Preferences
+        </h3>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="default_currency"
+              label="Default Currency"
+            >
+              <Select placeholder="Select currency">
+                <Option value="USD">USD - US Dollar</Option>
+                <Option value="EUR">EUR - Euro</Option>
+                <Option value="GBP">GBP - British Pound</Option>
+                <Option value="CAD">CAD - Canadian Dollar</Option>
+                <Option value="AUD">AUD - Australian Dollar</Option>
+                <Option value="ETB">ETB - Ethiopian Birr</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="default_price_list"
+              label="Default Price List"
+            >
+              <Select placeholder="Select price list">
+                <Option value="Standard">Standard Selling</Option>
+                <Option value="Wholesale">Wholesale</Option>
+                <Option value="Retail">Retail</Option>
+                <Option value="Premium">Premium</Option>
+                <Option value="Discount">Discount</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="language"
+              label="Language"
+            >
+              <Select placeholder="Select language">
+                <Option value="en">English</Option>
+                <Option value="es">Spanish</Option>
+                <Option value="fr">French</Option>
+                <Option value="de">German</Option>
+                <Option value="zh">Chinese</Option>
+                <Option value="am">Amharic</Option>
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -406,6 +600,90 @@ export default function CustomerForm({
                 <Option value="Cash on Delivery">Cash on Delivery</Option>
                 <Option value="Prepaid">Prepaid</Option>
               </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="credit_days"
+              label="Credit Days"
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                placeholder="Enter credit days"
+                min={0}
+                max={365}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="default_bank_account"
+              label="Default Bank Account"
+            >
+              <Select placeholder="Select bank account">
+                <Option value="Primary Checking">Primary Checking - ****1234</Option>
+                <Option value="Business Savings">Business Savings - ****5678</Option>
+                <Option value="USD Account">USD Account - ****9012</Option>
+                <Option value="EUR Account">EUR Account - ****3456</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Loyalty & Portal */}
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-4 flex items-center">
+          <StarOutlined className="mr-2" />
+          Loyalty & Portal Access
+        </h3>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="loyalty_program"
+              label="Loyalty Program"
+            >
+              <Select placeholder="Select loyalty program">
+                <Option value="Gold">Gold Tier</Option>
+                <Option value="Silver">Silver Tier</Option>
+                <Option value="Bronze">Bronze Tier</Option>
+                <Option value="Platinum">Platinum Tier</Option>
+                <Option value="None">No Program</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="loyalty_points"
+              label="Loyalty Points"
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                placeholder="Current points"
+                min={0}
+                disabled
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="customer_portal_access"
+              label="Portal Access"
+              valuePropName="checked"
+            >
+              <Switch checkedChildren="Enabled" unCheckedChildren="Disabled" />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="portal_username"
+              label="Portal Username"
+            >
+              <Input placeholder="Enter portal username" />
             </Form.Item>
           </Col>
         </Row>

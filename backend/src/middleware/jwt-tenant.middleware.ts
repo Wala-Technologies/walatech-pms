@@ -26,6 +26,15 @@ declare global {
       tenant_id?: string;
       isSuperAdmin?: boolean;
     }
+    
+    // Extend the Passport User interface to include tenant information
+    interface User {
+      id: string;
+      email: string;
+      tenant_id?: string;
+      isSuperAdmin?: boolean;
+      [key: string]: any;
+    }
   }
 }
 
@@ -78,6 +87,38 @@ export class JwtTenantMiddleware implements NestMiddleware {
         const superAdminSubdomain =
           process.env.SUPER_ADMIN_SUBDOMAIN || 'walatech';
         const isSuperAdmin = userTenant.subdomain === superAdminSubdomain;
+        
+        // Check for tenant switching via header (only for super admins)
+        const requestedTenantSubdomain = req.get('x-tenant-subdomain');
+        let effectiveTenant = userTenant;
+        
+        console.log('[JwtTenantMiddleware] Debug info:', {
+          userTenantSubdomain: userTenant.subdomain,
+          requestedTenantSubdomain,
+          isSuperAdmin,
+          userTenantId: userTenant.id,
+          path: req.path
+        });
+        
+        if (requestedTenantSubdomain && isSuperAdmin && requestedTenantSubdomain !== userTenant.subdomain) {
+          // Super admin is requesting access to a different tenant
+          const requestedTenant = await this.tenantsService.findBySubdomain(requestedTenantSubdomain);
+          if (requestedTenant && requestedTenant.status === 'active') {
+            effectiveTenant = requestedTenant;
+            console.log('[JwtTenantMiddleware] Tenant switched:', {
+              from: userTenant.subdomain,
+              to: effectiveTenant.subdomain,
+              effectiveTenantId: effectiveTenant.id
+            });
+          } else {
+            console.log('[JwtTenantMiddleware] Tenant switch failed:', {
+              requestedSubdomain: requestedTenantSubdomain,
+              found: !!requestedTenant,
+              status: requestedTenant?.status
+            });
+          }
+        }
+        
         if (
           process.env.NODE_ENV !== 'production' &&
           process.env.E2E_DEBUG === 'true'
@@ -87,14 +128,16 @@ export class JwtTenantMiddleware implements NestMiddleware {
             payload.sub,
             'tenant',
             userTenant.subdomain,
+            'effectiveTenant',
+            effectiveTenant.subdomain,
             'isSuperAdmin',
             isSuperAdmin,
           );
         }
 
         // Add tenant and user info to request context
-        req.tenant = userTenant;
-        req.tenant_id = userTenant.id;
+        req.tenant = effectiveTenant;
+        req.tenant_id = effectiveTenant.id;
         req.user = Object.assign(req.user || {}, {
           id: payload.sub,
           email: payload.email,
@@ -102,6 +145,13 @@ export class JwtTenantMiddleware implements NestMiddleware {
           isSuperAdmin,
         });
         req.isSuperAdmin = isSuperAdmin;
+        
+        console.log('[JwtTenantMiddleware] Final request context:', {
+          'req.tenant_id': req.tenant_id,
+          'req.user.tenant_id': req.user.tenant_id,
+          'effectiveTenant.subdomain': effectiveTenant.subdomain,
+          'effectiveTenant.id': effectiveTenant.id
+        });
 
         next();
       } catch {
@@ -117,7 +167,7 @@ export class JwtTenantMiddleware implements NestMiddleware {
     const fullPath = (req.originalUrl || req.url || '').split('?')[0];
     const publicMatchers: RegExp[] = [
       /^\/(?:api\/)?$/, // root or /api root
-      /^\/(?:api\/)?auth\/(login|register|refresh)(?:\/|$)/,
+      /^\/(?:api\/)?auth\/(login|register|refresh|forgot-password|reset-password)(?:\/|$)/,
       /^\/(?:api\/)?tenants\/(by-subdomain|validate)(?:\/|$)/,
       /^\/(?:api\/)?(health|docs|swagger)(?:\/|$)/,
     ];

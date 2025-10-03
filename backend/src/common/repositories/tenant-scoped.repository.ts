@@ -20,12 +20,16 @@ export class TenantScopedRepository<T extends TenantScopedEntity> {
   ) {}
 
   private gettenant_id(): string | undefined {
-    // Check if user is super admin (from walatech tenant)
-    const user = this.request.user as any;
-    if (user && user.isSuperAdmin) {
-      return undefined; // No tenant filtering for super admins
+    // Always use tenant_id from request context
+    // For super admins, this will be set via x-tenant-subdomain header
+    // For regular users, this will be their own tenant_id
+    const tenant_id = this.request.tenant_id;
+    
+    if (!tenant_id) {
+      console.warn('[TenantScopedRepository] No tenant_id found in request context');
     }
-    return this.request.tenant_id;
+    
+    return tenant_id;
   }
 
   private addTenantScope(

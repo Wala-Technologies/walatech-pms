@@ -46,7 +46,7 @@ export class DesignationsController {
   ): Promise<Designation> {
     return this.designationsService.create(
       createDesignationDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -59,7 +59,7 @@ export class DesignationsController {
     type: [Designation],
   })
   async findAll(@Request() req: any): Promise<Designation[]> {
-    return this.designationsService.findAll(req.user.tenantId);
+    return this.designationsService.findAll(req.user.tenant_id);
   }
 
   @Get('with-employee-count')
@@ -69,7 +69,7 @@ export class DesignationsController {
     description: 'Designations with employee count retrieved successfully',
   })
   async getWithEmployeeCount(@Request() req: any): Promise<any[]> {
-    return this.designationsService.getDesignationsWithEmployeeCount(req.user.tenantId);
+    return this.designationsService.getDesignationsWithEmployeeCount(req.user.tenant_id);
   }
 
   @Get('search')
@@ -84,7 +84,7 @@ export class DesignationsController {
     @Query('q') searchTerm: string,
     @Request() req: any,
   ): Promise<Designation[]> {
-    return this.designationsService.searchDesignations(searchTerm, req.user.tenantId);
+    return this.designationsService.searchDesignations(searchTerm, req.user.tenant_id);
   }
 
   @Get('name/:name')
@@ -100,7 +100,7 @@ export class DesignationsController {
     @Param('name') name: string,
     @Request() req: any,
   ): Promise<Designation> {
-    return this.designationsService.findByName(name, req.user.tenantId);
+    return this.designationsService.findByName(name, req.user.tenant_id);
   }
 
   @Get(':id')
@@ -116,7 +116,7 @@ export class DesignationsController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<Designation> {
-    return this.designationsService.findOne(id, req.user.tenantId);
+    return this.designationsService.findOne(id, req.user.tenant_id);
   }
 
   @Patch(':id')
@@ -137,7 +137,7 @@ export class DesignationsController {
     return this.designationsService.update(
       id,
       updateDesignationDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -149,6 +149,6 @@ export class DesignationsController {
   @ApiResponse({ status: 404, description: 'Designation not found' })
   @ApiResponse({ status: 409, description: 'Cannot delete designation that is assigned to employees' })
   async remove(@Param('id') id: string, @Request() req: any): Promise<void> {
-    return this.designationsService.remove(id, req.user.tenantId);
+    return this.designationsService.remove(id, req.user.tenant_id);
   }
 }

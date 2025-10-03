@@ -21,6 +21,7 @@ import { LeaveApplicationsService } from './services/leave-applications.service'
 import { LeaveTypesService } from './services/leave-types.service';
 import { ShiftTypesService } from './services/shift-types.service';
 import { DesignationsService } from './services/designations.service';
+import { DepartmentAccessService } from '../../common/services/department-access.service';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { DesignationsService } from './services/designations.service';
     LeaveTypesService,
     ShiftTypesService,
     DesignationsService,
+    DepartmentAccessService,
   ],
   exports: [
     EmployeesService,

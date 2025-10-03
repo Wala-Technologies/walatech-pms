@@ -9,6 +9,7 @@ import { WorkOrderTaskService } from './services/work-order-task.service';
 import { ProductionOrderController } from './controllers/production-order.controller';
 import { WorkOrderController } from './controllers/work-order.controller';
 import { WorkOrderTaskController } from './controllers/work-order-task.controller';
+import { DepartmentAccessService } from '../../common/services/department-access.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { WorkOrderTaskController } from './controllers/work-order-task.controlle
     ProductionOrderService,
     WorkOrderService,
     WorkOrderTaskService,
+    DepartmentAccessService,
   ],
   exports: [
     ProductionOrderService,

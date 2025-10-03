@@ -1,791 +1,312 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import {
-  Card,
-  Form,
-  Input,
-  Button,
-  Switch,
-  Select,
-  Space,
-  message,
-  Row,
-  Col,
-  Typography,
-  Divider,
-  Alert,
-  Tabs,
-  InputNumber,
-  Upload,
-  Avatar,
-} from 'antd';
-import {
-  SaveOutlined,
-  UploadOutlined,
-  GlobalOutlined,
-  SettingOutlined,
-  TeamOutlined,
-  SecurityScanOutlined,
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Layout, Menu, Card, Breadcrumb, Button, Alert, Spin } from 'antd';
+import { 
+  SettingOutlined, 
+  TeamOutlined, 
+  UserOutlined, 
+  CreditCardOutlined, 
+  SecurityScanOutlined, 
+  ApiOutlined,
+  DatabaseOutlined,
+  HomeOutlined,
+  BankOutlined
 } from '@ant-design/icons';
-import { useTenant } from '../../../../../contexts/tenant-context';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '../../../../../lib/api-client';
-import LogoUpload from './components/LogoUpload';
+import { useTenant } from '../../../../../contexts/tenant-context';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
-const { TabPane } = Tabs;
-const { TextArea } = Input;
+// Import tab components
+import GeneralSettings from './components/GeneralSettings';
+import DepartmentManagement from './components/DepartmentManagement';
+import UserRoleManagement from './components/UserRoleManagement';
+import BillingManagement from './components/BillingManagement';
+import SecuritySettings from './components/SecuritySettings';
+import IntegrationsManagement from './components/IntegrationsManagement';
+import SystemSettings from './components/SystemSettings';
 
-interface TenantSettings {
-  general: {
-    name: string;
-    description?: string;
-    website?: string;
-    logo?: string;
-    timezone: string;
-    dateFormat: string;
-    currency: string;
-  };
-  features: {
-    enableInventory: boolean;
-    enableManufacturing: boolean;
-    enableQuality: boolean;
-    enableMaintenance: boolean;
-    enableReports: boolean;
-    enableAPI: boolean;
-  };
-  limits: {
-    maxUsers: number;
-    maxProjects: number;
-    maxStorage: number; // in GB
-  };
-  security: {
-    enforcePasswordPolicy: boolean;
-    requireTwoFactor: boolean;
-    sessionTimeout: number; // in minutes
-    allowedDomains?: string[];
-  };
+const { Sider, Content } = Layout;
 
-  // Theme Settings
-  theme?: {
-    primaryColor: string;
-    secondaryColor: string;
-    logoPosition: 'left' | 'center';
-    sidebarStyle: 'light' | 'dark';
-    headerStyle: 'light' | 'dark';
-  };
+type TabKey = 'general' | 'departments' | 'users-roles' | 'billing' | 'security' | 'integrations' | 'system';
+
+interface TabConfig {
+  key: TabKey;
+  label: string;
+  icon: React.ReactNode;
+  component: React.ComponentType;
+  description: string;
 }
 
-export default function OrganizationSettingsPage() {
-  const t = useTranslations('tenant');
-  const tCommon = useTranslations('common');
-  const { tenant, updateTenantSettings } = useTenant();
+export default function OrganizationManagement() {
+  const t = useTranslations('organization');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { tenant: currentTenant } = useTenant();
+  const [activeTab, setActiveTab] = useState<TabKey>('general');
+  const [collapsed, setCollapsed] = useState(false);
+  const [managedTenant, setManagedTenant] = useState<any>(null);
+  const [isLoadingTenant, setIsLoadingTenant] = useState(false);
+  const [tenantError, setTenantError] = useState<string | null>(null);
 
-  const [settings, setSettings] = useState<TenantSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  // Removed selectedTenant logic to prevent cross-tenant contamination
-  const [form] = Form.useForm();
+  // Check if we're managing a different tenant
+  const targetTenantSubdomain = searchParams.get('tenant');
+  const isManagingDifferentTenant = targetTenantSubdomain && targetTenantSubdomain !== currentTenant?.subdomain;
 
+  // Tab configuration
+  const tabs: TabConfig[] = [
+    {
+      key: 'general',
+      label: t('tabs.general'),
+      icon: <SettingOutlined />,
+      component: GeneralSettings,
+      description: t('tabs.generalDesc')
+    },
+    {
+      key: 'departments',
+      label: t('tabs.departments'),
+      icon: <BankOutlined />,
+      component: DepartmentManagement,
+      description: t('tabs.departmentsDesc')
+    },
+    {
+      key: 'users-roles',
+      label: t('tabs.usersRoles'),
+      icon: <UserOutlined />,
+      component: UserRoleManagement,
+      description: t('tabs.usersRolesDesc')
+    },
+    {
+      key: 'billing',
+      label: t('tabs.billing'),
+      icon: <CreditCardOutlined />,
+      component: BillingManagement,
+      description: t('tabs.billingDesc')
+    },
+    {
+      key: 'security',
+      label: t('tabs.security'),
+      icon: <SecurityScanOutlined />,
+      component: SecuritySettings,
+      description: t('tabs.securityDesc')
+    },
+    {
+      key: 'integrations',
+      label: t('tabs.integrations'),
+      icon: <ApiOutlined />,
+      component: IntegrationsManagement,
+      description: t('tabs.integrationsDesc')
+    },
+    {
+      key: 'system',
+      label: t('tabs.system'),
+      icon: <DatabaseOutlined />,
+      component: SystemSettings,
+      description: t('tabs.systemDesc')
+    }
+  ];
+
+  // Handle URL parameters
   useEffect(() => {
-    if (tenant) {
-      // Set organization name immediately
-      form.setFieldsValue({ name: tenant.name });
-      fetchTenantSettings();
+    const tab = searchParams.get('tab') as TabKey;
+    if (tab && tabs.find(t => t.key === tab)) {
+      setActiveTab(tab);
     }
-  }, [tenant]);
+  }, [searchParams]);
 
-  // Removed tenant selection functions to prevent cross-tenant contamination
-
-  const fetchTenantSettings = async () => {
-    try {
-      setLoading(true);
-      // Always use tenant-settings endpoint which uses current user's tenant context
-      const endpoint = '/tenant-settings';
-      const response = await apiClient.get(endpoint);
-      const settingsData = response.data;
-      setSettings(settingsData);
-
-      // Set form values with defaults for theme
-      const themeDefaults = {
-        primaryColor: '#1890ff',
-        secondaryColor: '#52c41a',
-        logoPosition: 'left',
-        sidebarStyle: 'light',
-        headerStyle: 'light',
-      };
-
-      form.setFieldsValue({
-        // Set organization name from current tenant if not in settings
-        name: settingsData.general?.name || tenant?.name || '',
-        ...settingsData.general,
-        ...settingsData.features,
-        ...settingsData.limits,
-        ...settingsData.security,
-        ...themeDefaults,
-        ...settingsData.theme,
-        // Map companyLogo to logo field for the form
-        logo: settingsData.companyLogo || '',
-        allowedDomains: settingsData.security.allowedDomains?.join(', ') || '',
-      });
-    } catch (error) {
-      message.error('Failed to fetch organization settings');
-      console.error('Error fetching tenant settings:', error);
-    } finally {
-      setLoading(false);
+  // Fetch target tenant information if managing a different tenant
+  useEffect(() => {
+    if (isManagingDifferentTenant && targetTenantSubdomain) {
+      setIsLoadingTenant(true);
+      setTenantError(null);
+      
+      // Fetch tenant information directly by subdomain
+      apiClient.get(`/api/tenants/by-subdomain/${targetTenantSubdomain}`)
+        .then(response => {
+          const tenant = response.data;
+          if (tenant && tenant.status === 'active') {
+            setManagedTenant(tenant);
+          } else {
+            setTenantError('Tenant is not valid or active');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching tenant:', error);
+          setTenantError('Failed to load tenant information');
+        })
+        .finally(() => {
+          setIsLoadingTenant(false);
+        });
+    } else {
+      setManagedTenant(null);
+      setTenantError(null);
     }
+  }, [isManagingDifferentTenant, targetTenantSubdomain]);
+
+  // Handle tab change
+  const handleTabChange = (key: TabKey) => {
+    setActiveTab(key);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', key);
+    router.push(url.pathname + url.search, { scroll: false });
   };
 
-  const handleSaveSettings = async (values: any) => {
-    try {
-      setSaving(true);
-      console.log('Form values:', values);
-      console.log('Current tenant:', tenant);
+  // Get current tab configuration
+  const currentTab = tabs.find(tab => tab.key === activeTab) || tabs[0];
+  const CurrentComponent = currentTab.component;
 
-      const updatedSettings: TenantSettings = {
-        // Map logo field to general.logo
-        general: {
-          name: values.name,
-          description: values.description,
-          website: values.website,
-          logo: values.logo,
-          timezone: values.timezone,
-          dateFormat: values.dateFormat,
-          currency: values.currency,
-        },
-        features: {
-          enableInventory: values.enableInventory,
-          enableManufacturing: values.enableManufacturing,
-          enableQuality: values.enableQuality,
-          enableMaintenance: values.enableMaintenance,
-          enableReports: values.enableReports,
-          enableAPI: values.enableAPI,
-        },
-        limits: {
-          maxUsers: values.maxUsers,
-          maxProjects: values.maxProjects,
-          maxStorage: values.maxStorage,
-        },
-        security: {
-          enforcePasswordPolicy: values.enforcePasswordPolicy,
-          requireTwoFactor: values.requireTwoFactor,
-          sessionTimeout: values.sessionTimeout,
-          allowedDomains: values.allowedDomains
-            ? values.allowedDomains.split(',').map((d: string) => d.trim())
-            : [],
-        },
-        theme: {
-          primaryColor: values.primaryColor || '#1890ff',
-          secondaryColor: values.secondaryColor || '#52c41a',
-          logoPosition: values.logoPosition || 'left',
-          sidebarStyle: values.sidebarStyle || 'light',
-          headerStyle: values.headerStyle || 'light',
-        },
-      };
-
-      // Always use tenant-settings endpoint which uses current user's tenant context
-      const endpoint = '/tenant-settings';
-      console.log('API endpoint:', endpoint);
-      console.log('Sending settings:', { settings: updatedSettings });
-
-      const response = await apiClient.put(endpoint, {
-        settings: updatedSettings,
-      });
-      console.log('API response:', response);
-      setSettings(updatedSettings);
-
-      // Update tenant context if general settings changed
-      if (updateTenantSettings) {
-        updateTenantSettings(updatedSettings.general);
-      }
-
-      message.success('Organization settings updated successfully');
-    } catch (error: any) {
-      console.error('Save settings error:', error);
-      console.error('Error response:', error.response);
-      console.error('Error status:', error.response?.status);
-      console.error('Error data:', error.response?.data);
-      message.error(
-        error.response?.data?.message ||
-          'Failed to update organization settings'
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleResetSettings = async () => {
-    try {
-      // Always use tenant-settings endpoint which uses current user's tenant context
-      const endpoint = '/tenant-settings/reset';
-      await apiClient.post(endpoint);
-      message.success('Settings reset to defaults');
-      fetchTenantSettings();
-    } catch (error: any) {
-      message.error(
-        error.response?.data?.message || 'Failed to reset settings'
-      );
-    }
-  };
-
-  if (!tenant) {
+  // Show loading state while fetching tenant
+  if (isLoadingTenant) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center' }}>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Spin size="large" />
+        <span className="ml-3">Loading tenant information...</span>
+      </div>
+    );
+  }
+
+  // Show error state if tenant fetch failed
+  if (tenantError) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
         <Alert
-          message="No Organization Context"
-          description="Unable to load organization context. Please ensure you're accessing this page from a valid tenant subdomain."
-          type="warning"
+          message="Error Loading Tenant"
+          description={tenantError}
+          type="error"
           showIcon
+          action={
+            <Button size="small" onClick={() => router.back()}>
+              Go Back
+            </Button>
+          }
         />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={2}>
-          <SettingOutlined style={{ marginRight: '8px' }} />
-          {tenant.name} - Organization Settings
-        </Title>
-        <Text type="secondary">
-          Configure your organization's preferences and features
-        </Text>
-      </div>
-
-      <Alert
-        message={`Managing: ${tenant.name}`}
-        description={`Organization ID: ${tenant.subdomain}`}
-        type="info"
-        showIcon
-        style={{ marginBottom: '24px' }}
-      />
-
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSaveSettings}
-        disabled={loading}
-      >
-        <Tabs
-          defaultActiveKey="general"
+    <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b px-6 py-4">
+        <Breadcrumb
           items={[
             {
-              key: 'general',
-              label: (
-                <span>
-                  <GlobalOutlined />
-                  General
+              title: (
+                <span className="flex items-center gap-2">
+                  <HomeOutlined />
+                  {t('breadcrumb.dashboard')}
                 </span>
-              ),
-              children: (
-                <Card>
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item
-                        name="name"
-                        label="Organization Name"
-                        rules={[
-                          {
-                            required: true,
-                            message: 'Please enter organization name',
-                          },
-                        ]}
-                      >
-                        <Input placeholder="Enter organization name" />
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item name="website" label="Website">
-                        <Input placeholder="https://example.com" />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Form.Item name="description" label="Description">
-                    <TextArea
-                      rows={3}
-                      placeholder="Brief description of your organization"
-                    />
-                  </Form.Item>
-
-                  <Form.Item name="logo" label="Organization Logo">
-                    <LogoUpload
-                      value={settings?.general?.logo}
-                      onChange={(logoUrl) =>
-                        form.setFieldsValue({ logo: logoUrl })
-                      }
-                      tenant_id={tenant?.id}
-                    />
-                  </Form.Item>
-
-                  <Row gutter={24}>
-                    <Col span={8}>
-                      <Form.Item
-                        name="timezone"
-                        label="Timezone"
-                        rules={[
-                          { required: true, message: 'Please select timezone' },
-                        ]}
-                      >
-                        <Select placeholder="Select timezone">
-                          <Option value="UTC">UTC</Option>
-                          <Option value="America/New_York">Eastern Time</Option>
-                          <Option value="America/Chicago">Central Time</Option>
-                          <Option value="America/Denver">Mountain Time</Option>
-                          <Option value="America/Los_Angeles">
-                            Pacific Time
-                          </Option>
-                          <Option value="Europe/London">London</Option>
-                          <Option value="Europe/Paris">Paris</Option>
-                          <Option value="Asia/Tokyo">Tokyo</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item
-                        name="dateFormat"
-                        label="Date Format"
-                        rules={[
-                          {
-                            required: true,
-                            message: 'Please select date format',
-                          },
-                        ]}
-                      >
-                        <Select placeholder="Select date format">
-                          <Option value="MM/DD/YYYY">MM/DD/YYYY</Option>
-                          <Option value="DD/MM/YYYY">DD/MM/YYYY</Option>
-                          <Option value="YYYY-MM-DD">YYYY-MM-DD</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item
-                        name="currency"
-                        label="Currency"
-                        rules={[
-                          { required: true, message: 'Please select currency' },
-                        ]}
-                      >
-                        <Select placeholder="Select currency">
-                          <Option value="USD">USD - US Dollar</Option>
-                          <Option value="EUR">EUR - Euro</Option>
-                          <Option value="GBP">GBP - British Pound</Option>
-                          <Option value="JPY">JPY - Japanese Yen</Option>
-                          <Option value="ETB">ETB - Ethiopian Birr</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Card>
               ),
             },
             {
-              key: 'features',
-              label: (
-                <span>
-                  <SettingOutlined />
-                  Features
-                </span>
-              ),
-              children: (
-                <Card>
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item name="enableInventory" valuePropName="checked">
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Inventory Management
-                            </div>
-                            <Text type="secondary">
-                              Enable inventory tracking and management
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item
-                        name="enableManufacturing"
-                        valuePropName="checked"
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Manufacturing
-                            </div>
-                            <Text type="secondary">
-                              Enable production planning and work orders
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item name="enableQuality" valuePropName="checked">
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Quality Control
-                            </div>
-                            <Text type="secondary">
-                              Enable quality inspections and procedures
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item
-                        name="enableMaintenance"
-                        valuePropName="checked"
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Maintenance
-                            </div>
-                            <Text type="secondary">
-                              Enable asset maintenance scheduling
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item name="enableReports" valuePropName="checked">
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Advanced Reports
-                            </div>
-                            <Text type="secondary">
-                              Enable detailed reporting and analytics
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item name="enableAPI" valuePropName="checked">
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>API Access</div>
-                            <Text type="secondary">
-                              Enable REST API for integrations
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Card>
-              ),
+              title: t('breadcrumb.settings'),
             },
             {
-              key: 'limits',
-              label: (
-                <span>
-                  <TeamOutlined />
-                  Limits
-                </span>
-              ),
-              children: (
-                <Card>
-                  <Row gutter={24}>
-                    <Col span={8}>
-                      <Form.Item
-                        name="maxUsers"
-                        label="Maximum Users"
-                        rules={[
-                          { required: true, message: 'Please enter max users' },
-                        ]}
-                      >
-                        <InputNumber
-                          min={1}
-                          max={1000}
-                          style={{ width: '100%' }}
-                          placeholder="Enter max users"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item
-                        name="maxProjects"
-                        label="Maximum Projects"
-                        rules={[
-                          {
-                            required: true,
-                            message: 'Please enter max projects',
-                          },
-                        ]}
-                      >
-                        <InputNumber
-                          min={1}
-                          max={500}
-                          style={{ width: '100%' }}
-                          placeholder="Enter max projects"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item
-                        name="maxStorage"
-                        label="Storage Limit (GB)"
-                        rules={[
-                          {
-                            required: true,
-                            message: 'Please enter storage limit',
-                          },
-                        ]}
-                      >
-                        <InputNumber
-                          min={1}
-                          max={1000}
-                          style={{ width: '100%' }}
-                          placeholder="Enter storage limit"
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Card>
-              ),
+              title: t('breadcrumb.organization'),
             },
             {
-              key: 'security',
-              label: (
-                <span>
-                  <SecurityScanOutlined />
-                  Security
-                </span>
-              ),
-              children: (
-                <Card>
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item
-                        name="enforcePasswordPolicy"
-                        valuePropName="checked"
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Enforce Password Policy
-                            </div>
-                            <Text type="secondary">
-                              Require strong passwords
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item
-                        name="requireTwoFactor"
-                        valuePropName="checked"
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>
-                              Require Two-Factor Auth
-                            </div>
-                            <Text type="secondary">
-                              Mandatory 2FA for all users
-                            </Text>
-                          </div>
-                          <Switch />
-                        </div>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item
-                        name="sessionTimeout"
-                        label="Session Timeout (minutes)"
-                        rules={[
-                          {
-                            required: true,
-                            message: 'Please enter session timeout',
-                          },
-                        ]}
-                      >
-                        <InputNumber
-                          min={15}
-                          max={1440}
-                          style={{ width: '100%' }}
-                          placeholder="Enter timeout in minutes"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item
-                        name="allowedDomains"
-                        label="Allowed Email Domains"
-                      >
-                        <Input placeholder="example.com, company.org (comma separated)" />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Card>
-              ),
-            },
-            {
-              key: 'theme',
-              label: (
-                <span>
-                  <SettingOutlined />
-                  Theme
-                </span>
-              ),
-              children: (
-                <Card>
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <Form.Item
-                        name="primaryColor"
-                        label="Primary Color"
-                        initialValue="#1890ff"
-                      >
-                        <Input type="color" style={{ width: '100px' }} />
-                      </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                      <Form.Item
-                        name="secondaryColor"
-                        label="Secondary Color"
-                        initialValue="#52c41a"
-                      >
-                        <Input type="color" style={{ width: '100px' }} />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Row gutter={24}>
-                    <Col span={8}>
-                      <Form.Item name="logoPosition" label="Logo Position">
-                        <Select placeholder="Select logo position">
-                          <Option value="left">Left</Option>
-                          <Option value="center">Center</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item name="sidebarStyle" label="Sidebar Style">
-                        <Select placeholder="Select sidebar style">
-                          <Option value="light">Light</Option>
-                          <Option value="dark">Dark</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item name="headerStyle" label="Header Style">
-                        <Select placeholder="Select header style">
-                          <Option value="light">Light</Option>
-                          <Option value="dark">Dark</Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Card>
-              ),
+              title: currentTab.label,
             },
           ]}
         />
+      </div>
 
-        <Card style={{ marginTop: '24px' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Space>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                htmlType="submit"
-                loading={saving}
-              >
-                Save Settings
+      {/* Tenant Management Banner */}
+      {isManagingDifferentTenant && managedTenant && (
+        <div className="bg-blue-50 border-b px-6 py-3">
+          <Alert
+            message={
+              <span>
+                <BankOutlined className="mr-2" />
+                Managing Organization: <strong>{managedTenant.name}</strong> ({managedTenant.subdomain})
+              </span>
+            }
+            description="You are currently managing settings for a different organization as a super administrator."
+            type="info"
+            showIcon={false}
+            action={
+              <Button size="small" onClick={() => router.push('/dashboard/settings/organization')}>
+                Return to My Organization
               </Button>
-              <Button onClick={() => fetchTenantSettings()} disabled={loading}>
-                Reset Changes
-              </Button>
-            </Space>
-            <Button danger onClick={handleResetSettings}>
-              Reset to Defaults
-            </Button>
+            }
+          />
+        </div>
+      )}
+
+      <Layout className="min-h-screen">
+        {/* Sidebar Navigation */}
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
+          width={280}
+          className="bg-white border-r"
+          breakpoint="lg"
+          collapsedWidth={80}
+        >
+          <div className="p-4 border-b">
+            <h2 className={`font-semibold text-gray-800 transition-all duration-200 ${
+              collapsed ? 'text-center text-sm' : 'text-lg'
+            }`}>
+              {collapsed ? t('title.short') : t('title.full')}
+            </h2>
           </div>
-        </Card>
-      </Form>
+
+          <Menu
+            mode="inline"
+            selectedKeys={[activeTab]}
+            className="border-none"
+            items={tabs.map(tab => ({
+              key: tab.key,
+              icon: tab.icon,
+              label: tab.label,
+              onClick: () => handleTabChange(tab.key),
+              className: 'mb-1 mx-2 rounded-lg'
+            }))}
+          />
+
+          {/* Quick Actions */}
+          {!collapsed && (
+            <div className="absolute bottom-4 left-4 right-4">
+              <Card size="small" className="bg-blue-50 border-blue-200">
+                <div className="text-center">
+                  <TeamOutlined className="text-blue-500 text-xl mb-2" />
+                  <p className="text-xs text-gray-600 mb-2">
+                    {t('quickActions.needHelp')}
+                  </p>
+                  <Button size="small" type="link" className="p-0 h-auto">
+                    {t('quickActions.viewDocs')}
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+        </Sider>
+
+        {/* Main Content */}
+        <Layout>
+          <Content className="p-6">
+            {/* Tab Header */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                  {currentTab.icon}
+                  {currentTab.label}
+                </h1>
+              </div>
+              <p className="text-gray-600">{currentTab.description}</p>
+            </div>
+
+            {/* Tab Content */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <CurrentComponent 
+                managedTenant={isManagingDifferentTenant ? managedTenant : null}
+              />
+            </div>
+          </Content>
+        </Layout>
+      </Layout>
     </div>
   );
 }

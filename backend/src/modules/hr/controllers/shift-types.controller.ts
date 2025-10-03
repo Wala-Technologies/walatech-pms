@@ -44,7 +44,7 @@ export class ShiftTypesController {
   ): Promise<ShiftType> {
     return this.shiftTypesService.create(
       createShiftTypeDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -57,7 +57,7 @@ export class ShiftTypesController {
     type: [ShiftType],
   })
   async findAll(@Request() req: any): Promise<ShiftType[]> {
-    return this.shiftTypesService.findAll(req.user.tenantId);
+    return this.shiftTypesService.findAll(req.user.tenant_id);
   }
 
   @Get('active')
@@ -68,7 +68,7 @@ export class ShiftTypesController {
     type: [ShiftType],
   })
   async getActiveShiftTypes(@Request() req: any): Promise<ShiftType[]> {
-    return this.shiftTypesService.getActiveShiftTypes(req.user.tenantId);
+    return this.shiftTypesService.getActiveShiftTypes(req.user.tenant_id);
   }
 
   @Get('current')
@@ -79,7 +79,7 @@ export class ShiftTypesController {
     type: ShiftType,
   })
   async getCurrentShift(@Request() req: any): Promise<ShiftType | null> {
-    return this.shiftTypesService.getCurrentShift(req.user.tenantId);
+    return this.shiftTypesService.getCurrentShift(req.user.tenant_id);
   }
 
   @Get('stats')
@@ -89,7 +89,7 @@ export class ShiftTypesController {
     description: 'Shift types with statistics retrieved successfully',
   })
   async getStats(@Request() req: any): Promise<any[]> {
-    return this.shiftTypesService.getShiftTypesWithStats(req.user.tenantId);
+    return this.shiftTypesService.getShiftTypesWithStats(req.user.tenant_id);
   }
 
   @Get('name/:name')
@@ -105,7 +105,7 @@ export class ShiftTypesController {
     @Param('name') name: string,
     @Request() req: any,
   ): Promise<ShiftType> {
-    return this.shiftTypesService.findByName(name, req.user.tenantId);
+    return this.shiftTypesService.findByName(name, req.user.tenant_id);
   }
 
   @Get(':id')
@@ -121,7 +121,7 @@ export class ShiftTypesController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<ShiftType> {
-    return this.shiftTypesService.findOne(id, req.user.tenantId);
+    return this.shiftTypesService.findOne(id, req.user.tenant_id);
   }
 
   @Patch(':id')
@@ -142,7 +142,7 @@ export class ShiftTypesController {
     return this.shiftTypesService.update(
       id,
       updateShiftTypeDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -156,7 +156,7 @@ export class ShiftTypesController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<void> {
-    return this.shiftTypesService.updateLastSyncTime(id, req.user.tenantId);
+    return this.shiftTypesService.updateLastSyncTime(id, req.user.tenant_id);
   }
 
   @Delete(':id')
@@ -166,6 +166,6 @@ export class ShiftTypesController {
   @ApiResponse({ status: 404, description: 'Shift type not found' })
   @ApiResponse({ status: 409, description: 'Cannot delete shift type that is being used' })
   async remove(@Param('id') id: string, @Request() req: any): Promise<void> {
-    return this.shiftTypesService.remove(id, req.user.tenantId);
+    return this.shiftTypesService.remove(id, req.user.tenant_id);
   }
 }

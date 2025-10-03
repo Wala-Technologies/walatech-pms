@@ -7,6 +7,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   UseGuards,
   HttpStatus,
   HttpCode,
@@ -36,7 +37,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../../auth/guards/super-admin.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
-import { TenantPlan } from '../../../entities/tenant.entity';
+import { TenantPlan, TenantStatus } from '../../../entities/tenant.entity';
+import { TenantCleanupService } from '../services/tenant-cleanup.service';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard)
@@ -44,6 +46,7 @@ export class TenantsController {
   constructor(
     private readonly tenantsService: TenantsService,
     private readonly tenantSettingsService: TenantSettingsService,
+    private readonly tenantCleanupService: TenantCleanupService,
   ) {}
 
   @Post()
@@ -55,8 +58,19 @@ export class TenantsController {
 
   @Get()
   @UseGuards(SuperAdminGuard)
-  findAll() {
-    return this.tenantsService.findAll();
+  @ApiOperation({ summary: 'Get all tenants with optional status filtering' })
+  @ApiResponse({ status: 200, description: 'Tenants retrieved successfully' })
+  findAll(
+    @Query('status') status?: TenantStatus,
+    @Query('includeDeleted') includeDeleted?: string,
+  ) {
+    const includeDeletedBool = includeDeleted === 'true';
+    
+    // Only pass status filter if explicitly provided
+    // If includeDeleted is true and no status is specified, don't default to ACTIVE
+    const filterStatus = status || (includeDeletedBool ? undefined : TenantStatus.ACTIVE);
+    
+    return this.tenantsService.findAll(includeDeletedBool, filterStatus);
   }
 
   // Removed insecure public endpoint 'admin/all' that exposed all tenants without authentication.
@@ -175,6 +189,103 @@ export class TenantsController {
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   resetTenantSettings(@Param('id') id: string): Promise<TenantSettings> {
     return this.tenantSettingsService.resetTenantSettings(id);
+  }
+
+  // Lifecycle Management Endpoints
+
+  @Post(':id/soft-delete')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Soft delete a tenant with retention period' })
+  @ApiResponse({ status: 200, description: 'Tenant soft deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Tenant is already deleted' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async softDeleteTenant(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; email: string },
+    @Body() body: { reason?: string; retentionDays?: number },
+  ) {
+    return this.tenantsService.softDelete(
+      id,
+      user.email,
+      body.reason,
+      body.retentionDays,
+    );
+  }
+
+  @Post(':id/hard-delete')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Permanently delete a tenant' })
+  @ApiResponse({ status: 204, description: 'Tenant hard deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Tenant is already hard deleted' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async hardDeleteTenant(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; email: string },
+    @Body() body: { reason?: string },
+  ) {
+    await this.tenantsService.hardDelete(id, user.email, body.reason);
+  }
+
+  @Post(':id/reactivate')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reactivate a suspended or soft-deleted tenant' })
+  @ApiResponse({ status: 200, description: 'Tenant reactivated successfully' })
+  @ApiResponse({ status: 400, description: 'Tenant cannot be reactivated from current status' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async reactivateTenant(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; email: string },
+    @Body() body: { reason?: string },
+  ) {
+    return this.tenantsService.reactivate(id, user.email, body.reason);
+  }
+
+  @Patch(':id/retention-period')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update tenant retention period' })
+  @ApiResponse({ status: 200, description: 'Retention period updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid retention period (must be 7-365 days)' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async updateRetentionPeriod(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; email: string },
+    @Body() body: { retentionPeriodDays: number },
+  ) {
+    return this.tenantsService.updateRetentionPeriod(
+      id,
+      body.retentionPeriodDays,
+      user.email,
+    );
+  }
+
+  @Get(':id/audit-log')
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Get tenant lifecycle audit log' })
+  @ApiResponse({ status: 200, description: 'Audit log retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async getTenantAuditLog(@Param('id') id: string) {
+    return this.tenantsService.getTenantAuditLog(id);
+  }
+
+  @Get('admin/eligible-for-deletion')
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Get tenants eligible for hard deletion' })
+  @ApiResponse({ status: 200, description: 'Eligible tenants retrieved successfully' })
+  async getTenantsEligibleForDeletion() {
+    return this.tenantsService.getTenantsEligibleForHardDeletion();
+  }
+
+  @Post('admin/trigger-cleanup')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manually trigger tenant cleanup process' })
+  @ApiResponse({ status: 200, description: 'Cleanup process completed' })
+  async triggerManualCleanup(@CurrentUser() user: { id: string; email: string }) {
+    return this.tenantCleanupService.triggerManualCleanup(user.email);
   }
 
   @Post(':id/logo')

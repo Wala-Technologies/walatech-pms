@@ -1,4 +1,5 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Scope, Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Account } from '../entities/account.entity';
@@ -15,8 +16,9 @@ import { CreateCostCenterDto } from '../dto/create-cost-center.dto';
 import { CreateFiscalYearDto } from '../dto/create-fiscal-year.dto';
 import { CreatePaymentEntryDto } from '../dto/create-payment-entry.dto';
 import { AccountBalanceQueryDto, TrialBalanceQueryDto, GLReportQueryDto } from '../dto/accounting-query.dto';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class AccountingService {
   constructor(
     @InjectRepository(Account) private accountRepo: Repository<Account>,
@@ -26,6 +28,8 @@ export class AccountingService {
     @InjectRepository(CostCenter) private costCenterRepo: Repository<CostCenter>,
     @InjectRepository(FiscalYear) private fiscalYearRepo: Repository<FiscalYear>,
     @InjectRepository(PaymentEntry) private paymentRepo: Repository<PaymentEntry>,
+    private departmentAccessService: DepartmentAccessService,
+    @Inject(REQUEST) private request: any,
   ) {}
 
   async createAccount(dto: CreateAccountDto, tenant_id: string) {
@@ -50,6 +54,18 @@ export class AccountingService {
   }
 
   async createJournalEntry(dto: CreateJournalEntryDto, tenant_id: string) {
+    // Department access control
+    const user = this.request.user;
+    let departmentId = dto.department_id;
+    
+    if (!departmentId && user) {
+      departmentId = this.departmentAccessService.getDefaultDepartmentForUser(user) ?? undefined;
+    }
+    
+    if (user && departmentId && !this.departmentAccessService.canAccessDepartment(user, departmentId)) {
+      throw new BadRequestException('Access denied: You cannot create journal entries for this department');
+    }
+
     // Basic debit/credit validation
     const totalDebit = (dto.accounts || []).reduce(
       (s, l) => s + (l.debitInAccountCurrency || 0),
@@ -66,6 +82,7 @@ export class AccountingService {
       voucherType: dto.voucherType,
       postingDate: dto.postingDate,
       company: dto.company,
+      department_id: departmentId,
       referenceNo: dto.referenceNo,
       referenceDate: dto.referenceDate,
       userRemark: dto.userRemark,
@@ -83,11 +100,26 @@ export class AccountingService {
   }
 
   async listJournalEntries(tenant_id: string) {
-    return this.jeRepo.find({
-      where: { tenant: { id: tenant_id } },
-      relations: ['lines'],
-      order: { postingDate: 'DESC' },
-    });
+    const queryBuilder = this.jeRepo.createQueryBuilder('je')
+      .leftJoinAndSelect('je.lines', 'lines')
+      .where('je.tenant_id = :tenant_id', { tenant_id })
+      .orderBy('je.postingDate', 'DESC');
+
+    // Apply department-based filtering
+    const user = this.request.user;
+    if (user && !this.departmentAccessService.canAccessAllDepartments(user)) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments && accessibleDepartments.length > 0) {
+        queryBuilder.andWhere('je.department_id IN (:...departmentIds)', {
+          departmentIds: accessibleDepartments,
+        });
+      } else {
+        // User has no department access, return empty result
+        queryBuilder.andWhere('1 = 0');
+      }
+    }
+
+    return queryBuilder.getMany();
   }
 
   // GL Entry Methods
@@ -375,10 +407,26 @@ export class AccountingService {
   }
 
   async listPaymentEntries(tenant_id: string) {
-    return this.paymentRepo.find({
-      where: { tenant: { id: tenant_id } },
-      relations: ['paidFromAccount', 'paidToAccount'],
-      order: { postingDate: 'DESC' },
-    });
+    const queryBuilder = this.paymentRepo.createQueryBuilder('payment')
+      .leftJoinAndSelect('payment.paidFromAccount', 'paidFromAccount')
+      .leftJoinAndSelect('payment.paidToAccount', 'paidToAccount')
+      .where('payment.tenant_id = :tenant_id', { tenant_id })
+      .orderBy('payment.postingDate', 'DESC');
+
+    // Apply department-based filtering
+    const user = this.request.user;
+    if (user && !this.departmentAccessService.canAccessAllDepartments(user)) {
+      const accessibleDepartments = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartments && accessibleDepartments.length > 0) {
+        queryBuilder.andWhere('payment.department_id IN (:...departmentIds)', {
+          departmentIds: accessibleDepartments,
+        });
+      } else {
+        // User has no department access, return empty result
+        queryBuilder.andWhere('1 = 0');
+      }
+    }
+
+    return queryBuilder.getMany();
   }
 }

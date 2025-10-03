@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -18,7 +18,8 @@ import {
   Badge,
   DatePicker,
   Row,
-  Col
+  Col,
+  message
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,6 +33,7 @@ import {
   MoreOutlined,
   EyeOutlined
 } from '@ant-design/icons';
+import { hrApi } from '@/lib/hr-api';
 
 interface User {
   id: string;
@@ -41,6 +43,7 @@ interface User {
   lastName: string;
   role: string;
   department: string;
+  department_id?: string;
   status: 'active' | 'inactive' | 'suspended';
   lastLogin: string;
   createdAt: string;
@@ -56,13 +59,41 @@ interface Role {
   userCount: number;
 }
 
+interface Department {
+  id: string;
+  name: string;
+  department_name: string;
+  description?: string;
+  parent_department?: string;
+  is_group: boolean;
+  disabled: boolean;
+}
+
 export default function UsersPage() {
   const [searchText, setSearchText] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await hrApi.getDepartments({ limit: 1000 });
+      if (response.data) {
+        setDepartments(response.data.departments || response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      message.error('Failed to load departments');
+    }
+  };
 
   // Mock data
   const users: User[] = [
@@ -74,6 +105,7 @@ export default function UsersPage() {
       lastName: 'Administrator',
       role: 'System Admin',
       department: 'IT',
+      department_id: 'dept-it-001',
       status: 'active',
       lastLogin: '2024-01-14 09:30:00',
       createdAt: '2023-01-01',
@@ -87,6 +119,7 @@ export default function UsersPage() {
       lastName: 'Tadesse',
       role: 'Production Manager',
       department: 'Production',
+      department_id: 'dept-prod-001',
       status: 'active',
       lastLogin: '2024-01-14 08:15:00',
       createdAt: '2023-02-15',
@@ -100,6 +133,7 @@ export default function UsersPage() {
       lastName: 'Bekele',
       role: 'Quality Lead',
       department: 'Quality Control',
+      department_id: 'dept-qc-001',
       status: 'active',
       lastLogin: '2024-01-13 16:45:00',
       createdAt: '2023-03-10',
@@ -113,6 +147,7 @@ export default function UsersPage() {
       lastName: 'Haile',
       role: 'Machine Operator',
       department: 'Production',
+      department_id: 'dept-prod-001',
       status: 'inactive',
       lastLogin: '2024-01-10 17:30:00',
       createdAt: '2023-06-20',
@@ -345,6 +380,21 @@ export default function UsersPage() {
     },
   ];
 
+  // Filter users based on search and filters
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = searchText === '' || 
+      user.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchText.toLowerCase());
+    
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    const matchesDepartment = departmentFilter === 'all' || user.department_id === departmentFilter;
+    
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+  });
+
   // Calculate summary statistics
   const totalUsers = users.length;
   const activeUsers = users.filter(user => user.status === 'active').length;
@@ -432,6 +482,19 @@ export default function UsersPage() {
               <Select.Option value="inactive">Inactive</Select.Option>
               <Select.Option value="suspended">Suspended</Select.Option>
             </Select>
+            <Select
+              placeholder="Filter by department"
+              value={departmentFilter}
+              onChange={setDepartmentFilter}
+              className="w-48"
+            >
+              <Select.Option value="all">All Departments</Select.Option>
+              {departments.map(dept => (
+                <Select.Option key={dept.id} value={dept.id}>
+                  {dept.department_name || dept.name}
+                </Select.Option>
+              ))}
+            </Select>
             <Button icon={<FilterOutlined />}>More Filters</Button>
           </div>
         </Card>
@@ -441,7 +504,7 @@ export default function UsersPage() {
       <Card>
         <Table
           columns={columns}
-          dataSource={users}
+          dataSource={filteredUsers}
           rowKey="id"
           pagination={{
             total: users.length,
@@ -525,11 +588,17 @@ export default function UsersPage() {
             </Col>
             <Col span={12}>
               <Form.Item
-                name="department"
+                name="department_id"
                 label="Department"
-                rules={[{ required: true, message: 'Please enter department' }]}
+                rules={[{ required: true, message: 'Please select department' }]}
               >
-                <Input />
+                <Select placeholder="Select department">
+                  {departments.map(dept => (
+                    <Select.Option key={dept.id} value={dept.id}>
+                      {dept.department_name || dept.name}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>

@@ -6,6 +6,7 @@ import { Employee, EmployeeStatus } from '../entities/employee.entity';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
 import { EmployeeQueryDto } from '../dto/employee-query.dto';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class EmployeesService {
@@ -13,9 +14,10 @@ export class EmployeesService {
     @InjectRepository(Employee)
     private employeeRepository: Repository<Employee>,
     @Inject(REQUEST) private request: any,
+    private departmentAccessService: DepartmentAccessService,
   ) {}
 
-  private get tenantId(): string {
+  private get tenant_id(): string {
     return this.request.tenant_id || this.request.user?.tenant_id;
   }
 
@@ -24,7 +26,7 @@ export class EmployeesService {
     const existingEmployee = await this.employeeRepository.findOne({
       where: {
         name: createEmployeeDto.name,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -37,7 +39,7 @@ export class EmployeesService {
       const existingNumber = await this.employeeRepository.findOne({
         where: {
           employee_number: createEmployeeDto.employee_number,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -51,7 +53,7 @@ export class EmployeesService {
       const existingEmail = await this.employeeRepository.findOne({
         where: {
           personal_email: createEmployeeDto.personal_email,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -60,11 +62,24 @@ export class EmployeesService {
       }
     }
 
+    // Set default department if not provided and user has limited access
+    let departmentId = createEmployeeDto.department_id;
+    const user = this.request.user;
+    if (!departmentId && user) {
+      departmentId = this.departmentAccessService.getDefaultDepartmentForUser(user) ?? undefined;
+    }
+
+    // Validate department access
+    if (departmentId && user && !this.departmentAccessService.canAccessDepartment(user, departmentId)) {
+      throw new ConflictException('You do not have access to create employees in this department');
+    }
+
     const employee = this.employeeRepository.create({
       ...createEmployeeDto,
+      department_id: departmentId,
       date_of_birth: createEmployeeDto.date_of_birth ? new Date(createEmployeeDto.date_of_birth) : undefined,
       date_of_joining: createEmployeeDto.date_of_joining ? new Date(createEmployeeDto.date_of_joining) : undefined,
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -80,7 +95,19 @@ export class EmployeesService {
       .leftJoinAndSelect('employee.department', 'department')
       .leftJoinAndSelect('employee.designation', 'designation')
       .leftJoinAndSelect('employee.user', 'user')
-      .where('employee.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .where('employee.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
+
+    // Apply department-based access control
+    const user = this.request.user;
+    if (user && !this.departmentAccessService.canAccessAllDepartments(user)) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartmentIds && accessibleDepartmentIds.length > 0) {
+        queryBuilder.andWhere('employee.department_id IN (:...accessibleDepartmentIds)', { accessibleDepartmentIds });
+      } else {
+        // User has no department access, return empty result
+        return { employees: [], total: 0 };
+      }
+    }
 
     // Apply search
     if (search) {
@@ -96,6 +123,10 @@ export class EmployeesService {
     }
 
     if (department_id) {
+      // Additional check: ensure user can access the requested department
+      if (user && !this.departmentAccessService.canAccessDepartment(user, department_id)) {
+        return { employees: [], total: 0 };
+      }
       queryBuilder.andWhere('employee.department_id = :department_id', { department_id });
     }
 
@@ -124,11 +155,17 @@ export class EmployeesService {
 
   async findOne(id: string): Promise<Employee> {
     const employee = await this.employeeRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
       relations: ['department', 'designation', 'user'],
     });
 
     if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    // Validate department access
+    const user = this.request.user;
+    if (user && employee.department_id && !this.departmentAccessService.canAccessDepartment(user, employee.department_id)) {
       throw new NotFoundException('Employee not found');
     }
 
@@ -137,7 +174,7 @@ export class EmployeesService {
 
   async findByName(name: string): Promise<Employee> {
     const employee = await this.employeeRepository.findOne({
-      where: { name, tenant_id: this.tenantId },
+      where: { name, tenant_id: this.tenant_id },
       relations: ['department', 'designation', 'user'],
     });
 
@@ -156,7 +193,7 @@ export class EmployeesService {
       const existingNumber = await this.employeeRepository.findOne({
         where: {
           employee_number: updateEmployeeDto.employee_number,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -170,7 +207,7 @@ export class EmployeesService {
       const existingEmail = await this.employeeRepository.findOne({
         where: {
           personal_email: updateEmployeeDto.personal_email,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -194,7 +231,7 @@ export class EmployeesService {
     return this.employeeRepository.find({
       where: {
         department_id: departmentId,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
       relations: ['designation', 'user'],
     });
@@ -204,7 +241,7 @@ export class EmployeesService {
     return this.employeeRepository.find({
       where: {
         status: EmployeeStatus.ACTIVE,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
       relations: ['department', 'designation'],
     });

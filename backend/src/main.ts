@@ -12,10 +12,10 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000', 
       'http://localhost:3001',
-      'http://localhost:3001',
+      'http://localhost:3002',  // Frontend development server
       /^http:\/\/.*\.localhost:3000$/,  // Allow any subdomain on localhost:3000
       /^http:\/\/.*\.localhost:3001$/,  // Allow any subdomain on localhost:3001
-      /^http:\/\/.*\.localhost:3001$/   // Allow any subdomain on localhost:3001
+      /^http:\/\/.*\.localhost:3002$/   // Allow any subdomain on localhost:3002
     ],
     credentials: true,
   });

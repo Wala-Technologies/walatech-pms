@@ -21,6 +21,10 @@ import { Attendance } from './modules/hr/entities/attendance.entity';
 import { LeaveApplication } from './modules/hr/entities/leave-application.entity';
 import { LeaveType } from './modules/hr/entities/leave-type.entity';
 import { ShiftType } from './modules/hr/entities/shift-type.entity';
+import { SalesOrder } from './entities/sales-order.entity';
+import { SalesOrderItem } from './entities/sales-order-item.entity';
+import { Customer } from './entities/customer.entity';
+import { TenantLifecycleAudit } from './entities/tenant-lifecycle-audit.entity';
 
 // Load environment variables
 config();
@@ -56,6 +60,10 @@ export const AppDataSource = new DataSource({
     LeaveApplication,
     LeaveType,
     ShiftType,
+    SalesOrder,
+    SalesOrderItem,
+    Customer,
+    TenantLifecycleAudit,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

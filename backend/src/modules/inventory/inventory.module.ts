@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Item } from '../../entities/item.entity';
 import { User } from '../../entities/user.entity';
 import { Tenant } from '../../entities/tenant.entity';
+import { Department } from '../hr/entities/department.entity';
 import { Warehouse } from './entities/warehouse.entity';
 import { Bin } from './entities/bin.entity';
 import { Batch } from './entities/batch.entity';
@@ -22,6 +23,7 @@ import { BinService } from './services/bin.service';
 import { StockEntryService } from './services/stock-entry.service';
 import { BatchService } from './services/batch.service';
 import { SerialNoService } from './services/serial-no.service';
+import { DepartmentAccessService } from '../../common/services/department-access.service';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { SerialNoService } from './services/serial-no.service';
       Item,
       User,
       Tenant,
+      Department,
       Warehouse,
       Bin,
       Batch,
@@ -39,7 +42,7 @@ import { SerialNoService } from './services/serial-no.service';
     ]),
   ],
   controllers: [InventoryController, WarehouseController, StockEntryController, BatchController, SerialNoController, BinController],
-  providers: [InventoryService, WarehouseService, BinService, StockEntryService, BatchService, SerialNoService],
+  providers: [InventoryService, WarehouseService, BinService, StockEntryService, BatchService, SerialNoService, DepartmentAccessService],
   exports: [TypeOrmModule, InventoryService, WarehouseService, BinService, StockEntryService, BatchService, SerialNoService],
 })
 export class InventoryModule {}

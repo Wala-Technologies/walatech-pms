@@ -38,7 +38,10 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Request() req: AuthRequest) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.E2E_DEBUG === 'true'
+    ) {
       // Temporary diagnostic logging
       const diagnostic: Record<string, unknown> = {
         email: loginDto.email,
@@ -57,6 +60,24 @@ export class AuthController {
   @Post('logout')
   logout() {
     return { message: 'Logged out successfully' };
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body('email') email: string,
+    @Request() req: AuthRequest,
+  ) {
+    const result = await this.authService.forgotPassword(email, req.tenant);
+    return result;
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    const result = await this.authService.resetPasswordWithToken(token, newPassword);
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

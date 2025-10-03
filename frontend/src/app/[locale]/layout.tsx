@@ -1,4 +1,5 @@
 import "@ant-design/v5-patch-for-react-19";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
@@ -7,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { locales } from '../../i18n';
 import { TenantProvider } from '../../contexts/tenant-context';
+import { React19CompatProvider } from '../../components/React19CompatProvider';
 import "../globals.css";
 
 const geistSans = Geist({
@@ -53,7 +55,9 @@ export default async function LocaleLayout({
         <AntdRegistry>
           <NextIntlClientProvider messages={messages}>
             <TenantProvider>
-              {children}
+              <React19CompatProvider>
+                {children}
+              </React19CompatProvider>
             </TenantProvider>
           </NextIntlClientProvider>
         </AntdRegistry>

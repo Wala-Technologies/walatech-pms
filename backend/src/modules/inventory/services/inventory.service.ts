@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Scope, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindManyOptions, Between } from 'typeorm';
+import { REQUEST } from '@nestjs/core';
 import { Item } from '../../../entities/item.entity';
 import { Tenant } from '../../../entities/tenant.entity';
 import { Warehouse } from '../entities/warehouse.entity';
@@ -12,8 +13,10 @@ import { SerialNo } from '../entities/serial-no.entity';
 import { CreateItemDto } from '../dto/create-item.dto';
 import { UpdateItemDto } from '../dto/update-item.dto';
 import { ItemQueryDto } from '../dto/item-query.dto';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
+import { User } from '../../../entities/user.entity';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class InventoryService {
   constructor(
     @InjectRepository(Item)
@@ -32,7 +35,17 @@ export class InventoryService {
     private batchRepository: Repository<Batch>,
     @InjectRepository(SerialNo)
     private serialNoRepository: Repository<SerialNo>,
+    private departmentAccessService: DepartmentAccessService,
+    @Inject(REQUEST) private readonly request: any,
   ) {}
+
+  private get tenant_id(): string {
+    return this.request.tenant_id || this.request.user?.tenant_id;
+  }
+
+  private get user(): User {
+    return this.request.user;
+  }
 
   async createItem(createItemDto: CreateItemDto, tenant_id: string, userId: string): Promise<Item> {
     // Check if item code already exists for this tenant
@@ -50,11 +63,26 @@ export class InventoryService {
       throw new NotFoundException('Tenant not found');
     }
 
+    // Handle department assignment
+    const user = this.user;
+    let departmentId = createItemDto.department_id;
+
+    // If no department specified, use user's default department
+    if (!departmentId && user) {
+      departmentId = this.departmentAccessService.getDefaultDepartmentForUser(user) ?? undefined;
+    }
+
+    // Validate department access if department is specified
+    if (departmentId && user && !this.departmentAccessService.canModifyItemForDepartment(user, departmentId)) {
+      throw new BadRequestException('Access denied to this department');
+    }
+
     // Create item with tenant relationship
     const item = this.itemRepository.create({
       ...createItemDto,
       tenant,
       createdById: userId,
+      department_id: departmentId,
     });
 
     return await this.itemRepository.save(item);
@@ -69,6 +97,21 @@ export class InventoryService {
       .leftJoinAndSelect('item.createdBy', 'createdBy')
       .leftJoinAndSelect('item.modifiedBy', 'modifiedBy')
       .where('tenant.id = :tenant_id', { tenant_id });
+
+    // Apply department-based filtering
+    const user = this.user;
+    if (user && !this.departmentAccessService.canAccessAllDepartments(user)) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      
+      if (accessibleDepartmentIds && accessibleDepartmentIds.length > 0) {
+        queryBuilder.andWhere('(item.department_id IN (:...departmentIds) OR item.department_id IS NULL)', {
+          departmentIds: accessibleDepartmentIds
+        });
+      } else {
+        // User has no department access, return empty result
+        return { items: [], total: 0 };
+      }
+    }
 
     if (search) {
       queryBuilder.andWhere('item.name LIKE :search', { search: `%${search}%` });
@@ -102,6 +145,12 @@ export class InventoryService {
       throw new NotFoundException('Item not found');
     }
 
+    // Validate department access
+    const user = this.user;
+    if (user && item.department_id && !this.departmentAccessService.canAccessDepartment(user, item.department_id)) {
+      throw new NotFoundException('Item not found');
+    }
+
     return item;
   }
 
@@ -116,6 +165,14 @@ export class InventoryService {
 
       if (existingItem) {
         throw new BadRequestException('Item code already exists');
+      }
+    }
+
+    // Validate department access if department is being changed
+    const user = this.user;
+    if (updateItemDto.department_id !== undefined && updateItemDto.department_id !== item.department_id) {
+      if (updateItemDto.department_id && user && !this.departmentAccessService.canModifyItemForDepartment(user, updateItemDto.department_id)) {
+        throw new BadRequestException('Access denied to target department');
       }
     }
 

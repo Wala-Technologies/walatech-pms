@@ -55,7 +55,7 @@ export class TestHelpers {
   }
 
   static async createTestGLEntry(
-    tenantId: string,
+    tenant_id: string,
     data: Partial<TestGLEntry> = {}
   ): Promise<TestGLEntry> {
     if (!this.dataSource) {
@@ -64,7 +64,7 @@ export class TestHelpers {
     const glRepo = this.dataSource.getRepository(TestGLEntry);
     
     const glEntry = glRepo.create({
-      tenant_id: tenantId,
+      tenant_id: tenant_id,
       accountCode: data.accountCode || '1000',
       accountName: data.accountName || 'Test Account',
       debit: data.debit || 0,

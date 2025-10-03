@@ -34,7 +34,7 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+    return this.usersService.createUser(createUserDto);
   }
 
   @Get()
@@ -64,11 +64,11 @@ export class UsersController {
     return this.usersService.getUsersByRole(role);
   }
 
-  @Get('by-department/:department')
+  @Get('by-department/:departmentId')
   @ApiOperation({ summary: 'Get users by department' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
-  async getUsersByDepartment(@Param('department') department: string): Promise<User[]> {
-    return this.usersService.getUsersByDepartment(department);
+  async getUsersByDepartment(@Param('departmentId') departmentId: string): Promise<User[]> {
+    return this.usersService.getUsersByDepartment(departmentId);
   }
 
   @Get(':id')
@@ -88,7 +88,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.updateUser(id, updateUserDto);
   }
 
   @Delete(':id')

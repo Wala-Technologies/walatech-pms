@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   ValidateNested,
 } from 'class-validator';
@@ -38,6 +39,10 @@ export class CreateJournalEntryDto {
   @IsString()
   @Length(1, 140)
   company: string;
+
+  @IsOptional()
+  @IsUUID()
+  department_id?: string;
 
   @IsOptional()
   @IsString()

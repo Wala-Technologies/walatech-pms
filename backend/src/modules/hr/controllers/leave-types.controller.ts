@@ -44,7 +44,7 @@ export class LeaveTypesController {
   ): Promise<LeaveType> {
     return this.leaveTypesService.create(
       createLeaveTypeDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -57,7 +57,7 @@ export class LeaveTypesController {
     type: [LeaveType],
   })
   async findAll(@Request() req: any): Promise<LeaveType[]> {
-    return this.leaveTypesService.findAll(req.user.tenantId);
+    return this.leaveTypesService.findAll(req.user.tenant_id);
   }
 
   @Get('stats')
@@ -67,7 +67,7 @@ export class LeaveTypesController {
     description: 'Leave types with statistics retrieved successfully',
   })
   async getStats(@Request() req: any): Promise<any[]> {
-    return this.leaveTypesService.getLeaveTypesWithStats(req.user.tenantId);
+    return this.leaveTypesService.getLeaveTypesWithStats(req.user.tenant_id);
   }
 
   @Get('name/:name')
@@ -83,7 +83,7 @@ export class LeaveTypesController {
     @Param('name') name: string,
     @Request() req: any,
   ): Promise<LeaveType> {
-    return this.leaveTypesService.findByName(name, req.user.tenantId);
+    return this.leaveTypesService.findByName(name, req.user.tenant_id);
   }
 
   @Get(':id')
@@ -99,7 +99,7 @@ export class LeaveTypesController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<LeaveType> {
-    return this.leaveTypesService.findOne(id, req.user.tenantId);
+    return this.leaveTypesService.findOne(id, req.user.tenant_id);
   }
 
   @Patch(':id')
@@ -120,7 +120,7 @@ export class LeaveTypesController {
     return this.leaveTypesService.update(
       id,
       updateLeaveTypeDto,
-      req.user.tenantId,
+      req.user.tenant_id,
       req.user.userId,
     );
   }
@@ -132,6 +132,6 @@ export class LeaveTypesController {
   @ApiResponse({ status: 404, description: 'Leave type not found' })
   @ApiResponse({ status: 409, description: 'Cannot delete leave type that is being used' })
   async remove(@Param('id') id: string, @Request() req: any): Promise<void> {
-    return this.leaveTypesService.remove(id, req.user.tenantId);
+    return this.leaveTypesService.remove(id, req.user.tenant_id);
   }
 }

@@ -55,7 +55,13 @@ export function TenantProvider({
   const [tenant, setTenant] = useState<Tenant | null>(initialTenant || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+
+  // Track when component is mounted to prevent hydration mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Get tenant subdomain from cookie or URL
   const getTenantSubdomain = (): string | null => {
@@ -209,18 +215,18 @@ export function TenantProvider({
 
   // Initialize tenant on mount
   useEffect(() => {
-    if (!tenant) {
+    if (isMounted && !tenant) {
       const subdomain = getTenantSubdomain();
       if (subdomain) {
         fetchTenant(subdomain).then(setTenant);
       }
     }
-    // Only depends on tenant state; helper functions are stable
-  }, [tenant]);
+    // Only depends on tenant state and mount status; helper functions are stable
+  }, [tenant, isMounted]);
 
   // Apply tenant branding and theme
   useEffect(() => {
-    if (tenant?.settings) {
+    if (isMounted && tenant?.settings) {
       // Apply branding colors (legacy support)
       if (tenant.settings.branding) {
         const { primaryColor, secondaryColor } = tenant.settings.branding;
@@ -240,7 +246,7 @@ export function TenantProvider({
         }
       }
     }
-  }, [tenant?.settings]);
+  }, [tenant?.settings, isMounted]);
 
   const contextValue: TenantContextType = {
     tenant,

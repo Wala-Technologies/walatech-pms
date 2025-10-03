@@ -12,10 +12,10 @@ export class DesignationsService {
     private designationRepository: Repository<Designation>,
   ) {}
 
-  async create(createDesignationDto: CreateDesignationDto, tenantId: string, userId: string): Promise<Designation> {
+  async create(createDesignationDto: CreateDesignationDto, tenant_id: string, userId: string): Promise<Designation> {
     // Check if designation with same name already exists for this tenant
     const existingDesignation = await this.designationRepository.findOne({
-      where: { name: createDesignationDto.name, tenant_id: tenantId },
+      where: { name: createDesignationDto.name, tenant_id: tenant_id },
     });
 
     if (existingDesignation) {
@@ -24,7 +24,7 @@ export class DesignationsService {
 
     const designation = this.designationRepository.create({
       ...createDesignationDto,
-      tenant_id: tenantId,
+      tenant_id: tenant_id,
       owner: userId,
       modified_by: userId,
     });
@@ -32,16 +32,16 @@ export class DesignationsService {
     return this.designationRepository.save(designation);
   }
 
-  async findAll(tenantId: string): Promise<Designation[]> {
+  async findAll(tenant_id: string): Promise<Designation[]> {
     return this.designationRepository.find({
-      where: { tenant_id: tenantId },
+      where: { tenant_id: tenant_id },
       order: { designation_name: 'ASC' },
     });
   }
 
-  async findOne(id: string, tenantId: string): Promise<Designation> {
+  async findOne(id: string, tenant_id: string): Promise<Designation> {
     const designation = await this.designationRepository.findOne({
-      where: { id, tenant_id: tenantId },
+      where: { id, tenant_id: tenant_id },
       relations: ['employees'],
     });
 
@@ -52,9 +52,9 @@ export class DesignationsService {
     return designation;
   }
 
-  async findByName(name: string, tenantId: string): Promise<Designation> {
+  async findByName(name: string, tenant_id: string): Promise<Designation> {
     const designation = await this.designationRepository.findOne({
-      where: { name, tenant_id: tenantId },
+      where: { name, tenant_id: tenant_id },
       relations: ['employees'],
     });
 
@@ -65,13 +65,13 @@ export class DesignationsService {
     return designation;
   }
 
-  async update(id: string, updateDesignationDto: UpdateDesignationDto, tenantId: string, userId: string): Promise<Designation> {
-    const designation = await this.findOne(id, tenantId);
+  async update(id: string, updateDesignationDto: UpdateDesignationDto, tenant_id: string, userId: string): Promise<Designation> {
+    const designation = await this.findOne(id, tenant_id);
 
     // Check if name is being updated and if it conflicts with existing designation
     if (updateDesignationDto.name && updateDesignationDto.name !== designation.name) {
       const existingDesignation = await this.designationRepository.findOne({
-        where: { name: updateDesignationDto.name, tenant_id: tenantId },
+        where: { name: updateDesignationDto.name, tenant_id: tenant_id },
       });
 
       if (existingDesignation) {
@@ -85,8 +85,8 @@ export class DesignationsService {
     return this.designationRepository.save(designation);
   }
 
-  async remove(id: string, tenantId: string): Promise<void> {
-    const designation = await this.findOne(id, tenantId);
+  async remove(id: string, tenant_id: string): Promise<void> {
+    const designation = await this.findOne(id, tenant_id);
 
     // Check if designation is being used by any employees
     if (designation.employees && designation.employees.length > 0) {
@@ -96,7 +96,7 @@ export class DesignationsService {
     await this.designationRepository.remove(designation);
   }
 
-  async getDesignationsWithEmployeeCount(tenantId: string): Promise<any[]> {
+  async getDesignationsWithEmployeeCount(tenant_id: string): Promise<any[]> {
     return this.designationRepository
       .createQueryBuilder('designation')
       .leftJoin('designation.employees', 'employee')
@@ -108,15 +108,15 @@ export class DesignationsService {
       ])
       .addSelect('COUNT(employee.id)', 'employee_count')
       .addSelect('COUNT(CASE WHEN employee.status = \'Active\' THEN 1 END)', 'active_employee_count')
-      .where('designation.tenant_id = :tenantId', { tenantId })
+      .where('designation.tenant_id = :tenant_id', { tenant_id })
       .groupBy('designation.id')
       .getRawMany();
   }
 
-  async searchDesignations(searchTerm: string, tenantId: string): Promise<Designation[]> {
+  async searchDesignations(searchTerm: string, tenant_id: string): Promise<Designation[]> {
     return this.designationRepository
       .createQueryBuilder('designation')
-      .where('designation.tenant_id = :tenantId', { tenantId })
+      .where('designation.tenant_id = :tenant_id', { tenant_id })
       .andWhere(
         '(designation.designation_name ILIKE :searchTerm OR designation.description ILIKE :searchTerm OR designation.skill_requirements ILIKE :searchTerm)',
         { searchTerm: `%${searchTerm}%` }

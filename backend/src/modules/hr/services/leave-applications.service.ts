@@ -14,7 +14,7 @@ export class LeaveApplicationsService {
     @Inject(REQUEST) private request: any,
   ) {}
 
-  private get tenantId(): string {
+  private get tenant_id(): string {
     return this.request.tenant_id || this.request.user?.tenant_id;
   }
 
@@ -31,7 +31,7 @@ export class LeaveApplicationsService {
     const overlappingLeave = await this.leaveApplicationRepository
       .createQueryBuilder('leave')
       .where('leave.employee_id = :employeeId', { employeeId: createLeaveApplicationDto.employee_id })
-      .andWhere('leave.tenant_id = :tenantId', { tenantId: this.tenantId })
+      .andWhere('leave.tenant_id = :tenant_id', { tenant_id: this.tenant_id })
       .andWhere('leave.status IN (:...statuses)', { 
         statuses: [LeaveApplicationStatus.OPEN, LeaveApplicationStatus.APPROVED] 
       })
@@ -63,7 +63,7 @@ export class LeaveApplicationsService {
       posting_date: createLeaveApplicationDto.posting_date ? new Date(createLeaveApplicationDto.posting_date) : new Date(),
       follow_via_email: createLeaveApplicationDto.follow_via_email ? 'Yes' : 'No',
       color: createLeaveApplicationDto.color,
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -72,7 +72,7 @@ export class LeaveApplicationsService {
 
   async findAll(): Promise<LeaveApplication[]> {
     return this.leaveApplicationRepository.find({
-      where: { tenant_id: this.tenantId },
+      where: { tenant_id: this.tenant_id },
       relations: ['employee', 'leave_type'],
       order: { creation: 'DESC' },
     });
@@ -80,7 +80,7 @@ export class LeaveApplicationsService {
 
   async findOne(id: string): Promise<LeaveApplication> {
     const leaveApplication = await this.leaveApplicationRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
       relations: ['employee', 'leave_type'],
     });
 
@@ -97,7 +97,7 @@ export class LeaveApplicationsService {
       .leftJoinAndSelect('leave.employee', 'employee')
       .leftJoinAndSelect('leave.leave_type', 'leave_type')
       .where('leave.employee_id = :employeeId', { employeeId })
-      .andWhere('leave.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .andWhere('leave.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
 
     if (year) {
       queryBuilder.andWhere('leave.from_date LIKE :year', { year: `${year}%` });
@@ -112,7 +112,7 @@ export class LeaveApplicationsService {
     return this.leaveApplicationRepository.find({
       where: { 
         status,
-        tenant_id: this.tenantId 
+        tenant_id: this.tenant_id 
       },
       relations: ['employee', 'leave_type'],
       order: { creation: 'DESC' },
@@ -125,7 +125,7 @@ export class LeaveApplicationsService {
       .leftJoinAndSelect('leave.employee', 'employee')
       .leftJoinAndSelect('leave.leave_type', 'leave_type')
       .where('leave.status = :status', { status: LeaveApplicationStatus.OPEN })
-      .andWhere('leave.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .andWhere('leave.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
 
     if (approverId) {
       queryBuilder.andWhere('leave.leave_approver = :approverId', { approverId });
@@ -225,7 +225,7 @@ export class LeaveApplicationsService {
       .andWhere('leave.leave_type_id = :leaveTypeId', { leaveTypeId })
       .andWhere('leave.status = :status', { status: LeaveApplicationStatus.APPROVED })
       .andWhere('leave.from_date LIKE :year', { year: `${currentYear}%` })
-      .andWhere('leave.tenant_id = :tenantId', { tenantId: this.tenantId })
+      .andWhere('leave.tenant_id = :tenant_id', { tenant_id: this.tenant_id })
       .getMany();
 
     const totalUsed = approvedLeaves.reduce((sum, leave) => sum + leave.total_leave_days, 0);
@@ -244,7 +244,7 @@ export class LeaveApplicationsService {
   async getLeaveStats(employeeId?: string, year?: string): Promise<any> {
     const queryBuilder = this.leaveApplicationRepository
       .createQueryBuilder('leave')
-      .where('leave.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .where('leave.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
 
     if (employeeId) {
       queryBuilder.andWhere('leave.employee_id = :employeeId', { employeeId });

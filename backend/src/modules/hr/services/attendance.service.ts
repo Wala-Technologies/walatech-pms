@@ -5,6 +5,7 @@ import { REQUEST } from '@nestjs/core';
 import { Attendance, AttendanceStatus } from '../entities/attendance.entity';
 import { CreateAttendanceDto } from '../dto/create-attendance.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
+import { DepartmentAccessService } from '../../../common/services/department-access.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AttendanceService {
@@ -12,10 +13,15 @@ export class AttendanceService {
     @InjectRepository(Attendance)
     private attendanceRepository: Repository<Attendance>,
     @Inject(REQUEST) private request: any,
+    private departmentAccessService: DepartmentAccessService,
   ) {}
 
-  private get tenantId(): string {
+  private get tenant_id(): string {
     return this.request.tenant_id || this.request.user?.tenant_id;
+  }
+
+  private get user(): any {
+    return this.request.user;
   }
 
   async create(createAttendanceDto: CreateAttendanceDto): Promise<Attendance> {
@@ -24,7 +30,7 @@ export class AttendanceService {
       where: {
         employee_id: createAttendanceDto.employee_id,
         attendance_date: new Date(createAttendanceDto.attendance_date),
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -37,7 +43,7 @@ export class AttendanceService {
       attendance_date: new Date(createAttendanceDto.attendance_date),
       late_entry: createAttendanceDto.late_entry ? 1 : 0, // Convert boolean to number
       early_exit: createAttendanceDto.early_exit ? 1 : 0, // Convert boolean to number
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -45,16 +51,34 @@ export class AttendanceService {
   }
 
   async findAll(): Promise<Attendance[]> {
-    return this.attendanceRepository.find({
-      where: { tenant_id: this.tenantId },
-      relations: ['employee', 'shift_type'],
-      order: { attendance_date: 'DESC' },
-    });
+    const queryBuilder = this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .leftJoinAndSelect('attendance.employee', 'employee')
+      .leftJoinAndSelect('attendance.shift_type', 'shift_type')
+      .where('attendance.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
+
+    // Apply department-based access control
+    const user = this.user;
+    if (user && !this.departmentAccessService.canAccessAllDepartments(user)) {
+      const accessibleDepartmentIds = this.departmentAccessService.getAccessibleDepartmentIds(user);
+      if (accessibleDepartmentIds && accessibleDepartmentIds.length > 0) {
+        queryBuilder.andWhere('employee.department_id IN (:...departmentIds)', {
+          departmentIds: accessibleDepartmentIds,
+        });
+      } else {
+        // User has no department access, return empty result
+        queryBuilder.andWhere('1 = 0');
+      }
+    }
+
+    return queryBuilder
+      .orderBy('attendance.attendance_date', 'DESC')
+      .getMany();
   }
 
   async findOne(id: string): Promise<Attendance> {
     const attendance = await this.attendanceRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
       relations: ['employee', 'shift_type', 'leave_application'],
     });
 
@@ -71,7 +95,7 @@ export class AttendanceService {
       .leftJoinAndSelect('attendance.employee', 'employee')
       .leftJoinAndSelect('attendance.shift_type', 'shift_type')
       .where('attendance.employee_id = :employeeId', { employeeId })
-      .andWhere('attendance.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .andWhere('attendance.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
 
     if (startDate && endDate) {
       queryBuilder.andWhere('attendance.attendance_date BETWEEN :startDate AND :endDate', {
@@ -89,7 +113,7 @@ export class AttendanceService {
     return this.attendanceRepository.find({
       where: {
         attendance_date: Between(new Date(startDate), new Date(endDate)),
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
       relations: ['employee', 'shift_type'],
       order: { attendance_date: 'DESC' },
@@ -120,7 +144,7 @@ export class AttendanceService {
       where: {
         employee_id: employeeId,
         attendance_date: today,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -134,7 +158,7 @@ export class AttendanceService {
       status: AttendanceStatus.PRESENT,
       in_time: currentTime,
       company: 'Default Company', // This should come from employee or system settings
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -150,7 +174,7 @@ export class AttendanceService {
       where: {
         employee_id: employeeId,
         attendance_date: today,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -180,7 +204,7 @@ export class AttendanceService {
   async getAttendanceStats(employeeId?: string, month?: string): Promise<any> {
     const queryBuilder = this.attendanceRepository
       .createQueryBuilder('attendance')
-      .where('attendance.tenant_id = :tenantId', { tenantId: this.tenantId });
+      .where('attendance.tenant_id = :tenant_id', { tenant_id: this.tenant_id });
 
     if (employeeId) {
       queryBuilder.andWhere('attendance.employee_id = :employeeId', { employeeId });

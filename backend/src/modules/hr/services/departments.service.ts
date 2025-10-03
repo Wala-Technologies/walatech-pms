@@ -14,8 +14,22 @@ export class DepartmentsService {
     @Inject(REQUEST) private request: any,
   ) {}
 
-  private get tenantId(): string {
-    return this.request.tenant_id || this.request.user?.tenant_id;
+  private get tenant_id(): string {
+    const tenantId = this.request?.tenant_id || this.request?.user?.tenant_id || this.request?.tenant?.id;
+    
+    if (!tenantId) {
+      console.error('No tenant_id found in request context:', {
+        hasRequest: !!this.request,
+        hasRequestTenantId: !!this.request?.tenant_id,
+        hasRequestUser: !!this.request?.user,
+        hasRequestUserTenantId: !!this.request?.user?.tenant_id,
+        hasRequestTenant: !!this.request?.tenant,
+        requestKeys: this.request ? Object.keys(this.request) : []
+      });
+      throw new Error('No tenant_id found in request context');
+    }
+    
+    return tenantId;
   }
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
@@ -23,7 +37,7 @@ export class DepartmentsService {
     const existingDepartment = await this.departmentRepository.findOne({
       where: {
         name: createDepartmentDto.name,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
     });
 
@@ -33,7 +47,7 @@ export class DepartmentsService {
 
     const department = this.departmentRepository.create({
       ...createDepartmentDto,
-      tenant_id: this.tenantId,
+      tenant_id: this.tenant_id,
       owner: this.request.user?.email || 'system',
     });
 
@@ -41,16 +55,39 @@ export class DepartmentsService {
   }
 
   async findAll(): Promise<Department[]> {
-    return this.departmentRepository.find({
-      where: { tenant_id: this.tenantId },
-      relations: ['employees'],
-      order: { department_name: 'ASC' },
-    });
+    const tenantId = this.tenant_id; // This will throw if tenant_id is not found
+    
+    console.log('[DepartmentsService] findAll - tenant_id:', tenantId);
+    console.log('[DepartmentsService] findAll - request.user:', this.request.user);
+    console.log('[DepartmentsService] findAll - request.tenant:', this.request.tenant);
+    
+    // Use query builder for more control and better debugging
+    const query = this.departmentRepository
+      .createQueryBuilder('department')
+      .leftJoinAndSelect('department.employees', 'employees')
+      .where('department.tenant_id = :tenantId', { tenantId })
+      .orderBy('department.department_name', 'ASC');
+    
+    console.log('[DepartmentsService] findAll - SQL Query:', query.getSql());
+    
+    const departments = await query.getMany();
+    
+    console.log('[DepartmentsService] findAll - found departments:', departments.length, 'departments');
+    if (departments.length > 0) {
+      console.log('[DepartmentsService] findAll - sample department:', {
+        id: departments[0].id,
+        name: departments[0].name,
+        tenant_id: departments[0].tenant_id,
+        employee_count: departments[0].employees?.length
+      });
+    }
+    
+    return departments;
   }
 
   async findOne(id: string): Promise<Department> {
     const department = await this.departmentRepository.findOne({
-      where: { id, tenant_id: this.tenantId },
+      where: { id, tenant_id: this.tenant_id },
       relations: ['employees'],
     });
 
@@ -63,7 +100,7 @@ export class DepartmentsService {
 
   async findByName(name: string): Promise<Department> {
     const department = await this.departmentRepository.findOne({
-      where: { name, tenant_id: this.tenantId },
+      where: { name, tenant_id: this.tenant_id },
       relations: ['employees'],
     });
 
@@ -82,7 +119,7 @@ export class DepartmentsService {
       const existingDepartment = await this.departmentRepository.findOne({
         where: {
           name: updateDepartmentDto.name,
-          tenant_id: this.tenantId,
+          tenant_id: this.tenant_id,
         },
       });
 
@@ -112,7 +149,7 @@ export class DepartmentsService {
     return this.departmentRepository.find({
       where: {
         disabled: false,
-        tenant_id: this.tenantId,
+        tenant_id: this.tenant_id,
       },
       order: { department_name: 'ASC' },
     });
@@ -120,7 +157,7 @@ export class DepartmentsService {
 
   async getDepartmentHierarchy(): Promise<Department[]> {
     const departments = await this.departmentRepository.find({
-      where: { tenant_id: this.tenantId },
+      where: { tenant_id: this.tenant_id },
       order: { department_name: 'ASC' },
     });
 

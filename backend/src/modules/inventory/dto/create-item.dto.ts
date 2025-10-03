@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsBoolean, IsNotEmpty, Min } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber, IsBoolean, IsNotEmpty, Min, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateItemDto {
@@ -9,6 +9,10 @@ export class CreateItemDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsOptional()
+  @IsUUID()
+  department_id?: string;
 
   @IsOptional()
   @IsString()

@@ -61,13 +61,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Load theme from tenant settings
   useEffect(() => {
-    if (tenant?.settings?.branding) {
+    if (tenant?.settings) {
+      const { branding, theme: themeSettings } = tenant.settings;
       setThemeSettings({
-        primaryColor: tenant.settings.branding.primaryColor || defaultTheme.primaryColor,
-        secondaryColor: tenant.settings.branding.secondaryColor || defaultTheme.secondaryColor,
-        logoPosition: defaultTheme.logoPosition,
-        sidebarStyle: defaultTheme.sidebarStyle,
-        headerStyle: defaultTheme.headerStyle,
+        primaryColor: themeSettings?.primaryColor || branding?.primaryColor || defaultTheme.primaryColor,
+        secondaryColor: themeSettings?.secondaryColor || branding?.secondaryColor || defaultTheme.secondaryColor,
+        logoPosition: themeSettings?.logoPosition || defaultTheme.logoPosition,
+        sidebarStyle: themeSettings?.sidebarStyle || defaultTheme.sidebarStyle,
+        headerStyle: themeSettings?.headerStyle || defaultTheme.headerStyle,
       });
     }
   }, [tenant]);

@@ -24,8 +24,8 @@ async function seedHRData() {
       return;
     }
 
-    const tenantId = tenantRows[0].id;
-    console.log('Using tenant ID:', tenantId);
+    const tenant_id = tenantRows[0].id;
+    console.log('Using tenant ID:', tenant_id);
 
     // Sample departments
     const departments = [
@@ -41,7 +41,7 @@ async function seedHRData() {
         const deptId = uuidv4();
         await connection.execute(
           'INSERT INTO tabDepartment (id, name, department_name, tenant_id, creation, modified) VALUES (?, ?, ?, ?, NOW(), NOW())',
-          [deptId, dept.name, dept.department_name, tenantId]
+          [deptId, dept.name, dept.department_name, tenant_id]
         );
         console.log('✅ Created department:', dept.name);
       } catch (error) {
@@ -68,7 +68,7 @@ async function seedHRData() {
         const designationId = uuidv4();
         await connection.execute(
           'INSERT INTO tabDesignation (id, name, designation_name, tenant_id, creation, modified) VALUES (?, ?, ?, ?, NOW(), NOW())',
-          [designationId, designation.name, designation.designation_name, tenantId]
+          [designationId, designation.name, designation.designation_name, tenant_id]
         );
         console.log('✅ Created designation:', designation.name);
       } catch (error) {
@@ -83,12 +83,12 @@ async function seedHRData() {
     // Get department and designation IDs for employee creation
     const [deptRows] = await connection.execute(
       'SELECT id, name FROM tabDepartment WHERE tenant_id = ?',
-      [tenantId]
+      [tenant_id]
     );
 
     const [designationRows] = await connection.execute(
       'SELECT id, name FROM tabDesignation WHERE tenant_id = ?',
-      [tenantId]
+      [tenant_id]
     );
 
     if (deptRows.length > 0 && designationRows.length > 0) {
@@ -122,7 +122,7 @@ async function seedHRData() {
           const empId = uuidv4();
           await connection.execute(
             'INSERT INTO tabEmployee (id, name, employee_name, first_name, last_name, company_email, department_id, designation_id, status, tenant_id, creation, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-            [empId, emp.name, emp.employee_name, emp.first_name, emp.last_name, emp.company_email, emp.department_id, emp.designation_id, emp.status, tenantId]
+            [empId, emp.name, emp.employee_name, emp.first_name, emp.last_name, emp.company_email, emp.department_id, emp.designation_id, emp.status, tenant_id]
           );
           console.log('✅ Created employee:', emp.employee_name);
         } catch (error) {

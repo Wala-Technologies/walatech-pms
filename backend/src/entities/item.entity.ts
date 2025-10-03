@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import { User } from './user.entity';
+import { Department } from '../modules/hr/entities/department.entity';
 
 @Entity('items')
 export class Item {
@@ -214,9 +215,19 @@ export class Item {
   metaKeywords: string;
 
   // Relationships
+  @Column()
+  tenant_id: string;
+
+  @Column({ length: 36, nullable: true })
+  department_id: string | null;
+
   @ManyToOne(() => Tenant, { nullable: false })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'created_by' })

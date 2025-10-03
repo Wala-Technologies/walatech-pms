@@ -15,7 +15,7 @@ describe('AccountingController', () => {
   let accountingService: jest.Mocked<AccountingService>;
   let seederService: jest.Mocked<ChartOfAccountsSeederService>;
 
-  const mockTenantId = 'test-tenant-id';
+  const mocktenant_id = 'test-tenant-id';
 
   beforeEach(async () => {
     const mockAccountingService = {
@@ -76,9 +76,9 @@ describe('AccountingController', () => {
       const mockAccount = { id: '1', ...createAccountDto };
       accountingService.createAccount.mockResolvedValue(mockAccount as any);
 
-      const result = await controller.createAccount(createAccountDto, mockTenantId);
+      const result = await controller.createAccount(createAccountDto, mocktenant_id);
 
-      expect(accountingService.createAccount).toHaveBeenCalledWith(createAccountDto, mockTenantId);
+      expect(accountingService.createAccount).toHaveBeenCalledWith(createAccountDto, mocktenant_id);
       expect(result).toEqual(mockAccount);
     });
 
@@ -104,9 +104,9 @@ describe('AccountingController', () => {
 
       accountingService.listAccounts.mockResolvedValue(mockAccounts as any);
 
-      const result = await controller.listAccounts(mockTenantId);
+      const result = await controller.listAccounts(mocktenant_id);
 
-      expect(accountingService.listAccounts).toHaveBeenCalledWith(mockTenantId);
+      expect(accountingService.listAccounts).toHaveBeenCalledWith(mocktenant_id);
       expect(result).toEqual(mockAccounts);
     });
   });
@@ -134,9 +134,9 @@ describe('AccountingController', () => {
       const mockJournalEntry = { id: '1', ...createJournalEntryDto };
       accountingService.createJournalEntry.mockResolvedValue(mockJournalEntry as any);
 
-      const result = await controller.createJournalEntry(createJournalEntryDto, mockTenantId);
+      const result = await controller.createJournalEntry(createJournalEntryDto, mocktenant_id);
 
-      expect(accountingService.createJournalEntry).toHaveBeenCalledWith(createJournalEntryDto, mockTenantId);
+      expect(accountingService.createJournalEntry).toHaveBeenCalledWith(createJournalEntryDto, mocktenant_id);
       expect(result).toEqual(mockJournalEntry);
     });
   });
@@ -150,9 +150,9 @@ describe('AccountingController', () => {
 
       accountingService.listJournalEntries.mockResolvedValue(mockJournalEntries as any);
 
-      const result = await controller.listJournalEntries(mockTenantId);
+      const result = await controller.listJournalEntries(mocktenant_id);
 
-      expect(accountingService.listJournalEntries).toHaveBeenCalledWith(mockTenantId);
+      expect(accountingService.listJournalEntries).toHaveBeenCalledWith(mocktenant_id);
       expect(result).toEqual(mockJournalEntries);
     });
   });
@@ -162,9 +162,9 @@ describe('AccountingController', () => {
       const mockResult = new Map();
       seederService.seedStandardChartOfAccounts.mockResolvedValue(mockResult);
 
-      const result = await controller.seedChartOfAccounts(mockTenantId);
+      const result = await controller.seedChartOfAccounts(mocktenant_id);
 
-      expect(seederService.seedStandardChartOfAccounts).toHaveBeenCalledWith(mockTenantId, 'Default Company');
+      expect(seederService.seedStandardChartOfAccounts).toHaveBeenCalledWith(mocktenant_id, 'Default Company');
       expect(result).toEqual(mockResult);
     });
   });
@@ -183,9 +183,9 @@ describe('AccountingController', () => {
       const mockGLEntry = { id: '1', ...createGLEntryDto };
       accountingService.createGLEntry.mockResolvedValue(mockGLEntry as any);
 
-      const result = await controller.createGLEntry(createGLEntryDto, mockTenantId);
+      const result = await controller.createGLEntry(createGLEntryDto, mocktenant_id);
 
-      expect(accountingService.createGLEntry).toHaveBeenCalledWith(createGLEntryDto, mockTenantId);
+      expect(accountingService.createGLEntry).toHaveBeenCalledWith(createGLEntryDto, mocktenant_id);
       expect(result).toEqual(mockGLEntry);
     });
   });
@@ -205,9 +205,9 @@ describe('AccountingController', () => {
 
       accountingService.getGLReport.mockResolvedValue(mockReport as any);
 
-      const result = await controller.getGLReport(query, mockTenantId);
+      const result = await controller.getGLReport(query, mocktenant_id);
 
-      expect(accountingService.getGLReport).toHaveBeenCalledWith(query, mockTenantId);
+      expect(accountingService.getGLReport).toHaveBeenCalledWith(query, mocktenant_id);
       expect(result).toEqual(mockReport);
     });
   });
@@ -223,9 +223,9 @@ describe('AccountingController', () => {
       const mockCostCenter = { id: '1', ...createCostCenterDto };
       accountingService.createCostCenter.mockResolvedValue(mockCostCenter as any);
 
-      const result = await controller.createCostCenter(createCostCenterDto, mockTenantId);
+      const result = await controller.createCostCenter(createCostCenterDto, mocktenant_id);
 
-      expect(accountingService.createCostCenter).toHaveBeenCalledWith(createCostCenterDto, mockTenantId);
+      expect(accountingService.createCostCenter).toHaveBeenCalledWith(createCostCenterDto, mocktenant_id);
       expect(result).toEqual(mockCostCenter);
     });
   });
@@ -239,9 +239,9 @@ describe('AccountingController', () => {
 
       accountingService.listCostCenters.mockResolvedValue(mockCostCenters as any);
 
-      const result = await controller.listCostCenters(mockTenantId);
+      const result = await controller.listCostCenters(mocktenant_id);
 
-      expect(accountingService.listCostCenters).toHaveBeenCalledWith(mockTenantId);
+      expect(accountingService.listCostCenters).toHaveBeenCalledWith(mocktenant_id);
       expect(result).toEqual(mockCostCenters);
     });
   });
@@ -257,9 +257,9 @@ describe('AccountingController', () => {
       const mockFiscalYear = { id: '1', ...createFiscalYearDto };
       accountingService.createFiscalYear.mockResolvedValue(mockFiscalYear as any);
 
-      const result = await controller.createFiscalYear(createFiscalYearDto, mockTenantId);
+      const result = await controller.createFiscalYear(createFiscalYearDto, mocktenant_id);
 
-      expect(accountingService.createFiscalYear).toHaveBeenCalledWith(createFiscalYearDto, mockTenantId);
+      expect(accountingService.createFiscalYear).toHaveBeenCalledWith(createFiscalYearDto, mocktenant_id);
       expect(result).toEqual(mockFiscalYear);
     });
   });
@@ -273,9 +273,9 @@ describe('AccountingController', () => {
 
       accountingService.listFiscalYears.mockResolvedValue(mockFiscalYears as any);
 
-      const result = await controller.listFiscalYears(mockTenantId);
+      const result = await controller.listFiscalYears(mocktenant_id);
 
-      expect(accountingService.listFiscalYears).toHaveBeenCalledWith(mockTenantId);
+      expect(accountingService.listFiscalYears).toHaveBeenCalledWith(mocktenant_id);
       expect(result).toEqual(mockFiscalYears);
     });
   });
@@ -294,9 +294,9 @@ describe('AccountingController', () => {
       const mockPaymentEntry = { id: '1', ...createPaymentEntryDto };
       accountingService.createPaymentEntry.mockResolvedValue(mockPaymentEntry as any);
 
-      const result = await controller.createPaymentEntry(createPaymentEntryDto, mockTenantId);
+      const result = await controller.createPaymentEntry(createPaymentEntryDto, mocktenant_id);
 
-      expect(accountingService.createPaymentEntry).toHaveBeenCalledWith(createPaymentEntryDto, mockTenantId);
+      expect(accountingService.createPaymentEntry).toHaveBeenCalledWith(createPaymentEntryDto, mocktenant_id);
       expect(result).toEqual(mockPaymentEntry);
     });
   });
@@ -310,9 +310,9 @@ describe('AccountingController', () => {
 
       accountingService.listPaymentEntries.mockResolvedValue(mockPaymentEntries as any);
 
-      const result = await controller.listPaymentEntries(mockTenantId);
+      const result = await controller.listPaymentEntries(mocktenant_id);
 
-      expect(accountingService.listPaymentEntries).toHaveBeenCalledWith(mockTenantId);
+      expect(accountingService.listPaymentEntries).toHaveBeenCalledWith(mocktenant_id);
       expect(result).toEqual(mockPaymentEntries);
     });
   });
@@ -334,12 +334,12 @@ describe('AccountingController', () => {
 
       accountingService.getAccountBalance.mockResolvedValue(mockBalance as any);
 
-      const result = await controller.getAccountBalance(accountId, query, mockTenantId);
+      const result = await controller.getAccountBalance(accountId, query, mocktenant_id);
 
       expect(accountingService.getAccountBalance).toHaveBeenCalledWith(
         accountId,
         query.asOfDate,
-        mockTenantId,
+        mocktenant_id,
         query.company
       );
       expect(result).toEqual(mockBalance);
@@ -377,9 +377,9 @@ describe('AccountingController', () => {
 
       accountingService.getTrialBalance.mockResolvedValue(mockTrialBalance as any);
 
-      const result = await controller.getTrialBalance(query, mockTenantId);
+      const result = await controller.getTrialBalance(query, mocktenant_id);
 
-      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mockTenantId);
+      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mocktenant_id);
       expect(result).toEqual(mockTrialBalance);
     });
   });
@@ -399,9 +399,9 @@ describe('AccountingController', () => {
 
       accountingService.getTrialBalance.mockResolvedValue(mockTrialBalance as any);
 
-      const result = await controller.getProfitLossStatement(query, mockTenantId);
+      const result = await controller.getProfitLossStatement(query, mocktenant_id);
 
-      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mockTenantId);
+      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mocktenant_id);
       expect(result.income.total).toBe(5000);
       expect(result.expenses.total).toBe(3000);
       expect(result.netIncome).toBe(2000);
@@ -425,9 +425,9 @@ describe('AccountingController', () => {
 
       accountingService.getTrialBalance.mockResolvedValue(mockTrialBalance as any);
 
-      const result = await controller.getBalanceSheet(query, mockTenantId);
+      const result = await controller.getBalanceSheet(query, mocktenant_id);
 
-      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mockTenantId);
+      expect(accountingService.getTrialBalance).toHaveBeenCalledWith(query, mocktenant_id);
       expect(result.assets.total).toBe(1300);
       expect(result.liabilities.total).toBe(900);
       expect(result.equity.total).toBe(400);
@@ -445,9 +445,9 @@ describe('AccountingController', () => {
 
       accountingService.postJournalEntryToGL.mockResolvedValue(mockGLEntries as any);
 
-      const result = await controller.postJournalEntryToGL(journalEntryId, mockTenantId);
+      const result = await controller.postJournalEntryToGL(journalEntryId, mocktenant_id);
 
-      expect(accountingService.postJournalEntryToGL).toHaveBeenCalledWith(journalEntryId, mockTenantId);
+      expect(accountingService.postJournalEntryToGL).toHaveBeenCalledWith(journalEntryId, mocktenant_id);
       expect(result).toEqual(mockGLEntries);
     });
   });

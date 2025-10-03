@@ -21,8 +21,12 @@ export class UsersService extends TenantScopedService<User> {
     super(userRepository, request);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { email, password, phone, role, department, ...userData } = createUserDto;
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const { email, password, phone, role, department_id, ...userData } = createUserDto;
+
+    const tenantId = this.gettenant_id();
+    console.log('[UsersService] createUser - tenant_id:', tenantId);
+    console.log('[UsersService] createUser - createUserDto:', { ...createUserDto, password: '***' });
 
     // Check if user already exists within tenant
     const existingUser = await this.findOne({
@@ -37,17 +41,19 @@ export class UsersService extends TenantScopedService<User> {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Map DTO properties to entity properties
-    const entityData: any = { ...userData };
+    const entityData: Partial<User> = { ...userData };
     if (phone) {
       entityData.mobile_no = phone;
     }
     if (role) {
       entityData.role_profile_name = role;
     }
-    // department is not mapped to entity
+    if (department_id) {
+      entityData.department_id = department_id;
+    }
 
     // Create user with tenant context
-    const userDataToCreate = {
+    const userDataToCreate: Partial<User> = {
       ...entityData,
       email,
       password: hashedPassword,
@@ -55,13 +61,18 @@ export class UsersService extends TenantScopedService<User> {
       time_zone: 'Africa/Addis_Ababa',
     };
 
-    const savedUser = await this.create(userDataToCreate);
+    const savedUser = await super.create(userDataToCreate);
 
-    // Ensure savedUser is a single user object, not an array
-    const userResult = Array.isArray(savedUser) ? savedUser[0] : savedUser;
+    console.log('[UsersService] createUser - User created successfully:', {
+      id: savedUser.id,
+      email: savedUser.email,
+      tenant_id: savedUser.tenant_id,
+      first_name: savedUser.first_name,
+      last_name: savedUser.last_name
+    });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = userResult;
+    const { password: _, ...userWithoutPassword } = savedUser;
     return userWithoutPassword as User;
   }
 
@@ -72,16 +83,20 @@ export class UsersService extends TenantScopedService<User> {
       search,
       role,
       status,
-      department,
+      department_id,
       sortBy = 'created_at',
       sortOrder = 'DESC',
     } = query;
+
+    const tenantId = this.gettenant_id();
+    console.log('[UsersService] findAllUsers - tenant_id:', tenantId);
+    console.log('[UsersService] findAllUsers - query params:', query);
 
     const queryBuilder = this.createQueryBuilder('user');
 
     // Search functionality
     if (search) {
-      queryBuilder.where(
+      queryBuilder.andWhere(
         '(user.first_name ILIKE :search OR user.last_name ILIKE :search OR user.email ILIKE :search)',
         { search: `%${search}%` },
       );
@@ -98,10 +113,10 @@ export class UsersService extends TenantScopedService<User> {
       queryBuilder.andWhere('user.enabled = :enabled', { enabled });
     }
 
-    // Department filtering not available in current entity schema
-    // if (department) {
-    //   queryBuilder.andWhere('user.department = :department', { department });
-    // }
+    // Filter by department
+    if (department_id) {
+      queryBuilder.andWhere('user.department_id = :department_id', { department_id });
+    }
 
     // Sorting
     const validSortFields = ['creation', 'modified', 'first_name', 'last_name', 'email'];
@@ -111,6 +126,10 @@ export class UsersService extends TenantScopedService<User> {
     // Pagination
     const offset = (page - 1) * limit;
     queryBuilder.skip(offset).take(limit);
+
+    // Log the SQL query for debugging
+    console.log('[UsersService] findAllUsers - SQL:', queryBuilder.getSql());
+    console.log('[UsersService] findAllUsers - Parameters:', queryBuilder.getParameters());
 
     // Execute query
     const [users, total] = await queryBuilder.getManyAndCount();
@@ -151,7 +170,7 @@ export class UsersService extends TenantScopedService<User> {
     return userWithoutPassword as User;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findById(id);
 
     if (!user) {
@@ -170,19 +189,18 @@ export class UsersService extends TenantScopedService<User> {
     }
 
     // Map DTO properties to entity properties
-    const updateData: any = { ...updateUserDto };
+    const updateData: Partial<User> = { ...updateUserDto };
     if (updateUserDto.phone) {
       updateData.mobile_no = updateUserDto.phone;
-      delete updateData.phone;
+      delete (updateData as any).phone;
     }
     if (updateUserDto.role) {
       updateData.role_profile_name = updateUserDto.role;
-      delete updateData.role;
+      delete (updateData as any).role;
     }
-    delete updateData.department; // Not mapped to entity
 
     // Update user
-    const updatedUser = await super.update(id, updateData);
+    await super.update(id, updateData);
 
     return this.findUserById(id);
   }
@@ -335,9 +353,15 @@ export class UsersService extends TenantScopedService<User> {
      });
   }
 
-  // Department functionality not available in current entity schema
-  async getUsersByDepartment(department: string): Promise<User[]> {
-    // Return empty array since department is not mapped to entity
-    return [];
+  async getUsersByDepartment(departmentId: string): Promise<User[]> {
+    const users = await this.findAll({
+      where: { department_id: departmentId },
+    });
+
+    // Remove passwords from response
+    return users.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword as User;
+    });
   }
 }
