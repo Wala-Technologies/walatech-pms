@@ -8,6 +8,12 @@ const intlMiddleware = createMiddleware({
 
   // Used when no locale matches
   defaultLocale: 'en',
+
+  // Enable locale detection from cookies
+  localeDetection: true,
+
+  // Custom locale detection function
+  localePrefix: 'always',
 });
 
 // Enhanced middleware with tenant resolution
@@ -28,7 +34,7 @@ export default async function middleware(request: NextRequest) {
   ];
 
   if (skipTenantPaths.some((path) => pathname.startsWith(path))) {
-    return intlMiddleware(request);
+    return handleIntlWithPersistence(request);
   }
 
   // Handle tenant resolution
@@ -44,7 +50,7 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Set tenant subdomain cookie for frontend use (not for API calls)
-    const response = intlMiddleware(request);
+    const response = handleIntlWithPersistence(request);
     if (response) {
       response.cookies.set('tenant-subdomain', subdomain, {
         httpOnly: false,
@@ -67,7 +73,51 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  return intlMiddleware(request);
+  return handleIntlWithPersistence(request);
+}
+
+/**
+ * Handle internationalization with locale persistence
+ */
+function handleIntlWithPersistence(request: NextRequest) {
+  // Get locale from cookie
+  const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
+  const supportedLocales = ['en', 'am', 'ti', 'or'];
+  const pathname = request.nextUrl.pathname;
+  const currentLocale = pathname.split('/')[1];
+  
+  // Check if we have a valid locale in cookie
+  if (cookieLocale && supportedLocales.includes(cookieLocale)) {
+    // If the path doesn't start with the preferred locale, redirect
+    if (currentLocale !== cookieLocale && supportedLocales.includes(currentLocale)) {
+      const newPathname = pathname.replace(`/${currentLocale}`, `/${cookieLocale}`);
+      const url = request.nextUrl.clone();
+      url.pathname = newPathname;
+      return NextResponse.redirect(url);
+    }
+    
+    // If the path doesn't have any locale prefix, add the preferred locale
+    if (!supportedLocales.includes(currentLocale)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${cookieLocale}${pathname}`;
+      return NextResponse.redirect(url);
+    }
+  }
+  
+  // Use the standard intl middleware but with updated default locale if cookie exists
+  const response = intlMiddleware(request);
+  
+  // If we have a cookie locale and it's different from what the middleware would choose,
+  // we need to ensure the cookie persists
+  if (response && cookieLocale && supportedLocales.includes(cookieLocale)) {
+    response.cookies.set('NEXT_LOCALE', cookieLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax'
+    });
+  }
+  
+  return response;
 }
 
 /**

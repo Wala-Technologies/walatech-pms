@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button, Breadcrumb, message, Card, Spin, Alert } from 'antd';
 import { ArrowLeftOutlined, HomeOutlined, ShopOutlined, EditOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import SupplierForm from '../../components/SupplierForm';
-import { supplierApi, Supplier, UpdateSupplierDto, SupplierStatus, SupplierType } from '../../../../../../lib/supplier-api';
+import { Supplier, UpdateSupplierDto, SupplierStatus, SupplierType } from '../../../../../../lib/supplier-api';
 
 export default function EditSupplierPage() {
   const router = useRouter();
@@ -15,42 +15,36 @@ export default function EditSupplierPage() {
   const locale = params.locale as string;
   const supplierId = params.id as string;
   const t = useTranslations('suppliers');
-  
+
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSupplier();
-  }, [supplierId]);
-
-  const fetchSupplier = async () => {
+  const fetchSupplier = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Mock data for development
       const mockSupplier: Supplier = {
         id: supplierId,
-        supplierName: 'Global Manufacturing Co.',
-        supplierCode: 'GM001',
-        supplierType: SupplierType.MANUFACTURER,
+        name: 'Global Manufacturing Co.',
+        code: 'GM001',
+        type: SupplierType.COMPANY,
         status: SupplierStatus.ACTIVE,
         email: 'contact@globalmanufacturing.com',
         phone: '+1234567890',
         website: 'https://globalmanufacturing.com',
         country: 'USA',
+        isActive: true,
         createdAt: '2024-01-15T10:30:00Z',
         updatedAt: '2024-01-15T10:30:00Z',
       };
-      
+
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // In real implementation, uncomment this:
-      // const supplier = await supplierApi.getSupplier(supplierId);
-      
+
       setSupplier(mockSupplier);
     } catch (error) {
       console.error('Error fetching supplier:', error);
@@ -58,21 +52,22 @@ export default function EditSupplierPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supplierId, t]);
 
-  const handleSubmit = async (values: UpdateSupplierDto) => {
+  useEffect(() => {
+    fetchSupplier();
+  }, [fetchSupplier]);
+
+  const handleSubmit = useCallback(async (values: UpdateSupplierDto) => {
     try {
       setSubmitLoading(true);
-      
+
       // Mock API call for development
       console.log('Updating supplier:', values);
-      
+
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real implementation, uncomment this:
-      // const updatedSupplier = await supplierApi.updateSupplier(supplierId, values);
-      
+
       message.success(t('messages.updateSuccess'));
       router.push(`/${locale}/dashboard/suppliers/list`);
     } catch (error) {
@@ -81,7 +76,7 @@ export default function EditSupplierPage() {
     } finally {
       setSubmitLoading(false);
     }
-  };
+  }, [t, locale, router]);
 
   const handleCancel = () => {
     router.back();
@@ -143,7 +138,7 @@ export default function EditSupplierPage() {
         >
           {t('back')}
         </Button>
-        
+
         <Breadcrumb style={{ marginBottom: '16px' }}>
           <Breadcrumb.Item>
             <Link href={`/${locale}/dashboard`}>
@@ -157,16 +152,16 @@ export default function EditSupplierPage() {
           </Breadcrumb.Item>
           <Breadcrumb.Item>
             <Link href={`/${locale}/dashboard/suppliers/${supplierId}`}>
-              {supplier.supplierName}
+              {supplier.name}
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
             <EditOutlined /> {t('edit')}
           </Breadcrumb.Item>
         </Breadcrumb>
-        
+
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
-          {t('editSupplier')}: {supplier.supplierName}
+          {t('editSupplier')}: {supplier.name}
         </h1>
         <p style={{ color: '#666', margin: '8px 0 0 0' }}>
           {t('editSupplierDescription')}

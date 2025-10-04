@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -18,11 +18,9 @@ import {
   Table,
   Statistic,
   Progress,
-  Avatar,
-  Tooltip,
-  Dropdown,
   Modal,
   message,
+  Dropdown,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -63,7 +61,6 @@ export default function SupplierDetailPage() {
   const locale = params.locale as string;
   const supplierId = params.id as string;
   const t = useTranslations('suppliers');
-  
   const [loading, setLoading] = useState(false);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [quotations, setQuotations] = useState<SupplierQuotation[]>([]);
@@ -72,11 +69,7 @@ export default function SupplierDetailPage() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    fetchSupplierData();
-  }, [supplierId]);
-
-  const fetchSupplierData = async () => {
+  const fetchSupplierData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -84,79 +77,38 @@ export default function SupplierDetailPage() {
       // Mock data for development
       const mockSupplier: Supplier = {
         id: supplierId,
-        supplierName: 'Global Manufacturing Co.',
-        supplierCode: 'GM001',
-        supplierType: SupplierType.MANUFACTURER,
+        name: 'Global Manufacturing Co.',
+        code: 'GM001',
+        type: SupplierType.COMPANY,
         status: SupplierStatus.ACTIVE,
         email: 'contact@globalmanufacturing.com',
         phone: '+1234567890',
         website: 'https://globalmanufacturing.com',
         country: 'USA',
+        isActive: true,
         createdAt: '2024-01-15T10:30:00Z',
         updatedAt: '2024-01-15T10:30:00Z',
       };
-
-      const mockQuotations: SupplierQuotation[] = [
-        {
-          id: '1',
-          quotationNumber: 'QUO-2024-001',
-          supplierId: supplierId,
-          supplierName: 'Global Manufacturing Co.',
-          requestDate: '2024-01-15T10:30:00Z',
-          validUntil: '2024-02-15T10:30:00Z',
-          status: QuotationStatus.PENDING,
-          totalAmount: 15000,
-          currency: 'USD',
-          items: [],
-          notes: 'Urgent requirement for Q1 production',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-        },
-      ];
-
-      const mockScorecards: SupplierScorecard[] = [
-        {
-          id: '1',
-          supplierId: supplierId,
-          supplierName: 'Global Manufacturing Co.',
-          evaluationDate: '2024-01-25T00:00:00Z',
-          evaluationPeriod: 'Q4 2023',
-          overallScore: 4.5,
-          qualityScore: 4.8,
-          deliveryScore: 4.2,
-          serviceScore: 4.5,
-          priceScore: 4.0,
-          criteria: [],
-          comments: 'Excellent performance in quality and service',
-          evaluatedBy: 'John Manager',
-          createdAt: '2024-01-25T10:30:00Z',
-          updatedAt: '2024-01-25T10:30:00Z',
-        },
-      ];
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setSupplier(mockSupplier);
-      setQuotations(mockQuotations);
-      setScorecards(mockScorecards);
-    } catch (error) {
       console.error('Error fetching supplier data:', error);
       setError(t('messages.fetchError'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [supplierId, t]);
 
-  const handleStatusChange = async (newStatus: SupplierStatus) => {
+  useEffect(() => {
+    fetchSupplierData();
+  }, [fetchSupplierData]);
+
+  const handleStatusChange = useCallback(async (newStatus: SupplierStatus) => {
     try {
       setActionLoading(true);
       
       // Mock API call
       console.log('Changing supplier status to:', newStatus);
+      setSupplier(prev => prev ? { ...prev, status: newStatus } : null);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setSupplier(prev => prev ? { ...prev, status: newStatus } : null);
       message.success(t('messages.statusUpdateSuccess'));
     } catch (error) {
       console.error('Error updating supplier status:', error);
@@ -198,7 +150,7 @@ export default function SupplierDetailPage() {
 
   const getQuotationStatusColor = (status: QuotationStatus) => {
     switch (status) {
-      case QuotationStatus.PENDING:
+      case QuotationStatus.SUBMITTED:
         return 'orange';
       case QuotationStatus.APPROVED:
         return 'green';
@@ -261,17 +213,16 @@ export default function SupplierDetailPage() {
       key: 'quotationNumber',
     },
     {
-      title: t('requestDate'),
-      dataIndex: 'requestDate',
-      key: 'requestDate',
+      title: t('date'),
+      dataIndex: 'date',
+      key: 'date',
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
       title: t('totalAmount'),
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      render: (amount: number, record: SupplierQuotation) => 
-        `${record.currency} ${amount.toLocaleString()}`,
+      render: (amount: number) => `$${amount.toLocaleString()}`,
     },
     {
       title: t('status'),
@@ -293,9 +244,9 @@ export default function SupplierDetailPage() {
 
   const scorecardColumns = [
     {
-      title: t('evaluationPeriod'),
-      dataIndex: 'evaluationPeriod',
-      key: 'evaluationPeriod',
+      title: t('period'),
+      dataIndex: 'period',
+      key: 'period',
     },
     {
       title: t('overallScore'),
@@ -314,28 +265,9 @@ export default function SupplierDetailPage() {
       ),
     },
     {
-      title: t('qualityScore'),
-      dataIndex: 'qualityScore',
-      key: 'qualityScore',
-      render: (score: number) => score.toFixed(1),
-    },
-    {
-      title: t('deliveryScore'),
-      dataIndex: 'deliveryScore',
-      key: 'deliveryScore',
-      render: (score: number) => score.toFixed(1),
-    },
-    {
-      title: t('serviceScore'),
-      dataIndex: 'serviceScore',
-      key: 'serviceScore',
-      render: (score: number) => score.toFixed(1),
-    },
-    {
-      title: t('evaluationDate'),
-      dataIndex: 'evaluationDate',
-      key: 'evaluationDate',
-      render: (date: string) => new Date(date).toLocaleDateString(),
+      title: t('rating'),
+      dataIndex: 'rating',
+      key: 'rating',
     },
   ];
 
@@ -408,21 +340,21 @@ export default function SupplierDetailPage() {
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            {supplier.supplierName}
+            {supplier.name}
           </Breadcrumb.Item>
         </Breadcrumb>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
-              {supplier.supplierName}
+              {supplier.name}
             </h1>
             <Space style={{ marginTop: '8px' }}>
               <Tag color={getStatusColor(supplier.status)}>
                 {t(`status.${supplier.status}`)}
               </Tag>
-              <Tag>{t(`supplierTypes.${supplier.supplierType}`)}</Tag>
-              <span style={{ color: '#666' }}>{supplier.supplierCode}</span>
+              <Tag>{t(`supplierTypes.${supplier.type}`)}</Tag>
+              <span style={{ color: '#666' }}>{supplier.code}</span>
             </Space>
           </div>
           <Space>
@@ -448,13 +380,13 @@ export default function SupplierDetailPage() {
               <Card title={t('basicInformation')} style={{ marginBottom: 16 }}>
                 <Descriptions column={2}>
                   <Descriptions.Item label={t('supplierName')}>
-                    {supplier.supplierName}
+                    {supplier.name}
                   </Descriptions.Item>
                   <Descriptions.Item label={t('supplierCode')}>
-                    {supplier.supplierCode}
+                    {supplier.code}
                   </Descriptions.Item>
                   <Descriptions.Item label={t('supplierType')}>
-                    {t(`supplierTypes.${supplier.supplierType}`)}
+                    {t(`supplierTypes.${supplier.type}`)}
                   </Descriptions.Item>
                   <Descriptions.Item label={t('status')}>
                     <Tag color={getStatusColor(supplier.status)}>
@@ -582,7 +514,7 @@ export default function SupplierDetailPage() {
         cancelText={t('cancel')}
         okButtonProps={{ danger: true }}
       >
-        <p>{t('deleteConfirmMessage', { name: supplier.supplierName })}</p>
+        <p>{t('deleteConfirmMessage', { name: supplier.name })}</p>
         <Alert
           message={t('deleteWarning')}
           type="warning"

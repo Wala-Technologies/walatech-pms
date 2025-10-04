@@ -204,7 +204,7 @@ export default function BillingManagement() {
     {
       title: t('table.actions'),
       key: 'actions',
-      render: (_, record: Invoice) => (
+      render: (_: any, record: Invoice) => (
         <Button 
           type="link" 
           icon={<DownloadOutlined />}

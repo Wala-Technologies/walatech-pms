@@ -27,6 +27,22 @@ export interface Tenant {
       secondaryColor?: string;
       logoUrl?: string;
     };
+    theme?: {
+      primaryColor?: string;
+      secondaryColor?: string;
+      logoPosition?: 'left' | 'center';
+      sidebarStyle?: 'light' | 'dark';
+      headerStyle?: 'light' | 'dark';
+      headerTextColor?: string;
+      headerUseGradient?: boolean;
+      headerGradientFrom?: string;
+      headerGradientTo?: string;
+      headerGradientDirection?: string;
+      sidebarBgColor?: string;
+      sidebarTextColor?: string;
+      sidebarActiveBgColor?: string;
+      sidebarActiveTextColor?: string;
+    };
   };
 }
 

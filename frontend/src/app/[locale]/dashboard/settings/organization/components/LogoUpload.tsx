@@ -18,7 +18,7 @@ export default function LogoUpload({ value, onChange, tenant_id }: LogoUploadPro
 
   // Helper function to convert relative logo URLs to absolute URLs
   const getAbsoluteLogoUrl = (logoUrl: string | null) => {
-    if (!logoUrl) return null;
+    if (!logoUrl) return '';
     if (logoUrl.startsWith('http')) return logoUrl; // Already absolute
     // For relative URLs starting with /api, prepend the backend server URL
     if (logoUrl.startsWith('/api')) {

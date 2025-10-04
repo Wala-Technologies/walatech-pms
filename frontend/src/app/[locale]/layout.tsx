@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { locales } from '../../i18n';
 import { TenantProvider } from '../../contexts/tenant-context';
+import { ThemeProvider } from '../../contexts/theme-context';
 import { React19CompatProvider } from '../../components/React19CompatProvider';
 import "../globals.css";
 
@@ -55,9 +56,11 @@ export default async function LocaleLayout({
         <AntdRegistry>
           <NextIntlClientProvider messages={messages}>
             <TenantProvider>
-              <React19CompatProvider>
-                {children}
-              </React19CompatProvider>
+              <ThemeProvider>
+                <React19CompatProvider>
+                  {children}
+                </React19CompatProvider>
+              </ThemeProvider>
             </TenantProvider>
           </NextIntlClientProvider>
         </AntdRegistry>

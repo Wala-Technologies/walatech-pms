@@ -66,7 +66,7 @@ export default function ApplyLeavePage() {
   const fetchEmployees = async () => {
     try {
       const response = await hrApi.getEmployees({ limit: 1000 });
-      setEmployees(response.data);
+      setEmployees(response.data?.employees || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
       message.error('Failed to fetch employees');
@@ -79,12 +79,10 @@ export default function ApplyLeavePage() {
       
       const leaveData: CreateLeaveApplicationDto = {
         employeeId: values.employeeId,
-        leaveType: values.leaveType,
-        startDate: values.dateRange[0].format('YYYY-MM-DD'),
-        endDate: values.dateRange[1].format('YYYY-MM-DD'),
-        totalDays: totalDays,
+        leave_type: values.leaveType,
+        start_date: values.dateRange[0].format('YYYY-MM-DD'),
+        end_date: values.dateRange[1].format('YYYY-MM-DD'),
         reason: values.reason,
-        emergencyContact: values.emergencyContact,
       };
 
       await hrApi.createLeaveApplication(leaveData);
@@ -151,7 +149,7 @@ export default function ApplyLeavePage() {
                 >
                   {employees.map(employee => (
                     <Select.Option key={employee.id} value={employee.id}>
-                      {employee.firstName} {employee.lastName} ({employee.employeeId})
+                      {employee.name} ({employee.employee_number})
                     </Select.Option>
                   ))}
                 </Select>

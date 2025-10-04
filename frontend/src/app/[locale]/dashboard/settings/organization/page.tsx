@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout, Menu, Card, Breadcrumb, Button, Alert, Spin } from 'antd';
 import { 
@@ -31,11 +31,17 @@ const { Sider, Content } = Layout;
 
 type TabKey = 'general' | 'departments' | 'users-roles' | 'billing' | 'security' | 'integrations' | 'system';
 
+interface ManagedTenantRef {
+  id?: string;
+  name?: string;
+  subdomain?: string;
+}
+
 interface TabConfig {
   key: TabKey;
   label: string;
   icon: React.ReactNode;
-  component: React.ComponentType;
+  component: React.ComponentType<Record<string, unknown>>;
   description: string;
 }
 
@@ -46,7 +52,7 @@ export default function OrganizationManagement() {
   const { tenant: currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabKey>('general');
   const [collapsed, setCollapsed] = useState(false);
-  const [managedTenant, setManagedTenant] = useState<any>(null);
+  const [managedTenant, setManagedTenant] = useState<ManagedTenantRef | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = useState(false);
   const [tenantError, setTenantError] = useState<string | null>(null);
 
@@ -55,7 +61,7 @@ export default function OrganizationManagement() {
   const isManagingDifferentTenant = targetTenantSubdomain && targetTenantSubdomain !== currentTenant?.subdomain;
 
   // Tab configuration
-  const tabs: TabConfig[] = [
+  const tabs: TabConfig[] = useMemo(() => [
     {
       key: 'general',
       label: t('tabs.general'),
@@ -105,7 +111,7 @@ export default function OrganizationManagement() {
       component: SystemSettings,
       description: t('tabs.systemDesc')
     }
-  ];
+  ], [t]);
 
   // Handle URL parameters
   useEffect(() => {
@@ -113,7 +119,7 @@ export default function OrganizationManagement() {
     if (tab && tabs.find(t => t.key === tab)) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, tabs]);
 
   // Fetch target tenant information if managing a different tenant
   useEffect(() => {
@@ -155,6 +161,11 @@ export default function OrganizationManagement() {
   // Get current tab configuration
   const currentTab = tabs.find(tab => tab.key === activeTab) || tabs[0];
   const CurrentComponent = currentTab.component;
+
+  const componentProps: { managedTenant?: ManagedTenantRef | null } = {};
+  if (['general', 'departments', 'users-roles'].includes(activeTab)) {
+    componentProps.managedTenant = isManagingDifferentTenant ? managedTenant : null;
+  }
 
   // Show loading state while fetching tenant
   if (isLoadingTenant) {
@@ -300,9 +311,11 @@ export default function OrganizationManagement() {
 
             {/* Tab Content */}
             <div className="bg-white rounded-lg shadow-sm">
-              <CurrentComponent 
-                managedTenant={isManagingDifferentTenant ? managedTenant : null}
-              />
+              {['general', 'departments', 'users-roles'].includes(activeTab) ? (
+                <CurrentComponent {...componentProps} />
+              ) : (
+                <CurrentComponent />
+              )}
             </div>
           </Content>
         </Layout>

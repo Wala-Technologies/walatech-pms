@@ -28,7 +28,7 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { hrApi, Employee, AttendanceStatus, CreateAttendanceDto } from '../../../../../../lib/hr-api';
+import { hrApi, Employee, AttendanceStatus, CreateAttendanceDto, EmployeeStatus } from '../../../../../../lib/hr-api';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 
@@ -70,9 +70,9 @@ export default function MarkAttendancePage() {
       setLoading(true);
       const response = await hrApi.getEmployees({ 
         limit: 1000,
-        status: 'ACTIVE' // Only active employees
+        status: EmployeeStatus.ACTIVE // Only active employees
       });
-      setEmployees(response.data);
+      setEmployees(response.data?.employees || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
       message.error('Failed to fetch employees');
@@ -182,7 +182,7 @@ export default function MarkAttendancePage() {
       for (let i = 0; i < attendanceData.length; i += batchSize) {
         const batch = attendanceData.slice(i, i + batchSize);
         await Promise.all(
-          batch.map(data => hrApi.createAttendanceRecord(data))
+          batch.map(data => hrApi.markAttendance(data))
         );
       }
 
@@ -239,10 +239,10 @@ export default function MarkAttendancePage() {
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 500 }}>
-            {record.employee.firstName} {record.employee.lastName}
+            {record.employee.name || record.employee.employee_name}
           </div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {record.employee.employeeId}
+            {record.employee.employee_number}
           </div>
           <div style={{ fontSize: '12px', color: '#666' }}>
             {record.employee.department?.name}

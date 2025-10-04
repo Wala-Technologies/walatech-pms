@@ -7,6 +7,17 @@ export interface TenantSettings {
   // General Settings
   companyName?: string;
   companyLogo?: string;
+  description?: string;
+  industry?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  // Address fields
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
   timezone?: string;
   dateFormat?: string;
   currency?: string;
@@ -242,6 +253,16 @@ export class TenantSettingsService {
   private getDefaultSettings(): TenantSettings {
     return {
       companyName: '',
+      description: '',
+      industry: '',
+      website: '',
+      phone: '',
+      email: '',
+      street: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
       timezone: 'UTC',
       dateFormat: 'YYYY-MM-DD',
       currency: 'USD',

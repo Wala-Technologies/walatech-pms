@@ -3,13 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Tenant, TenantStatus, TenantPlan } from '../../../entities/tenant.entity';
 import { User } from '../../../entities/user.entity';
+import { Department } from '../../hr/entities/department.entity';
 import { ProvisionTenantDto } from '../dto/provision-tenant.dto';
+import { BusinessUnitType } from '../../../common/enums/business-unit-types.enum';
+import { UserRole } from '../../../common/enums/user-roles.enum';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface TenantProvisioningResult {
   tenant: Tenant;
   adminUser: User;
+  defaultUsersCreated: number;
   setupComplete: boolean;
   message: string;
 }
@@ -23,6 +27,8 @@ export class TenantProvisioningService {
     private tenantRepository: Repository<Tenant>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Department)
+    private departmentRepository: Repository<Department>,
     private dataSource: DataSource,
   ) {}
 
@@ -45,15 +51,16 @@ export class TenantProvisioningService {
       await this.initializeTenantSettings(tenant, queryRunner);
 
       // Step 5: Set up default configurations
-      await this.setupDefaultConfigurations(tenant, queryRunner);
+      const defaultUsersCreated = await this.setupDefaultConfigurations(tenant, queryRunner);
 
       await queryRunner.commitTransaction();
 
       return {
         tenant,
         adminUser,
+        defaultUsersCreated,
         setupComplete: true,
-        message: 'Tenant provisioned successfully',
+        message: 'Tenant provisioned successfully with default users',
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -167,7 +174,7 @@ export class TenantProvisioningService {
     });
   }
 
-  private async setupDefaultConfigurations(tenant: Tenant, queryRunner: any): Promise<void> {
+  private async setupDefaultConfigurations(tenant: Tenant, queryRunner: any): Promise<number> {
     // This method can be extended to set up default:
     // - Warehouses
     // - Product categories
@@ -175,8 +182,312 @@ export class TenantProvisioningService {
     // - Workflow templates
     // - Report templates
     
-    // For now, we'll just log that the setup is complete
+    // Create default departments
+    await this.createDefaultDepartments(tenant, queryRunner);
+    
+    // Create commonly used default users
+    const defaultUsersCreated = await this.createDefaultUsers(tenant, queryRunner);
+    
     console.log(`Default configurations set up for tenant: ${tenant.subdomain}`);
+    return defaultUsersCreated;
+  }
+
+  private async createDefaultDepartments(tenant: Tenant, queryRunner: any): Promise<void> {
+    const defaultDepartments = [
+      {
+        name: 'HR',
+        code: 'HR',
+        department_name: 'Human Resources',
+        description: 'Manages employee relations, recruitment, and organizational development',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Accounting',
+        code: 'ACC',
+        department_name: 'Accounting',
+        description: 'Handles financial records, bookkeeping, and financial reporting',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Purchasing',
+        code: 'PUR',
+        department_name: 'Purchasing',
+        description: 'Manages procurement, vendor relations, and supply chain',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Sales',
+        code: 'SAL',
+        department_name: 'Sales',
+        description: 'Drives revenue generation and customer acquisition',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Marketing',
+        code: 'MKT',
+        department_name: 'Marketing',
+        description: 'Manages brand promotion, advertising, and market research',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Production',
+        code: 'PRD',
+        department_name: 'Production',
+        description: 'Oversees manufacturing, quality control, and production planning',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'IT',
+        code: 'IT',
+        department_name: 'Information Technology',
+        description: 'Manages technology infrastructure, software development, and IT support',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Finance',
+        code: 'FIN',
+        department_name: 'Finance',
+        description: 'Handles financial planning, analysis, and strategic financial management',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Operations',
+        code: 'OPS',
+        department_name: 'Operations',
+        description: 'Manages day-to-day business operations and process optimization',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+      {
+        name: 'Legal',
+        code: 'LEG',
+        department_name: 'Legal',
+        description: 'Handles legal compliance, contracts, and regulatory matters',
+        business_unit_type: BusinessUnitType.GENERAL,
+        company: tenant.name,
+      },
+    ];
+
+    try {
+      for (const deptData of defaultDepartments) {
+        const department = queryRunner.manager.create(Department, {
+          id: uuidv4(),
+          ...deptData,
+          tenant_id: tenant.id,
+          owner: 'system',
+          is_group: false,
+          disabled: false,
+        });
+
+        await queryRunner.manager.save(Department, department);
+      }
+
+      console.log(`Created ${defaultDepartments.length} default departments for tenant: ${tenant.subdomain}`);
+    } catch (error) {
+      console.error(`Error creating default departments for tenant ${tenant.subdomain}:`, error);
+      throw error;
+    }
+  }
+
+  private async createDefaultUsers(tenant: Tenant, queryRunner: any): Promise<number> {
+    // Get all departments for this tenant to assign users to them
+    const departments = await queryRunner.manager.find(Department, {
+      where: { tenant_id: tenant.id },
+    });
+
+    // Create a mapping of department codes to department IDs
+    const deptMap = departments.reduce((map, dept) => {
+      map[dept.code] = dept.id;
+      return map;
+    }, {} as Record<string, string>);
+
+    // Define commonly used default users
+    const defaultUsers = [
+      // HR Department Users
+      {
+        email: `hr.manager@${tenant.subdomain}.com`,
+        first_name: 'HR',
+        last_name: 'Manager',
+        role: UserRole.HR,
+        department_id: deptMap['HR'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `hr.assistant@${tenant.subdomain}.com`,
+        first_name: 'HR',
+        last_name: 'Assistant',
+        role: UserRole.REGULAR_USER,
+        department_id: deptMap['HR'],
+        password: 'TempPass123!',
+      },
+      
+      // Accounting Department Users
+      {
+        email: `accountant@${tenant.subdomain}.com`,
+        first_name: 'Chief',
+        last_name: 'Accountant',
+        role: UserRole.ACCOUNTING,
+        department_id: deptMap['ACC'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `finance.manager@${tenant.subdomain}.com`,
+        first_name: 'Finance',
+        last_name: 'Manager',
+        role: UserRole.MANAGER,
+        department_id: deptMap['FIN'],
+        password: 'TempPass123!',
+      },
+      
+      // Sales Department Users
+      {
+        email: `sales.manager@${tenant.subdomain}.com`,
+        first_name: 'Sales',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['SAL'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `sales.rep@${tenant.subdomain}.com`,
+        first_name: 'Sales',
+        last_name: 'Representative',
+        role: UserRole.SALES,
+        department_id: deptMap['SAL'],
+        password: 'TempPass123!',
+      },
+      
+      // Purchasing Department Users
+      {
+        email: `purchasing.manager@${tenant.subdomain}.com`,
+        first_name: 'Purchasing',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['PUR'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `buyer@${tenant.subdomain}.com`,
+        first_name: 'Senior',
+        last_name: 'Buyer',
+        role: UserRole.PURCHASING,
+        department_id: deptMap['PUR'],
+        password: 'TempPass123!',
+      },
+      
+      // Production Department Users
+      {
+        email: `production.manager@${tenant.subdomain}.com`,
+        first_name: 'Production',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['PRD'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `production.supervisor@${tenant.subdomain}.com`,
+        first_name: 'Production',
+        last_name: 'Supervisor',
+        role: UserRole.PRODUCTION,
+        department_id: deptMap['PRD'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `quality.inspector@${tenant.subdomain}.com`,
+        first_name: 'Quality',
+        last_name: 'Inspector',
+        role: UserRole.REGULAR_USER,
+        department_id: deptMap['PRD'],
+        password: 'TempPass123!',
+      },
+      
+      // IT Department Users
+      {
+        email: `it.manager@${tenant.subdomain}.com`,
+        first_name: 'IT',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['IT'],
+        password: 'TempPass123!',
+      },
+      {
+        email: `system.admin@${tenant.subdomain}.com`,
+        first_name: 'System',
+        last_name: 'Administrator',
+        role: UserRole.MANAGER,
+        department_id: deptMap['IT'],
+        password: 'TempPass123!',
+      },
+      
+      // Operations Department Users
+      {
+        email: `operations.manager@${tenant.subdomain}.com`,
+        first_name: 'Operations',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['OPS'],
+        password: 'TempPass123!',
+      },
+      
+      // Marketing Department Users
+      {
+        email: `marketing.manager@${tenant.subdomain}.com`,
+        first_name: 'Marketing',
+        last_name: 'Manager',
+        role: UserRole.DEPARTMENT_HEAD,
+        department_id: deptMap['MKT'],
+        password: 'TempPass123!',
+      },
+    ];
+
+    let createdCount = 0;
+
+    try {
+      for (const userData of defaultUsers) {
+        // Check if user with this email already exists
+        const existingUser = await queryRunner.manager.findOne(User, {
+          where: { email: userData.email },
+        });
+
+        if (!existingUser) {
+          // Hash password
+          const hashedPassword = await bcrypt.hash(userData.password, 12);
+
+          const user = queryRunner.manager.create(User, {
+            id: uuidv4(),
+            email: userData.email,
+            password: hashedPassword,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            role: userData.role,
+            role_profile_name: userData.role,
+            department_id: userData.department_id,
+            tenant_id: tenant.id,
+            enabled: true,
+            time_zone: 'UTC',
+            language: 'en',
+            owner: 'system',
+          });
+
+          await queryRunner.manager.save(User, user);
+          createdCount++;
+        }
+      }
+
+      console.log(`Created ${createdCount} default users for tenant: ${tenant.subdomain}`);
+      return createdCount;
+    } catch (error) {
+      console.error(`Error creating default users for tenant ${tenant.subdomain}:`, error);
+      throw error;
+    }
   }
 
   private getMaxUsersForPlan(plan: TenantPlan): number {

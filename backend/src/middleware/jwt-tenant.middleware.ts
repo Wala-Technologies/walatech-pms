@@ -169,6 +169,7 @@ export class JwtTenantMiddleware implements NestMiddleware {
       /^\/(?:api\/)?$/, // root or /api root
       /^\/(?:api\/)?auth\/(login|register|refresh|forgot-password|reset-password)(?:\/|$)/,
       /^\/(?:api\/)?tenants\/(by-subdomain|validate)(?:\/|$)/,
+      /^\/(?:api\/)?tenant-provisioning\/provision(?:\/|$)/,
       /^\/(?:api\/)?(health|docs|swagger)(?:\/|$)/,
     ];
     const isPublic = publicMatchers.some((re) => re.test(fullPath));

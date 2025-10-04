@@ -1033,15 +1033,10 @@
         "departments": "Departments",
         "storage": "Storage",
         "apiCalls": "API Calls",
-        "apicalls": "API Calls",
         "support": "Support",
         "advancedAnalytics": "Advanced Analytics",
-        "advancedanalytics": "Advanced Analytics",
         "customIntegrations": "Custom Integrations",
-        "customintegrations": "Custom Integrations",
         "whiteLabel": "White Label"
-        ,
-        "whitelabel": "White Label"
       },
       "plans": {
         "free": "Free",

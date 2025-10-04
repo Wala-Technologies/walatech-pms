@@ -316,10 +316,10 @@ export default function IntegrationsManagement() {
       render: (permissions: string[]) => (
         <div className="flex flex-wrap gap-1">
           {permissions.slice(0, 2).map(permission => (
-            <Tag key={permission} size="small">{permission}</Tag>
+            <Tag key={permission}>{permission}</Tag>
           ))}
           {permissions.length > 2 && (
-            <Tag size="small">+{permissions.length - 2}</Tag>
+            <Tag>+{permissions.length - 2}</Tag>
           )}
         </div>
       ),

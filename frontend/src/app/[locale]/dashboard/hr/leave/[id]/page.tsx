@@ -30,7 +30,7 @@ import {
 } from '@ant-design/icons';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { hrApi, LeaveApplication, LeaveApplicationStatus, ApproveLeaveApplicationDto } from '../../../../../../lib/hr-api';
+import { hrApi, LeaveApplication, LeaveApplicationStatus, ApproveLeaveApplicationDto, RejectLeaveApplicationDto } from '../../../../../../lib/hr-api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -77,12 +77,19 @@ export default function LeaveApplicationDetailPage() {
     try {
       setActionLoading(true);
       
-      const approvalData: ApproveLeaveApplicationDto = {
-        approved,
-        comments
-      };
+      if (approved) {
+        const approvalData: ApproveLeaveApplicationDto = {
+          approved_by: 'current-user', // This should be the current user's ID
+          approved_date: new Date().toISOString()
+        };
+        await hrApi.approveLeaveApplication(leaveId, approvalData);
+      } else {
+        const rejectionData: RejectLeaveApplicationDto = {
+          rejection_reason: comments
+        };
+        await hrApi.rejectLeaveApplication(leaveId, rejectionData);
+      }
 
-      await hrApi.approveLeaveApplication(leaveId, approvalData);
       message.success(`Leave application ${approved ? 'approved' : 'rejected'} successfully`);
       
       setApprovalModalVisible(false);
@@ -101,7 +108,9 @@ export default function LeaveApplicationDetailPage() {
 
   const getStatusColor = (status: LeaveApplicationStatus) => {
     switch (status) {
-      case LeaveApplicationStatus.PENDING:
+      case LeaveApplicationStatus.DRAFT:
+        return 'blue';
+      case LeaveApplicationStatus.OPEN:
         return 'orange';
       case LeaveApplicationStatus.APPROVED:
         return 'green';
@@ -157,7 +166,7 @@ export default function LeaveApplicationDetailPage() {
           </Space>
         </Col>
         <Col>
-          {leaveApplication.status === LeaveApplicationStatus.PENDING && (
+          {leaveApplication.status === LeaveApplicationStatus.OPEN && (
             <Space>
               <Button
                 type="primary"
@@ -192,10 +201,10 @@ export default function LeaveApplicationDetailPage() {
           }>
             <Descriptions column={1} bordered>
               <Descriptions.Item label="Leave Type">
-                <Text strong>{leaveApplication.leaveType}</Text>
+                <Text strong>{leaveApplication.leave_type}</Text>
               </Descriptions.Item>
               <Descriptions.Item label="Start Date">
-                {new Date(leaveApplication.startDate).toLocaleDateString('en-US', {
+                {new Date(leaveApplication.start_date).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -203,7 +212,7 @@ export default function LeaveApplicationDetailPage() {
                 })}
               </Descriptions.Item>
               <Descriptions.Item label="End Date">
-                {new Date(leaveApplication.endDate).toLocaleDateString('en-US', {
+                {new Date(leaveApplication.end_date).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -211,18 +220,14 @@ export default function LeaveApplicationDetailPage() {
                 })}
               </Descriptions.Item>
               <Descriptions.Item label="Total Days">
-                <Text strong>{leaveApplication.totalDays} day(s)</Text>
+                <Text strong>{leaveApplication.total_days} day(s)</Text>
               </Descriptions.Item>
               <Descriptions.Item label="Reason">
                 <div style={{ whiteSpace: 'pre-wrap' }}>
                   {leaveApplication.reason}
                 </div>
               </Descriptions.Item>
-              {leaveApplication.emergencyContact && (
-                <Descriptions.Item label="Emergency Contact">
-                  {leaveApplication.emergencyContact}
-                </Descriptions.Item>
-              )}
+
               <Descriptions.Item label="Applied Date">
                 {new Date(leaveApplication.createdAt).toLocaleDateString('en-US', {
                   year: 'numeric',
@@ -232,9 +237,9 @@ export default function LeaveApplicationDetailPage() {
                   minute: '2-digit'
                 })}
               </Descriptions.Item>
-              {leaveApplication.approvedAt && (
+              {leaveApplication.approved_date && (
                 <Descriptions.Item label="Decision Date">
-                  {new Date(leaveApplication.approvedAt).toLocaleDateString('en-US', {
+                  {new Date(leaveApplication.approved_date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -243,10 +248,10 @@ export default function LeaveApplicationDetailPage() {
                   })}
                 </Descriptions.Item>
               )}
-              {leaveApplication.approverComments && (
-                <Descriptions.Item label="Approver Comments">
+              {leaveApplication.rejection_reason && (
+                <Descriptions.Item label="Rejection Reason">
                   <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {leaveApplication.approverComments}
+                    {leaveApplication.rejection_reason}
                   </div>
                 </Descriptions.Item>
               )}
@@ -264,23 +269,23 @@ export default function LeaveApplicationDetailPage() {
             <Descriptions column={1}>
               <Descriptions.Item label="Name">
                 <Text strong>
-                  {leaveApplication.employee.firstName} {leaveApplication.employee.lastName}
+                  {leaveApplication.employee?.name || 'N/A'}
                 </Text>
               </Descriptions.Item>
-              <Descriptions.Item label="Employee ID">
-                {leaveApplication.employee.employeeId}
+              <Descriptions.Item label="Employee Number">
+                {leaveApplication.employee?.employee_number || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Email">
-                {leaveApplication.employee.email}
+                {leaveApplication.employee?.email || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Phone">
-                {leaveApplication.employee.phone || 'N/A'}
+                {leaveApplication.employee?.phone || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Department">
-                {leaveApplication.employee.department?.name || 'N/A'}
+                {leaveApplication.employee?.department?.name || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Designation">
-                {leaveApplication.employee.designation?.title || 'N/A'}
+                {leaveApplication.employee?.designation?.title || 'N/A'}
               </Descriptions.Item>
             </Descriptions>
           </Card>

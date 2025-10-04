@@ -26,8 +26,10 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '../../../contexts/tenant-context';
+import { useTheme } from '../../../contexts/theme-context';
 import { useAuth } from '../../../hooks/useAuth';
 import { apiClient } from '../../../lib/api-client';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import { apiConfig } from '../../../config/api';
 
 const { Header, Sider, Content } = Layout;
@@ -46,6 +48,7 @@ export default function DashboardLayout({
   const t = useTranslations('navigation');
   const tCommon = useTranslations('common');
   const { tenant } = useTenant();
+  const { themeSettings } = useTheme();
   const { user, isSuperAdmin, loading, isInitialized } = useAuth();
   const router = useRouter();
 
@@ -101,20 +104,22 @@ export default function DashboardLayout({
     }
   };
 
-  // Theme helpers from tenant settings
-  const themeSettings = (tenant?.settings as any)?.theme || {};
+  // Theme helpers from theme context and tenant settings
+  const tenantThemeSettings = (tenant?.settings as any)?.theme || {};
   const branding = (tenant?.settings as any)?.branding || {};
   const siderTheme = themeSettings.sidebarStyle === 'dark' ? 'dark' : 'light';
   const headerIsDark = themeSettings.headerStyle === 'dark';
   const headerBg = headerIsDark ? (branding.primaryColor || '#1f1f1f') : '#ffffff';
-  const headerText = headerIsDark ? '#ffffff' : '#1f2937';
+  const headerText = tenantThemeSettings.headerTextColor || (headerIsDark ? '#ffffff' : '#1f2937');
   const logoPosition = themeSettings.logoPosition || 'left';
-  const headerUseGradient = !!themeSettings.headerUseGradient;
-  const headerGradFrom = themeSettings.headerGradientFrom || branding.primaryColor || '#1890ff';
-  const headerGradTo = themeSettings.headerGradientTo || branding.secondaryColor || '#52c41a';
-  const headerGradDir = themeSettings.headerGradientDirection || 'to-r';
-  const sidebarBgCustom = themeSettings.sidebarBgColor as string | undefined;
-  const sidebarTextCustom = themeSettings.sidebarTextColor as string | undefined;
+  const headerUseGradient = !!tenantThemeSettings.headerUseGradient;
+  const headerGradFrom = tenantThemeSettings.headerGradientFrom || branding.primaryColor || '#1890ff';
+  const headerGradTo = tenantThemeSettings.headerGradientTo || branding.secondaryColor || '#52c41a';
+  const headerGradDir = tenantThemeSettings.headerGradientDirection || 'to-r';
+  const sidebarBgCustom = tenantThemeSettings.sidebarBgColor as string | undefined;
+  const sidebarTextCustom = tenantThemeSettings.sidebarTextColor as string | undefined;
+  const sidebarActiveBgCustom = tenantThemeSettings.sidebarActiveBgColor as string | undefined;
+  const sidebarActiveTextCustom = tenantThemeSettings.sidebarActiveTextColor as string | undefined;
 
   // Get logo URL from multiple possible locations
   const getLogoUrl = () => {
@@ -137,6 +142,64 @@ export default function DashboardLayout({
       return `${apiConfig.baseURL}${logoUrl}`;
     }
     return logoUrl;
+  };
+
+  // Generate dynamic CSS for custom sidebar colors
+  const generateCustomMenuCSS = () => {
+    let css = '';
+    
+    // Override global CSS custom properties if custom colors are set
+    if (sidebarActiveBgCustom && sidebarActiveBgCustom.trim() !== '') {
+      css += `
+        :root {
+          --sidebar-menu-hover-bg: ${sidebarActiveBgCustom}80 !important;
+          --sidebar-menu-selected-bg: ${sidebarActiveBgCustom} !important;
+        }
+        
+        /* More specific selectors to ensure override */
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item:hover,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu-title:hover,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item:hover {
+          background-color: ${sidebarActiveBgCustom}80 !important;
+        }
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item-selected,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item-selected {
+          background-color: ${sidebarActiveBgCustom} !important;
+        }
+      `;
+    }
+    
+    if (sidebarActiveTextCustom && sidebarActiveTextCustom.trim() !== '') {
+      css += `
+        /* Text color for active items */
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item-selected,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item-selected {
+          color: ${sidebarActiveTextCustom} !important;
+        }
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item-selected .anticon,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item-selected .anticon {
+          color: ${sidebarActiveTextCustom} !important;
+        }
+      `;
+    }
+    
+    // Add general text color override for all menu items if custom text color is set
+    if (sidebarTextCustom && sidebarTextCustom.trim() !== '') {
+      css += `
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu-title,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item {
+          color: ${sidebarTextCustom} !important;
+        }
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-item .anticon,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu-title .anticon,
+        .ant-layout .ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item .anticon {
+          color: ${sidebarTextCustom} !important;
+        }
+      `;
+    }
+    
+    return css;
   };
 
   const menuItems = [
@@ -634,20 +697,43 @@ export default function DashboardLayout({
   ];
 
   return (
-    <Layout className="min-h-screen">
+    <>
+      {/* Dynamic CSS for custom menu colors */}
+      {(sidebarBgCustom || sidebarTextCustom || sidebarActiveBgCustom || sidebarActiveTextCustom) && (
+        <style dangerouslySetInnerHTML={{ __html: generateCustomMenuCSS() }} />
+      )}
+      <Layout className="min-h-screen">
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
         width={250}
         theme={siderTheme as 'light' | 'dark'}
-        className={siderTheme === 'dark' ? 'shadow-lg bg-[#141414]' : 'bg-white shadow-lg'}
+        className={
+          sidebarBgCustom && sidebarBgCustom.trim() !== '' 
+            ? 'shadow-lg' // Only shadow when custom color is set
+            : siderTheme === 'dark' 
+              ? 'shadow-lg bg-[#141414]' 
+              : 'bg-white shadow-lg'
+        }
         style={{
           backgroundColor: sidebarBgCustom && sidebarBgCustom.trim() !== '' ? sidebarBgCustom : undefined,
           color: sidebarTextCustom && sidebarTextCustom.trim() !== '' ? sidebarTextCustom : undefined,
         }}
       >
-        <div className={siderTheme === 'dark' ? 'p-4 border-b border-[#1f1f1f]' : 'p-4 border-b'}>
+        <div 
+          className={
+            sidebarBgCustom && sidebarBgCustom.trim() !== '' 
+              ? 'p-4 border-b' // No color classes when custom color is set
+              : siderTheme === 'dark' 
+                ? 'p-4 border-b border-[#1f1f1f]' 
+                : 'p-4 border-b'
+          }
+          style={{
+            backgroundColor: sidebarBgCustom && sidebarBgCustom.trim() !== '' ? sidebarBgCustom : undefined,
+            borderBottomColor: sidebarBgCustom && sidebarBgCustom.trim() !== '' ? 'rgba(255,255,255,0.1)' : undefined,
+          }}
+        >
           <div className={`flex ${logoPosition === 'center' ? 'justify-center' : 'justify-start'} items-center space-x-2`}>
             {getLogoUrl() ? (
               <img
@@ -672,10 +758,22 @@ export default function DashboardLayout({
             )}
             {!collapsed && (
               <div>
-                <h1 className={`text-lg font-bold ${siderTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <h1 
+                  className={`text-lg font-bold ${siderTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                  style={{
+                    color: sidebarTextCustom && sidebarTextCustom.trim() !== '' ? sidebarTextCustom : undefined,
+                  }}
+                >
                   {tenant?.settings?.companyName || tenant?.name || 'WalaTech'}
                 </h1>
-                <p className={`${siderTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'} text-xs`}>Production MES</p>
+                <p 
+                  className={`${siderTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'} text-xs`}
+                  style={{
+                    color: sidebarTextCustom && sidebarTextCustom.trim() !== '' ? `${sidebarTextCustom}CC` : undefined,
+                  }}
+                >
+                  Production MES
+                </p>
               </div>
             )}
           </div>
@@ -686,6 +784,10 @@ export default function DashboardLayout({
           defaultOpenKeys={['production']}
           items={menuItems}
           className="border-none"
+          style={{
+            backgroundColor: sidebarBgCustom && sidebarBgCustom.trim() !== '' ? sidebarBgCustom : undefined,
+            color: sidebarTextCustom && sidebarTextCustom.trim() !== '' ? sidebarTextCustom : undefined,
+          }}
         />
       </Sider>
 
@@ -710,13 +812,13 @@ export default function DashboardLayout({
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
-              className={headerIsDark ? 'text-white' : 'text-gray-600'}
+              style={{ color: headerText }}
             />
             <div>
-              <h2 className={`text-lg font-semibold ${headerIsDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className="text-lg font-semibold" style={{ color: headerText }}>
                 Production Dashboard
               </h2>
-              <p className={`text-sm ${headerIsDark ? 'text-gray-200' : 'text-gray-500'}`}>
+              <p className="text-sm" style={{ color: `${headerText}CC` }}>
                 Welcome back, Administrator
               </p>
             </div>
@@ -727,9 +829,11 @@ export default function DashboardLayout({
               <Button
                 type="text"
                 icon={<BellOutlined />}
-                className={headerIsDark ? 'text-white' : 'text-gray-600'}
+                style={{ color: headerText }}
               />
             </Badge>
+
+            <LanguageSwitcher />
 
             <Dropdown
               menu={{ items: userMenuItems }}
@@ -740,10 +844,10 @@ export default function DashboardLayout({
               <div className={`flex items-center space-x-2 cursor-pointer px-2 py-1 rounded ${headerIsDark ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                 <Avatar icon={<UserOutlined />} />
                 <div className="text-right">
-                  <p className={`text-sm font-medium ${headerIsDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className="text-sm font-medium" style={{ color: headerText }}>
                     Admin User
                   </p>
-                  <p className={`text-xs ${headerIsDark ? 'text-gray-200' : 'text-gray-500'}`}>System Administrator</p>
+                  <p className="text-xs" style={{ color: `${headerText}CC` }}>System Administrator</p>
                 </div>
               </div>
             </Dropdown>
@@ -753,5 +857,6 @@ export default function DashboardLayout({
         <Content className="bg-gray-50">{children}</Content>
       </Layout>
     </Layout>
+    </>
   );
 }
