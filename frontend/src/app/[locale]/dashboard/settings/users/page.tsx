@@ -6,7 +6,6 @@ import {
   Table,
   Button,
   Tag,
-  Space,
   Input,
   Select,
   Modal,
@@ -16,7 +15,6 @@ import {
   Tooltip,
   Dropdown,
   Badge,
-  DatePicker,
   Row,
   Col,
   message
@@ -33,7 +31,7 @@ import {
   MoreOutlined,
   EyeOutlined
 } from '@ant-design/icons';
-import { hrApi } from '@/lib/hr-api';
+import { hrApi, Department } from '@/lib/hr-api';
 
 interface User {
   id: string;
@@ -57,16 +55,6 @@ interface Role {
   description: string;
   permissions: string[];
   userCount: number;
-}
-
-interface Department {
-  id: string;
-  name: string;
-  department_name: string;
-  description?: string;
-  parent_department?: string;
-  is_group: boolean;
-  disabled: boolean;
 }
 
 export default function UsersPage() {
@@ -279,7 +267,7 @@ export default function UsersPage() {
     {
       title: 'User',
       key: 'user',
-      render: (_: any, record: User) => (
+      render: (_: unknown, record: User) => (
         <div className="flex items-center space-x-3">
           <Avatar 
             src={record.avatar} 
@@ -367,7 +355,7 @@ export default function UsersPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: User) => (
+      render: (_: unknown, record: User) => (
         <Dropdown
           menu={{ items: userActionItems(record) }}
           trigger={['click']}
@@ -491,7 +479,7 @@ export default function UsersPage() {
               <Select.Option value="all">All Departments</Select.Option>
               {departments.map(dept => (
                 <Select.Option key={dept.id} value={dept.id}>
-                  {dept.department_name || dept.name}
+                  {dept.name}
                 </Select.Option>
               ))}
             </Select>
@@ -595,7 +583,7 @@ export default function UsersPage() {
                 <Select placeholder="Select department">
                   {departments.map(dept => (
                     <Select.Option key={dept.id} value={dept.id}>
-                      {dept.department_name || dept.name}
+                      {dept.name}
                     </Select.Option>
                   ))}
                 </Select>

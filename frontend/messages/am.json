@@ -122,15 +122,19 @@
     "cancel": "ሰርዝ",
     "update": "አዘምን",
     "create": "ፍጠር",
-    "status.draft": "ረቂቅ",
-    "status.planned": "የታቀደ",
-    "status.in_progress": "በሂደት ላይ",
-    "status.completed": "ተጠናቀቀ",
-    "status.cancelled": "ተሰረዘ",
-    "priority.low": "ዝቅተኛ",
-    "priority.medium": "መካከለኛ",
-    "priority.high": "ከፍተኛ",
-    "priority.urgent": "አስቸኳይ"
+    "status": {
+      "draft": "ረቂቅ",
+      "planned": "የታቀደ",
+      "inProgress": "በሂደት ላይ",
+      "completed": "ተጠናቀቀ",
+      "cancelled": "ተሰረዘ"
+    },
+    "priority": {
+      "low": "ዝቅተኛ",
+      "medium": "መካከለኛ",
+      "high": "ከፍተኛ",
+      "urgent": "አስቸኳይ"
+    }
   },
   "inventory": {
     "title": "ክምችት",
@@ -138,8 +142,10 @@
     "items": "እቃዎች",
     "stockLevels": "የእቃ መጠን",
     "warehouses": "ጎተራዎች",
-    "breadcrumb.dashboard": "ዳሽቦርድ",
-    "breadcrumb.inventory": "ክምችት"
+    "breadcrumb": {
+      "dashboard": "ዳሽቦርድ",
+      "inventory": "ክምችት"
+    }
   },
   "tenant": {
     "selectTenant": "ድርጅት ይምረጡ",
@@ -707,6 +713,14 @@
       "filterBySalesPerson": "በሽያጭ ሰራተኛ ማጣሪያ",
       "filterByTerritory": "በክልል ማጣሪያ",
       "filterFromTransactionDate": "ከግብይት ቀን ማጣሪያ (YYYY-MM-DD)",
+      "filterBySupplier": "በአቅራቢ ማጣሪያ",
+      "filterBySupplierGroup": "በአቅራቢ ቡድን ማጣሪያ",
+      "filterBySupplierType": "በአቅራቢ አይነት ማጣሪያ",
+      "filterBySupplierCountry": "በአቅራቢ ሀገር ማጣሪያ",
+      "filterBySupplierCurrency": "በአቅራቢ ምንዛሬ ማጣሪያ",
+      "filterBySupplierStatus": "በአቅራቢ ሁኔታ ማጣሪያ",
+      "filterByHoldType": "በማቆያ አይነት ማጣሪያ",
+      "filterByQuotationStatus": "በዋጋ ሰላሳ ሁኔታ ማጣሪያ",
       "filterToTransactionDate": "እስከ ግብይት ቀን ማጣሪያ (YYYY-MM-DD)",
       "filterFromDeliveryDate": "ከማድረሻ ቀን ማጣሪያ (YYYY-MM-DD)",
       "filterToDeliveryDate": "እስከ ማድረሻ ቀን ማጣሪያ (YYYY-MM-DD)",

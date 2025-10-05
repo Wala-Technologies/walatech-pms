@@ -8,8 +8,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +21,39 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom sidebar styling for menu items */
+:root {
+  --sidebar-menu-hover-bg: rgba(255, 255, 255, 0.1);
+  --sidebar-menu-selected-bg: rgba(255, 255, 255, 0.2);
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-item,
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu-title {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-item:hover,
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu-title:hover {
+  background-color: var(--sidebar-menu-hover-bg) !important;
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-item-selected {
+  background-color: var(--sidebar-menu-selected-bg) !important;
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu-open > .ant-menu-submenu-title,
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item:hover {
+  background-color: var(--sidebar-menu-hover-bg) !important;
+}
+
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu .ant-menu-item-selected {
+  background-color: var(--sidebar-menu-selected-bg) !important;
 }

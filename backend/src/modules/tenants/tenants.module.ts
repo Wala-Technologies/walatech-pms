@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Tenant } from '../../entities/tenant.entity';
 import { User } from '../../entities/user.entity';
 import { TenantLifecycleAudit } from '../../entities/tenant-lifecycle-audit.entity';
+import { Department } from '../hr/entities/department.entity';
 import { TenantsService } from './services/tenants.service';
 import { TenantProvisioningService } from './services/tenant-provisioning.service';
 import { TenantSettingsService } from './services/tenant-settings.service';
@@ -14,7 +15,7 @@ import { TenantSettingsController } from './controllers/tenant-settings.controll
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Tenant, User, TenantLifecycleAudit]),
+    TypeOrmModule.forFeature([Tenant, User, TenantLifecycleAudit, Department]),
     ScheduleModule.forRoot(),
   ],
   controllers: [TenantsController, TenantProvisioningController, TenantSettingsController],

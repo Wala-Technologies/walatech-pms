@@ -254,7 +254,7 @@ export default function SupplierGroupsPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: SupplierGroup) => (
+      render: (_: any, record: SupplierGroup) => (
         <Space>
           <Tooltip title="Edit">
             <Button

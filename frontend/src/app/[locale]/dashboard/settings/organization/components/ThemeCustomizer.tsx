@@ -16,14 +16,16 @@ import {
   ColorPicker,
   Slider,
   Radio,
-  Preview,
   message,
+  Alert,
 } from 'antd';
 import {
   BgColorsOutlined,
   EyeOutlined,
   ReloadOutlined,
   SaveOutlined,
+  WarningOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -308,6 +310,88 @@ export default function ThemeCustomizer({ value, onChange }: ThemeCustomizerProp
                   </Form.Item>
                 </Col>
               </Row>
+
+              {/* Warning Note about Button Visibility */}
+              <Alert
+                message="Color Contrast & Button Visibility"
+                description={
+                  <div>
+                    <p style={{ marginBottom: '8px' }}>
+                      <WarningOutlined style={{ color: '#faad14', marginRight: '4px' }} />
+                      <strong>Important:</strong> The primary color affects all buttons and interactive elements. 
+                      Ensure sufficient contrast with white text for optimal visibility.
+                    </p>
+                    <p style={{ marginBottom: '0' }}>
+                      <InfoCircleOutlined style={{ color: '#1890ff', marginRight: '4px' }} />
+                      Use the preview buttons below to test visibility before saving changes.
+                    </p>
+                  </div>
+                }
+                type="info"
+                showIcon
+                style={{ marginTop: '16px' }}
+              />
+
+              {/* Preview Controls */}
+              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fafafa', borderRadius: '6px', border: '1px solid #d9d9d9' }}>
+                <Text strong style={{ display: 'block', marginBottom: '12px' }}>
+                  <EyeOutlined style={{ marginRight: '6px' }} />
+                  Button Preview
+                </Text>
+                <Space wrap>
+                  <Button 
+                    type="primary" 
+                    style={{ 
+                      backgroundColor: theme.primaryColor, 
+                      borderColor: theme.primaryColor,
+                      color: '#ffffff'
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                  <Button 
+                    style={{ 
+                      color: theme.primaryColor, 
+                      borderColor: theme.primaryColor 
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="primary" 
+                    danger
+                    style={{ 
+                      backgroundColor: theme.errorColor, 
+                      borderColor: theme.errorColor 
+                    }}
+                  >
+                    Delete
+                  </Button>
+                  <Button 
+                    style={{ 
+                      backgroundColor: theme.successColor, 
+                      borderColor: theme.successColor,
+                      color: '#ffffff'
+                    }}
+                  >
+                    Success
+                  </Button>
+                  <Button 
+                    style={{ 
+                      backgroundColor: theme.warningColor, 
+                      borderColor: theme.warningColor,
+                      color: '#ffffff'
+                    }}
+                  >
+                    Warning
+                  </Button>
+                </Space>
+                <div style={{ marginTop: '8px' }}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    These preview buttons show how your color choices will appear throughout the application.
+                  </Text>
+                </div>
+              </div>
             </Card>
           </Col>
 

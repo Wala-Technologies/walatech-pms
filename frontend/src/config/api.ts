@@ -127,11 +127,12 @@ export const apiClient = {
     return response;
   },
   
-  delete: async (endpoint: string) => {
+  delete: async (endpoint: string, data?: unknown) => {
     const url = buildApiUrl(endpoint);
     const response = await fetch(url, {
       method: 'DELETE',
       headers: getAuthHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
     });
     return response;
   },

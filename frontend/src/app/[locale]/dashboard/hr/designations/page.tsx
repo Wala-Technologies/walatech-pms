@@ -72,12 +72,12 @@ export default function DesignationsPage() {
         params.departmentId = departmentFilter;
       }
       
-      const response: PaginatedResponse<Designation> = await hrApi.getDesignations(params);
+      const response = await hrApi.getDesignations(params);
       
-      setDesignations(response.data);
+      setDesignations(response.data?.designations || []);
       setPagination(prev => ({
         ...prev,
-        total: response.total,
+        total: response.data?.total || 0,
       }));
     } catch (error) {
       console.error('Error fetching designations:', error);
@@ -90,7 +90,7 @@ export default function DesignationsPage() {
   const fetchDepartments = async () => {
     try {
       const response = await hrApi.getDepartments({ limit: 1000 });
-      setDepartments(response.data);
+      setDepartments(response.data?.departments || []);
     } catch (error) {
       console.error('Error fetching departments:', error);
     }
@@ -188,7 +188,7 @@ export default function DesignationsPage() {
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <UserOutlined style={{ marginRight: '4px' }} />
-          <span>{record.employees?.length || 0}</span>
+          <span>-</span>
         </div>
       ),
     },

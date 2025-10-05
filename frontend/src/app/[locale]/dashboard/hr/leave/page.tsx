@@ -29,7 +29,7 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { hrApi, LeaveApplication, LeaveApplicationStatus, PaginatedResponse } from '../../../../../lib/hr-api';
+import { hrApi, LeaveApplication, LeaveApplicationStatus, PaginatedResponse, RejectLeaveApplicationDto } from '../../../../../lib/hr-api';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Title } = Typography;
@@ -77,12 +77,12 @@ export default function LeaveApplicationsPage() {
         params.endDate = dateRange[1].format('YYYY-MM-DD');
       }
       
-      const response: PaginatedResponse<LeaveApplication> = await hrApi.getLeaveApplications(params);
+      const response = await hrApi.getLeaveApplications(params);
       
-      setLeaveApplications(response.data);
+      setLeaveApplications(response.data || []);
       setPagination(prev => ({
         ...prev,
-        total: response.total,
+        total: response.data?.length || 0,
       }));
     } catch (error) {
       console.error('Error fetching leave applications:', error);
@@ -94,7 +94,10 @@ export default function LeaveApplicationsPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await hrApi.approveLeaveApplication(id, { approved: true, comments: '' });
+      await hrApi.approveLeaveApplication(id, { 
+        approved_by: 'current_user', // This should be the current user's ID
+        approved_date: new Date().toISOString()
+      });
       message.success('Leave application approved successfully');
       fetchLeaveApplications();
     } catch (error) {
@@ -105,7 +108,9 @@ export default function LeaveApplicationsPage() {
 
   const handleReject = async (id: string) => {
     try {
-      await hrApi.approveLeaveApplication(id, { approved: false, comments: 'Rejected' });
+      await hrApi.rejectLeaveApplication(id, { 
+        rejection_reason: 'Rejected by manager'
+      });
       message.success('Leave application rejected');
       fetchLeaveApplications();
     } catch (error) {
@@ -116,7 +121,9 @@ export default function LeaveApplicationsPage() {
 
   const getStatusColor = (status: LeaveApplicationStatus) => {
     switch (status) {
-      case LeaveApplicationStatus.PENDING:
+      case LeaveApplicationStatus.DRAFT:
+        return 'blue';
+      case LeaveApplicationStatus.OPEN:
         return 'orange';
       case LeaveApplicationStatus.APPROVED:
         return 'green';
@@ -132,30 +139,30 @@ export default function LeaveApplicationsPage() {
   const columns: ColumnsType<LeaveApplication> = [
     {
       title: 'Employee',
-      dataIndex: ['employee', 'firstName'],
+      dataIndex: ['employee', 'name'],
       key: 'employee',
       render: (_, record) => (
         <div>
-          <div>{record.employee.firstName} {record.employee.lastName}</div>
+          <div>{record.employee?.name || 'N/A'}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {record.employee.employeeId}
+            {record.employee?.employee_number || 'N/A'}
           </div>
         </div>
       ),
     },
     {
       title: 'Leave Type',
-      dataIndex: 'leaveType',
-      key: 'leaveType',
+      dataIndex: 'leave_type',
+      key: 'leave_type',
     },
     {
       title: 'Duration',
       key: 'duration',
       render: (_, record) => (
         <div>
-          <div>{new Date(record.startDate).toLocaleDateString()} - {new Date(record.endDate).toLocaleDateString()}</div>
+          <div>{new Date(record.start_date).toLocaleDateString()} - {new Date(record.end_date).toLocaleDateString()}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {record.totalDays} day(s)
+            {record.total_days} day(s)
           </div>
         </div>
       ),
@@ -189,7 +196,7 @@ export default function LeaveApplicationsPage() {
             />
           </Tooltip>
           
-          {record.status === LeaveApplicationStatus.PENDING && (
+          {record.status === LeaveApplicationStatus.OPEN && (
             <>
               <Popconfirm
                 title="Approve this leave application?"
@@ -276,7 +283,8 @@ export default function LeaveApplicationsPage() {
               allowClear
               style={{ width: '100%' }}
             >
-              <Select.Option value={LeaveApplicationStatus.PENDING}>Pending</Select.Option>
+              <Select.Option value={LeaveApplicationStatus.DRAFT}>Draft</Select.Option>
+              <Select.Option value={LeaveApplicationStatus.OPEN}>Open</Select.Option>
               <Select.Option value={LeaveApplicationStatus.APPROVED}>Approved</Select.Option>
               <Select.Option value={LeaveApplicationStatus.REJECTED}>Rejected</Select.Option>
               <Select.Option value={LeaveApplicationStatus.CANCELLED}>Cancelled</Select.Option>

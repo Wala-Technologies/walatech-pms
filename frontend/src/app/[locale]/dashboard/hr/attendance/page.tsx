@@ -97,12 +97,12 @@ export default function AttendancePage() {
         params.employeeId = employeeFilter;
       }
       
-      const response: PaginatedResponse<Attendance> = await hrApi.getAttendanceRecords(params);
+      const response = await hrApi.getAttendance(params);
       
-      setAttendanceRecords(response.data);
+      setAttendanceRecords(response.data?.attendance || []);
       setPagination(prev => ({
         ...prev,
-        total: response.total,
+        total: response.data?.total || 0,
       }));
     } catch (error) {
       console.error('Error fetching attendance records:', error);
@@ -115,7 +115,7 @@ export default function AttendancePage() {
   const fetchEmployees = async () => {
     try {
       const response = await hrApi.getEmployees({ limit: 1000 });
-      setEmployees(response.data);
+      setEmployees(response.data?.employees || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
     }
@@ -124,12 +124,12 @@ export default function AttendancePage() {
   const fetchTodayStats = async () => {
     try {
       const today = dayjs().format('YYYY-MM-DD');
-      const response: PaginatedResponse<Attendance> = await hrApi.getAttendanceRecords({
+      const response = await hrApi.getAttendance({
         date: today,
         limit: 1000
       });
       
-      const records = response.data;
+      const records = response.data?.attendance || [];
       const stats = {
         present: records.filter(r => r.status === AttendanceStatus.PRESENT).length,
         absent: records.filter(r => r.status === AttendanceStatus.ABSENT).length,
@@ -148,13 +148,13 @@ export default function AttendancePage() {
       const attendanceData: CreateAttendanceDto = {
         employeeId: values.employeeId,
         date: values.date.format('YYYY-MM-DD'),
-        checkInTime: values.checkInTime?.format('HH:mm') || undefined,
-        checkOutTime: values.checkOutTime?.format('HH:mm') || undefined,
+        check_in_time: values.checkInTime?.format('HH:mm') || undefined,
+        check_out_time: values.checkOutTime?.format('HH:mm') || undefined,
         status: values.status,
-        notes: values.notes,
+        remarks: values.notes,
       };
 
-      await hrApi.createAttendanceRecord(attendanceData);
+      await hrApi.markAttendance(attendanceData);
       message.success('Attendance marked successfully');
       setMarkAttendanceModalVisible(false);
       form.resetFields();
@@ -188,9 +188,9 @@ export default function AttendancePage() {
       key: 'employee',
       render: (_, record) => (
         <div>
-          <div>{record.employee.firstName} {record.employee.lastName}</div>
+          <div>{record.employee?.name || record.employee?.employee_name || 'N/A'}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {record.employee.employeeId}
+            {record.employee?.employee_number || 'N/A'}
           </div>
         </div>
       ),
@@ -363,7 +363,7 @@ export default function AttendancePage() {
             >
               {employees.map(employee => (
                 <Select.Option key={employee.id} value={employee.id}>
-                  {employee.firstName} {employee.lastName}
+                  {employee.name || employee.employee_name}
                 </Select.Option>
               ))}
             </Select>
@@ -457,7 +457,7 @@ export default function AttendancePage() {
             >
               {employees.map(employee => (
                 <Select.Option key={employee.id} value={employee.id}>
-                  {employee.firstName} {employee.lastName} ({employee.employeeId})
+                  {employee.name || employee.employee_name} ({employee.employee_number})
                 </Select.Option>
               ))}
             </Select>

@@ -149,7 +149,7 @@ export default function DepartmentManagement({
       name: department.name,
       code: department.name, // Use name as code for existing departments
       department_name: department.department_name,
-      company: 'WalaTech Manufacturing', // Default company
+      company: managedTenant?.name || 'Company Name', // Use tenant name
       description: department.description,
       manager_id: department.manager_id,
       parent_department: department.parent_department,
@@ -250,7 +250,7 @@ export default function DepartmentManagement({
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Department) => (
+      render: (_: any, record: Department) => (
         <Space>
           <Button
             type="text"
@@ -344,7 +344,7 @@ export default function DepartmentManagement({
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            company: 'WalaTech Manufacturing'
+            company: managedTenant?.name || 'Company Name'
           }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
@@ -388,7 +388,7 @@ export default function DepartmentManagement({
                 { required: true, message: 'Please enter company name' },
               ]}
             >
-              <Input placeholder="Company name" />
+              <Input placeholder="Company name" disabled />
             </Form.Item>
 
             <Form.Item

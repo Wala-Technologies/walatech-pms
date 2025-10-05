@@ -278,9 +278,9 @@ export default function UserRoleManagement({ managedTenant }: UserRoleManagement
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
-      role: user.role_profile_name || user.role, // Try both field names
+      role: user.role_profile_name,
       department_id: user.department_id,
-      phone: user.mobile_no || user.phone
+      phone: user.mobile_no
     });
     setShowUserForm(true);
   };

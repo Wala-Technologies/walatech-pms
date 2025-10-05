@@ -169,7 +169,7 @@ export default function SupplierForm({
       layout="vertical"
       onFinish={handleSubmit}
       initialValues={{
-        supplierType: SupplierType.MANUFACTURER,
+        supplierType: SupplierType.INDIVIDUAL,
         status: SupplierStatus.ACTIVE,
         currency: 'USD',
         creditLimit: 0,
@@ -427,99 +427,95 @@ export default function SupplierForm({
           </Col>
         </Row>
       </Card>
-
-      {/* Financial Information */}
-      <Card title={
-        <Space>
-          <DollarOutlined />
-          {t('financialInformation')}
-        </Space>
-      } style={{ marginBottom: 16 }}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              name="creditLimit"
-              label={t('creditLimit')}
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                min={0}
-                placeholder={t('placeholders.creditLimit')}
-                formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="currency"
-              label={t('currency')}
-            >
-              <Select placeholder={t('placeholders.currency')}>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
-                <Option value="GBP">GBP - British Pound</Option>
-                <Option value="ETB">ETB - Ethiopian Birr</Option>
-                <Option value="CAD">CAD - Canadian Dollar</Option>
-                <Option value="JPY">JPY - Japanese Yen</Option>
-                <Option value="CNY">CNY - Chinese Yuan</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="paymentTerms"
-              label={t('paymentTerms')}
-            >
-              <Select placeholder={t('placeholders.paymentTerms')}>
-                <Option value="NET_30">Net 30 Days</Option>
-                <Option value="NET_60">Net 60 Days</Option>
-                <Option value="NET_90">Net 90 Days</Option>
-                <Option value="COD">Cash on Delivery</Option>
-                <Option value="PREPAID">Prepaid</Option>
-                <Option value="2_10_NET_30">2/10 Net 30</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="leadTime"
-              label={
-                <Space>
-                  {t('leadTime')}
-                  <Tooltip title={t('tooltips.leadTime')}>
-                    <InfoCircleOutlined />
-                  </Tooltip>
-                </Space>
-              }
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                min={0}
-                placeholder={t('placeholders.leadTime')}
-                addonAfter="days"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="minimumOrderValue"
-              label={t('minimumOrderValue')}
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                min={0}
-                placeholder={t('placeholders.minimumOrderValue')}
-                formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
+// Financial Information
+<Card title={
+  <Space>
+    <DollarOutlined />
+    {t('financialInformation')}
+  </Space>
+} style={{ marginBottom: 16 }}>
+  <Row gutter={16}>
+    <Col span={8}>
+      <Form.Item
+        name="creditLimit"
+        label={t('creditLimit')}
+      >
+        <InputNumber
+          style={{ width: '100%' }}
+          min={0}
+          placeholder={t('placeholders.creditLimit')}
+          prefix="$"
+        />
+      </Form.Item>
+    </Col>
+    <Col span={8}>
+      <Form.Item
+        name="currency"
+        label={t('currency')}
+      >
+        <Select placeholder={t('placeholders.currency')}>
+          <Option value="USD">USD - US Dollar</Option>
+          <Option value="EUR">EUR - Euro</Option>
+          <Option value="GBP">GBP - British Pound</Option>
+          <Option value="ETB">ETB - Ethiopian Birr</Option>
+          <Option value="CAD">CAD - Canadian Dollar</Option>
+          <Option value="JPY">JPY - Japanese Yen</Option>
+          <Option value="CNY">CNY - Chinese Yuan</Option>
+        </Select>
+      </Form.Item>
+    </Col>
+    <Col span={8}>
+      <Form.Item
+        name="paymentTerms"
+        label={t('paymentTerms')}
+      >
+        <Select placeholder={t('placeholders.paymentTerms')}>
+          <Option value="NET_30">Net 30 Days</Option>
+          <Option value="NET_60">Net 60 Days</Option>
+          <Option value="NET_90">Net 90 Days</Option>
+          <Option value="COD">Cash on Delivery</Option>
+          <Option value="PREPAID">Prepaid</Option>
+          <Option value="2_10_NET_30">2/10 Net 30</Option>
+        </Select>
+      </Form.Item>
+    </Col>
+  </Row>
+  <Row gutter={16}>
+    <Col span={12}>
+      <Form.Item
+        name="leadTime"
+        label={
+          <Space>
+            {t('leadTime')}
+            <Tooltip title={t('tooltips.leadTime')}>
+              <InfoCircleOutlined />
+            </Tooltip>
+          </Space>
+        }
+      >
+        <InputNumber
+          style={{ width: '100%' }}
+          min={0}
+          placeholder={t('placeholders.leadTime')}
+          addonAfter="days"
+        />
+      </Form.Item>
+    </Col>
+    <Col span={12}>
+      <Form.Item
+        name="minimumOrderValue"
+        label={t('minimumOrderValue')}
+      >
+        <InputNumber
+          style={{ width: '100%' }}
+          min={0}
+          placeholder={t('placeholders.minimumOrderValue')}
+          prefix="$"
+        />
+      </Form.Item>
+    </Col>
+  </Row>
+</Card>
       {/* Banking Information */}
       <Card title={
         <Space>

@@ -24,7 +24,7 @@ export class Department {
   @Column({ length: 140 })
   name: string;
 
-  @Column({ length: 20, unique: true })
+  @Column({ length: 20 })
   code: string;
 
   @Column({ length: 140 })

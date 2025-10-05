@@ -339,7 +339,7 @@ export default function EmployeeForm({ employee, isEdit = false, onSuccess, onCa
                     placeholder="Monthly salary"
                     min={0}
                     formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                    parser={(value) => (parseFloat(value!.replace(/\$\s?|(,*)/g, '')) || 0) as any}
                   />
                 </Form.Item>
               </Col>

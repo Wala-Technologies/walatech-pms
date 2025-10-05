@@ -63,12 +63,12 @@ export default function DepartmentsPage() {
         params.search = searchTerm;
       }
       
-      const response: PaginatedResponse<Department> = await hrApi.getDepartments(params);
+      const response = await hrApi.getDepartments(params);
       
-      setDepartments(response.data);
+      setDepartments(response.data?.departments || []);
       setPagination(prev => ({
         ...prev,
-        total: response.total,
+        total: response.data?.total || 0,
       }));
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -157,7 +157,7 @@ export default function DepartmentsPage() {
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <UserOutlined style={{ marginRight: '4px' }} />
-          <span>{record.employees?.length || 0}</span>
+          <span>-</span>
         </div>
       ),
     },

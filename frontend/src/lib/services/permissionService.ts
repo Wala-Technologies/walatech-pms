@@ -357,9 +357,7 @@ class PermissionService {
 
   async revokeUserPermission(userId: string, permissionId: string, reason: string): Promise<void> {
     try {
-      await apiClient.delete(`/users/${userId}/permissions/${permissionId}`, {
-        data: { reason }
-      });
+      await apiClient.delete(`/users/${userId}/permissions/${permissionId}`, { reason });
     } catch (error) {
       console.error('Error revoking user permission:', error);
       throw new Error('Failed to revoke permission');

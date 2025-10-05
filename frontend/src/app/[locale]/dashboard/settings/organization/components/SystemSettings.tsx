@@ -346,8 +346,21 @@ export default function SystemSettings() {
         form={form}
         layout="vertical"
         onFinish={handleSave}
-        initialValues={settings}
+        initialValues={settings || {}}
       >
+        {/* Save Button */}
+        <div className="flex justify-end mb-6">
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            loading={loading}
+            icon={<SaveOutlined />}
+            size="large"
+          >
+            {t('actions.save')}
+          </Button>
+        </div>
+
         {/* Backup Settings */}
         <Card 
           title={
@@ -545,18 +558,6 @@ export default function SystemSettings() {
           </Row>
         </Card>
 
-        {/* Save Button */}
-        <div className="flex justify-end mb-6">
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-            icon={<SaveOutlined />}
-            size="large"
-          >
-            {t('actions.save')}
-          </Button>
-        </div>
       </Form>
 
       {/* Backup History */}

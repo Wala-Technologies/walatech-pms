@@ -8,12 +8,18 @@ export enum SupplierStatus {
 }
 
 export enum SupplierType {
-  COMPANY = 'Company',
-  INDIVIDUAL = 'Individual'
+  DISTRIBUTOR = 'Distributor',
+  WHOLESALER = 'Wholesaler',
+  RETAILER = 'Retailer',
+  INDIVIDUAL = 'Individual',
+  MANUFACTURER = 'Manufacturer',
+  SERVICE_PROVIDER='Service Provider',
+  CONTRACTOR = 'Contractor'
 }
 
 export enum QuotationStatus {
   DRAFT = 'Draft',
+  PENDING = 'Pending',
   SUBMITTED = 'Submitted',
   APPROVED = 'Approved',
   REJECTED = 'Rejected',
@@ -58,6 +64,9 @@ export interface Supplier {
   group?: SupplierGroup;
   email?: string;
   phone?: string;
+  city?: string;
+  region?: string;
+  postalCode?:string;
   address?: string;
   country?: string;
   currency?: string;
@@ -66,7 +75,11 @@ export interface Supplier {
   taxId?: string;
   gstNumber?: string;
   panNumber?: string;
+  bankName?: string;
   bankAccount?: string;
+  routingNumber?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   contactPerson?: string;
   website?: string;
   notes?: string;
@@ -104,6 +117,7 @@ export interface SupplierQuotation {
   attachments?: string[];
   createdAt: string;
   updatedAt: string;
+  currency: string;
 }
 
 export interface ScorecardCriteria {
@@ -116,16 +130,25 @@ export interface ScorecardCriteria {
 
 export interface SupplierScorecard {
   id: string;
+  name:string;
   supplierId: string;
   supplier?: Supplier;
   period: string;
   criteria: ScorecardCriteria[];
   overallScore: number;
+  qualityScore: number;
+  deliveryScore: number;  
+  priceScore: number;
+  serviceScore: number; 
   weightedScore: number;
   rating: PerformanceRating;
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  evaluationDate: string;
+  evaluationPeriod: string;
+  evaluatedBy: string;
+  comments: string;
 }
 
 // Query parameter interfaces

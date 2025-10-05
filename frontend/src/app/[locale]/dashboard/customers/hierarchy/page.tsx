@@ -430,9 +430,15 @@ const CustomerHierarchyPage: React.FC = () => {
                 <Select
                   placeholder="Select parent customer"
                   showSearch
-                  filterOption={(input, option) =>
-                    (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={(input, option) => {
+                    if (!option) return false;
+                    const label = option.label as string;
+                    const children = option.children as React.ReactNode;
+                    return (
+                      label?.toLowerCase().includes(input.toLowerCase()) ||
+                      children?.toString()?.toLowerCase().includes(input.toLowerCase())
+                    ) || false;
+                  }}
                 >
                   {customers.map(customer => (
                     <Option key={customer.id} value={customer.id}>
@@ -451,9 +457,15 @@ const CustomerHierarchyPage: React.FC = () => {
                 <Select
                   placeholder="Select child customer"
                   showSearch
-                  filterOption={(input, option) =>
-                    (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={(input, option) => {
+                    if (!option) return false;
+                    const label = option.label as string;
+                    const children = option.children as React.ReactNode;
+                    return (
+                      label?.toLowerCase().includes(input.toLowerCase()) ||
+                      children?.toString()?.toLowerCase().includes(input.toLowerCase())
+                    ) || false;
+                  }}
                 >
                   {customers.map(customer => (
                     <Option key={customer.id} value={customer.id}>

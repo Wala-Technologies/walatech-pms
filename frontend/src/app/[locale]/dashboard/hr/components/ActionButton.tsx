@@ -27,6 +27,14 @@ export type ActionType =
   | 'download'
   | 'print';
 
+interface ActionConfig {
+  icon: React.ComponentType;
+  type: 'default' | 'primary';
+  tooltip: string;
+  color: string;
+  danger?: boolean;
+}
+
 interface ActionButtonProps {
   type: ActionType;
   onClick: () => void;
@@ -39,7 +47,7 @@ interface ActionButtonProps {
   children?: React.ReactNode;
 }
 
-const actionConfig = {
+const actionConfig: Record<ActionType, ActionConfig> = {
   edit: { 
     icon: EditOutlined, 
     type: 'default' as const, 
@@ -128,7 +136,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       disabled={disabled}
       size={size}
       className={className}
-      danger={config.danger}
+      danger={config.danger || false}
       style={config.color ? { borderColor: config.color, color: config.color } : undefined}
     >
       {children}

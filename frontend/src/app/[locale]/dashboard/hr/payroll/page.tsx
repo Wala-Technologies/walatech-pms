@@ -77,9 +77,10 @@ export default function PayrollPage() {
     try {
       setLoading(true);
       const response = await hrApi.getEmployees({ limit: 1000, isActive: true });
-      if (response.data) {
-        setEmployees(response.data.employees || []);
-        setStats(prev => ({ ...prev, totalEmployees: response.data.employees?.length || 0 }));
+      const responseData = response?.data;
+      if (responseData) {
+        setEmployees(responseData.employees || []);
+        setStats(prev => ({ ...prev, totalEmployees: responseData.employees?.length || 0 }));
       }
     } catch (error) {
       console.error('Error fetching employees:', error);

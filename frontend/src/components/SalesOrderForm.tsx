@@ -298,7 +298,7 @@ const SalesOrderForm: React.FC<SalesOrderFormProps> = ({
       title: 'Action',
       key: 'action',
       width: 60,
-      render: (_, record: FormItem) => (
+      render: (_: any, record: FormItem) => (
         <Popconfirm
           title="Are you sure you want to remove this item?"
           onConfirm={() => removeItem(record.key)}

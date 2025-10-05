@@ -37,6 +37,7 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import SalesOrderForm from '../../../../components/SalesOrderForm';
 import {
@@ -83,6 +84,14 @@ const SalesOrdersPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedOrderType, setSelectedOrderType] = useState<string>('');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+
+  const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null, dateStrings: [string, string]) => {
+    if (dates && dates[0] && dates[1]) {
+      setDateRange([dates[0], dates[1]]);
+    } else {
+      setDateRange(null);
+    }
+  };
   
   // Modal states
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
@@ -108,11 +117,12 @@ const SalesOrdersPage: React.FC = () => {
       };
 
       const response = await salesOrderApi.getSalesOrders(params);
-      if (response.data) {
-        setSalesOrders(response.data.data);
+      const responseData = response?.data;
+      if (responseData) {
+        setSalesOrders(responseData.data);
         setPagination(prev => ({
           ...prev,
-          total: response.data.total,
+          total: responseData.total,
         }));
       }
     } catch (error) {
@@ -491,7 +501,7 @@ const SalesOrdersPage: React.FC = () => {
             <Col span={6}>
               <RangePicker
                 value={dateRange}
-                onChange={setDateRange}
+                onChange={handleDateRangeChange}
                 style={{ width: '100%' }}
               />
             </Col>

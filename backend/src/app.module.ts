@@ -64,7 +64,9 @@ export class AppModule implements NestModule {
         '/auth/refresh',
         '/tenants/by-subdomain/(.*)',
         '/tenants/validate/(.*)',
-      ) // Exclude health check, metrics, auth endpoints, and public tenant endpoints (global prefix applied automatically)
+        '/tenant-provisioning/provision',
+        '/api/tenant-provisioning/provision',
+      ) // Exclude health check, metrics, auth endpoints, public tenant endpoints, and tenant provisioning (global prefix applied automatically)
       .forRoutes('*');
   }
 }

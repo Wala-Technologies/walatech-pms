@@ -94,14 +94,15 @@ export default function SuppliersPage() {
   const mockSuppliers: Supplier[] = [
     {
       id: '1',
-      supplierName: 'Global Manufacturing Co.',
-      supplierCode: 'GM001',
-      supplierType: SupplierType.MANUFACTURER,
+      name: 'Global Manufacturing Co.',
+      code: 'GM001',
+      isActive: true,
+      type: SupplierType.MANUFACTURER,
       email: 'contact@globalmanufacturing.com',
       phone: '+1234567890',
       address: '123 Industrial Ave',
       city: 'Detroit',
-      state: 'Michigan',
+      region: 'Michigan',
       country: 'USA',
       postalCode: '48201',
       status: SupplierStatus.ACTIVE,
@@ -115,16 +116,17 @@ export default function SuppliersPage() {
       bankName: 'First National Bank',
       bankAccount: '1234567890',
       routingNumber: '123456789',
-      supplierGroupId: 'group1',
+      groupId: 'group1',
       notes: 'Reliable supplier for manufacturing components',
       createdAt: '2024-01-15T10:30:00Z',
       updatedAt: '2024-01-15T10:30:00Z',
     },
     {
       id: '2',
-      supplierName: 'Tech Solutions Ltd.',
-      supplierCode: 'TS001',
-      supplierType: SupplierType.DISTRIBUTOR,
+      name: 'Tech Solutions Ltd.',
+      code: 'TS001',
+      isActive: true,
+      type: SupplierType.DISTRIBUTOR,
       email: 'info@techsolutions.com',
       phone: '+44123456789',
       address: '456 Tech Park',
@@ -141,21 +143,22 @@ export default function SuppliersPage() {
       contactPhone: '+44123456790',
       bankName: 'Barclays Bank',
       bankAccount: '9876543210',
-      supplierGroupId: 'group2',
+      groupId: 'group2',
       notes: 'Technology equipment distributor',
       createdAt: '2024-01-20T14:15:00Z',
       updatedAt: '2024-01-20T14:15:00Z',
     },
     {
       id: '3',
-      supplierName: 'Local Services Inc.',
-      supplierCode: 'LS001',
-      supplierType: SupplierType.SERVICE_PROVIDER,
+      name: 'Local Services Inc.',
+      code: 'LS001',
+      isActive: false,
+      type: SupplierType.SERVICE_PROVIDER,
       email: 'contact@localservices.com',
       phone: '+1987654321',
       address: '789 Service St',
       city: 'Chicago',
-      state: 'Illinois',
+      region: 'Illinois',
       country: 'USA',
       postalCode: '60601',
       status: SupplierStatus.DISABLED,
@@ -163,12 +166,10 @@ export default function SuppliersPage() {
       paymentTerms: 'Net 45',
       taxId: 'TAX789012',
       contactPerson: 'Mike Service',
-      contactEmail: 'mike@localservices.com',
-      contactPhone: '+1987654322',
       bankName: 'Chase Bank',
       bankAccount: '5555666677',
       routingNumber: '987654321',
-      supplierGroupId: 'group3',
+      groupId: 'group3',
       notes: 'Local maintenance and repair services',
       createdAt: '2024-01-10T09:00:00Z',
       updatedAt: '2024-01-25T16:30:00Z',
@@ -216,15 +217,15 @@ export default function SuppliersPage() {
       
       if (searchTerm) {
         filteredSuppliers = filteredSuppliers.filter(supplier =>
-          supplier.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          supplier.supplierCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          supplier.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           supplier.email?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
       if (filters.supplierType) {
         filteredSuppliers = filteredSuppliers.filter(supplier => 
-          supplier.supplierType === filters.supplierType
+          supplier.type === filters.supplierType
         );
       }
 
@@ -379,8 +380,8 @@ export default function SuppliersPage() {
   const columns: ColumnsType<Supplier> = [
     {
       title: t('supplierCode'),
-      dataIndex: 'supplierCode',
-      key: 'supplierCode',
+      dataIndex: 'code',
+      key: 'code',
       width: 120,
       render: (code: string) => (
         <Text strong>{code}</Text>
@@ -388,8 +389,8 @@ export default function SuppliersPage() {
     },
     {
       title: t('supplierName'),
-      dataIndex: 'supplierName',
-      key: 'supplierName',
+      dataIndex: 'name',
+      key: 'name',
       render: (name: string, record: Supplier) => (
         <Space>
           <Avatar icon={<ShopOutlined />} />
@@ -402,8 +403,8 @@ export default function SuppliersPage() {
     },
     {
       title: t('supplierType'),
-      dataIndex: 'supplierType',
-      key: 'supplierType',
+      dataIndex: 'type',
+      key: 'type',
       width: 150,
       render: (type: SupplierType) => (
         <Tag color="blue">{t(`supplierTypes.${type}`)}</Tag>
