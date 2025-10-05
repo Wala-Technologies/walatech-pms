@@ -304,7 +304,7 @@ export default function SupplierQuotationsPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: SupplierQuotation) => (
+      render: (_: any, record: SupplierQuotation) => (
         <Space>
           <Tooltip title="View">
             <Button

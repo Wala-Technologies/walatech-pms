@@ -75,6 +75,14 @@ export default function SupplierReportsPage() {
   const [performanceData, setPerformanceData] = useState<SupplierPerformanceData[]>([]);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
 
+  const handleDateRangeChange = (dates: any, dateStrings: [string, string]) => {
+    if (dates) {
+      setDateRange(dates);
+    } else {
+      setDateRange(null);
+    }
+  };
+
   // Mock data for development
   const mockPerformanceData: SupplierPerformanceData[] = [
     {
@@ -212,7 +220,7 @@ export default function SupplierReportsPage() {
     {
       title: 'Quotations',
       key: 'quotations',
-      render: (_, record: SupplierPerformanceData) => (
+      render: (_: any, record: SupplierPerformanceData) => (
         <div>
           <div>{record.approvedQuotations}/{record.totalQuotations}</div>
           <div className="text-sm text-gray-500">
@@ -312,7 +320,7 @@ export default function SupplierReportsPage() {
           <Col span={8}>
             <RangePicker
               value={dateRange}
-              onChange={setDateRange}
+              onChange={handleDateRangeChange}
               style={{ width: '100%' }}
             />
           </Col>

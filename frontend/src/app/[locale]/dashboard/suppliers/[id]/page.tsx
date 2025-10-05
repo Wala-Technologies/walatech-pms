@@ -50,10 +50,59 @@ import {
   SupplierType,
   SupplierQuotation,
   SupplierScorecard,
-  QuotationStatus 
+  QuotationStatus,
+  PerformanceRating
 } from '../../../../../lib/supplier-api';
 
 const { TabPane } = Tabs;
+
+// Mock data interfaces
+interface MockSupplier extends Supplier {
+  name: string;
+  code: string;
+  type: SupplierType;
+  status: SupplierStatus;
+  email?: string;
+  phone?: string;
+  website?: string;
+  country?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Complete MockQuotation with all required properties
+interface MockQuotation extends SupplierQuotation {
+  id: string;
+  quotationNumber: string;
+  date: string;
+  totalAmount: number;
+  status: QuotationStatus;
+  validUntil: string;
+  supplierId: string;
+  items: any[];
+  subtotal: number;
+  taxAmount: number;
+  taxRate: number;
+  currency: string;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Complete MockScorecard with all required properties
+interface MockScorecard extends SupplierScorecard {
+  id: string;
+  supplierId: string;
+  period: string;
+  overallScore: number;
+  rating: PerformanceRating;
+  criteria: any; // Use proper type if available
+  weightedScore: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function SupplierDetailPage() {
   const router = useRouter();
@@ -75,11 +124,11 @@ export default function SupplierDetailPage() {
       setError(null);
       
       // Mock data for development
-      const mockSupplier: Supplier = {
+      const mockSupplier: MockSupplier = {
         id: supplierId,
         name: 'Global Manufacturing Co.',
         code: 'GM001',
-        type: SupplierType.COMPANY,
+        type: SupplierType.MANUFACTURER,
         status: SupplierStatus.ACTIVE,
         email: 'contact@globalmanufacturing.com',
         phone: '+1234567890',
@@ -89,7 +138,124 @@ export default function SupplierDetailPage() {
         createdAt: '2024-01-15T10:30:00Z',
         updatedAt: '2024-01-15T10:30:00Z',
       };
-      console.error('Error fetching supplier data:', error);
+
+      const mockQuotations: MockQuotation[] = [
+        {
+          id: '1',
+          quotationNumber: 'QT-001',
+          date: '2024-01-20T00:00:00Z',
+          totalAmount: 15000,
+          status: QuotationStatus.APPROVED,
+          validUntil: '2024-02-20T00:00:00Z',
+          supplierId: supplierId,
+          items: [
+            {
+              id: 'item-1',
+              productName: 'Steel Beams',
+              quantity: 100,
+              unitPrice: 150,
+              totalPrice: 15000
+            }
+          ],
+          subtotal: 15000,
+          taxAmount: 1500,
+          taxRate: 0.1,
+          currency: 'USD',
+          notes: 'Bulk order discount applied',
+          createdBy: 'user-123',
+          createdAt: '2024-01-20T00:00:00Z',
+          updatedAt: '2024-01-20T00:00:00Z',
+        },
+        {
+          id: '2',
+          quotationNumber: 'QT-002',
+          date: '2024-01-25T00:00:00Z',
+          totalAmount: 22000,
+          status: QuotationStatus.SUBMITTED,
+          validUntil: '2024-02-25T00:00:00Z',
+          supplierId: supplierId,
+          items: [
+            {
+              id: 'item-2',
+              productName: 'Aluminum Sheets',
+              quantity: 200,
+              unitPrice: 110,
+              totalPrice: 22000
+            }
+          ],
+          subtotal: 22000,
+          taxAmount: 2200,
+          taxRate: 0.1,
+          currency: 'USD',
+          notes: 'Urgent delivery requested',
+          createdBy: 'user-123',
+          createdAt: '2024-01-25T00:00:00Z',
+          updatedAt: '2024-01-25T00:00:00Z',
+        },
+      ];
+
+      // Complete mock scorecards with all required properties
+      const mockScorecards: MockScorecard[] = [
+        {
+          id: '1',
+          name: 'testname',
+          evaluationDate: '2024-04-01T00:00:00Z',
+          evaluationPeriod: 'Q2-2024',
+          evaluatedBy: 'James Dobsen',
+          comments: 'No comment',
+          supplierId: supplierId,
+          period: 'Q1 2024',
+          overallScore: 4.2,
+          deliveryScore: 4.0,
+          qualityScore: 4.1,
+          serviceScore: 4.1,
+          priceScore: 4.1,
+          rating: PerformanceRating.EXCELLENT,
+          criteria: {
+            quality: 4.5,
+            delivery: 4.0,
+            price: 4.1,
+            service: 4.3
+          },
+          weightedScore: 4.2,
+          createdAt: '2024-04-01T00:00:00Z',
+          updatedAt: '2024-04-01T00:00:00Z',
+        },
+        {
+          id: '2',
+          name: 'testname',
+          evaluationDate: '2024-04-01T00:00:00Z',
+          evaluationPeriod: 'Q2-2024',
+          evaluatedBy: 'James Dobsen',
+          comments: 'No comment',
+          supplierId: supplierId,
+          period: 'Q4 2023',
+          overallScore: 3.8,
+          qualityScore: 4.1,
+          serviceScore: 4.1,
+           deliveryScore: 4.0,
+            priceScore: 4.1,
+         rating: PerformanceRating.GOOD,
+          criteria: {
+            quality: 4.0,
+            delivery: 3.5,
+            price: 3.9,
+            service: 3.8
+          },
+          weightedScore: 3.8,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setSupplier(mockSupplier);
+      setQuotations(mockQuotations);
+      setScorecards(mockScorecards);
+    } catch (err) {
+      console.error('Error fetching supplier data:', err);
       setError(t('messages.fetchError'));
     } finally {
       setLoading(false);
@@ -116,7 +282,7 @@ export default function SupplierDetailPage() {
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [t]);
 
   const handleDelete = async () => {
     try {
@@ -168,6 +334,12 @@ export default function SupplierDetailPage() {
     if (rating >= 3.0) return '#faad14';
     if (rating >= 2.0) return '#fa8c16';
     return '#f5222d';
+  };
+
+  // Helper function to get rating display text
+  const getRatingText = (rating: any) => {
+    if (typeof rating === 'string') return rating;
+    return String(rating);
   };
 
   const actionMenuItems: MenuProps['items'] = [
@@ -268,6 +440,7 @@ export default function SupplierDetailPage() {
       title: t('rating'),
       dataIndex: 'rating',
       key: 'rating',
+      render: (rating: any) => getRatingText(rating),
     },
   ];
 

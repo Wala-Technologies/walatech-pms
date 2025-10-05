@@ -256,8 +256,11 @@ class ApiClient {
     });
   }
 
-  async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+  async delete<T = any>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   // Tenant-specific API methods
@@ -368,11 +371,15 @@ class ApiClient {
 
   async deleteWithTenant<T = any>(
     endpoint: string,
-    tenantSubdomain: string
+    tenantSubdomain: string,
+    data?: any
   ): Promise<ApiResponse<T>> {
     return this.requestWithContentType<T>(
       endpoint,
-      { method: 'DELETE' },
+      {
+        method: 'DELETE',
+        body: data ? JSON.stringify(data) : undefined,
+      },
       false,
       tenantSubdomain
     );

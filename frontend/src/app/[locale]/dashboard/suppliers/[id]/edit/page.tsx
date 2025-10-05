@@ -31,7 +31,7 @@ export default function EditSupplierPage() {
         id: supplierId,
         name: 'Global Manufacturing Co.',
         code: 'GM001',
-        type: SupplierType.COMPANY,
+        type: SupplierType.MANUFACTURER,
         status: SupplierStatus.ACTIVE,
         email: 'contact@globalmanufacturing.com',
         phone: '+1234567890',

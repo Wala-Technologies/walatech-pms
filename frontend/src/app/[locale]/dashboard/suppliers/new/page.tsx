@@ -7,7 +7,7 @@ import { Button, Breadcrumb, message, Card } from 'antd';
 import { ArrowLeftOutlined, HomeOutlined, ShopOutlined, PlusOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import SupplierForm from '../components/SupplierForm';
-import { supplierApi, CreateSupplierDto } from '../../../../../lib/supplier-api';
+import { supplierApi, CreateSupplierDto, UpdateSupplierDto } from '../../../../../lib/supplier-api';
 
 export default function NewSupplierPage() {
   const router = useRouter();
@@ -82,7 +82,7 @@ export default function NewSupplierPage() {
       {/* Form */}
       <Card>
         <SupplierForm
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit as (values: CreateSupplierDto | UpdateSupplierDto) => Promise<void>}
           onCancel={handleCancel}
           loading={loading}
           submitText={t('createSupplier')}

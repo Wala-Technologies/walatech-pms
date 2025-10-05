@@ -8,7 +8,7 @@ describe('SuppliersController (e2e)', () => {
   let regularToken: string;
   let superAdminToken: string;
   let createdSupplierId: string;
-  let createdSupplierGroupId: string;
+  let createdgroupId: string;
   let createdQuotationId: string;
   let createdScorecardId: string;
 
@@ -100,7 +100,7 @@ describe('SuppliersController (e2e)', () => {
       expect(res.body.supplier_group_name).toBe(groupData.supplier_group_name);
       expect(res.body.description).toBe(groupData.description);
       
-      createdSupplierGroupId = res.body.id;
+      createdgroupId = res.body.id;
     });
 
     it('should retrieve all supplier groups', async () => {
@@ -125,12 +125,12 @@ describe('SuppliersController (e2e)', () => {
 
     it('should retrieve a specific supplier group by ID', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/api/supplier-groups/${createdSupplierGroupId}`)
+        .get(`/api/supplier-groups/${createdgroupId}`)
         .set('Authorization', `Bearer ${regularToken}`)
         .set('Host', 'walatech.localhost')
         .expect(HttpStatus.OK);
 
-      expect(res.body.id).toBe(createdSupplierGroupId);
+      expect(res.body.id).toBe(createdgroupId);
       expect(res.body.supplier_group_name).toBe('Test Supplier Group');
     });
 
@@ -141,7 +141,7 @@ describe('SuppliersController (e2e)', () => {
       };
 
       const res = await request(app.getHttpServer())
-        .patch(`/api/supplier-groups/${createdSupplierGroupId}`)
+        .patch(`/api/supplier-groups/${createdgroupId}`)
         .set('Authorization', `Bearer ${regularToken}`)
         .set('Host', 'walatech.localhost')
         .send(updateData)
@@ -159,7 +159,7 @@ describe('SuppliersController (e2e)', () => {
         email: 'test@supplier.com',
         supplier_code: 'SUP001',
         supplier_type: 'Company',
-        supplier_group: createdSupplierGroupId,
+        supplier_group: createdgroupId,
         mobile_no: '1234567890',
         gst_category: 'Registered Regular',
         gstin: '29ABCDE1234F1Z5',
@@ -283,7 +283,7 @@ describe('SuppliersController (e2e)', () => {
 
     it('should filter suppliers by group', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/api/suppliers/by-group/${createdSupplierGroupId}`)
+        .get(`/api/suppliers/by-group/${createdgroupId}`)
         .set('Authorization', `Bearer ${regularToken}`)
         .set('Host', 'walatech.localhost')
         .expect(HttpStatus.OK);
@@ -660,14 +660,14 @@ describe('SuppliersController (e2e)', () => {
 
     it('should delete the test supplier group', async () => {
       await request(app.getHttpServer())
-        .delete(`/api/supplier-groups/${createdSupplierGroupId}`)
+        .delete(`/api/supplier-groups/${createdgroupId}`)
         .set('Authorization', `Bearer ${regularToken}`)
         .set('Host', 'walatech.localhost')
         .expect(HttpStatus.NO_CONTENT);
 
       // Verify supplier group is deleted
       await request(app.getHttpServer())
-        .get(`/api/supplier-groups/${createdSupplierGroupId}`)
+        .get(`/api/supplier-groups/${createdgroupId}`)
         .set('Authorization', `Bearer ${regularToken}`)
         .set('Host', 'walatech.localhost')
         .expect(HttpStatus.NOT_FOUND);
