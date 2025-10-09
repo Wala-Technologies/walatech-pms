@@ -36,40 +36,14 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import { customerApi } from '../../../../../lib/customer-api';
+import type { Customer as ApiCustomer } from '../../../../../lib/customer-api';
 import type { ColumnsType } from 'antd/es/table';
 
 const { TabPane } = Tabs;
 
-interface Customer {
-  id: string;
-  customer_name: string;
-  customer_code?: string;
-  customer_type: string;
-  email?: string;
-  mobile_no?: string;
-  phone?: string;
-  website?: string;
-  tax_id?: string;
-  billing_address_line1?: string;
-  billing_address_line2?: string;
-  billing_city?: string;
-  billing_state?: string;
-  billing_country?: string;
-  billing_pincode?: string;
-  shipping_address_line1?: string;
-  shipping_address_line2?: string;
-  shipping_city?: string;
-  shipping_state?: string;
-  shipping_country?: string;
-  shipping_pincode?: string;
-  credit_limit: number;
-  payment_terms?: string;
-  is_frozen: boolean;
-  disabled: boolean;
-  notes?: string;
-  creation: string;
-  modified: string;
-}
+// Use shared Customer type from service
+type Customer = ApiCustomer;
 
 interface Order {
   id: string;
@@ -110,92 +84,7 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Mock data for development
-  const mockCustomer: Customer = {
-    id: customerId,
-    customer_name: 'Acme Corporation',
-    customer_code: 'ACME001',
-    customer_type: 'Company',
-    email: 'contact@acme.com',
-    mobile_no: '+1234567890',
-    phone: '+1234567891',
-    website: 'https://acme.com',
-    tax_id: 'TAX123456789',
-    billing_address_line1: '123 Business St',
-    billing_address_line2: 'Suite 100',
-    billing_city: 'New York',
-    billing_state: 'NY',
-    billing_country: 'USA',
-    billing_pincode: '10001',
-    shipping_address_line1: '456 Warehouse Ave',
-    shipping_address_line2: '',
-    shipping_city: 'Brooklyn',
-    shipping_state: 'NY',
-    shipping_country: 'USA',
-    shipping_pincode: '11201',
-    credit_limit: 50000,
-    payment_terms: 'Net 30',
-    is_frozen: false,
-    disabled: false,
-    notes: 'Important client with long-term contract',
-    creation: '2024-01-15T10:30:00Z',
-    modified: '2024-01-20T14:15:00Z',
-  };
-
-  const mockOrders: Order[] = [
-    {
-      id: '1',
-      order_number: 'ORD-001',
-      date: '2024-01-20',
-      status: 'Completed',
-      total_amount: 15000,
-      items_count: 5,
-    },
-    {
-      id: '2',
-      order_number: 'ORD-002',
-      date: '2024-01-18',
-      status: 'Processing',
-      total_amount: 8500,
-      items_count: 3,
-    },
-  ];
-
-  const mockTransactions: Transaction[] = [
-    {
-      id: '1',
-      type: 'Payment',
-      amount: 15000,
-      date: '2024-01-21',
-      description: 'Payment for Order ORD-001',
-      status: 'Completed',
-    },
-    {
-      id: '2',
-      type: 'Invoice',
-      amount: 8500,
-      date: '2024-01-18',
-      description: 'Invoice for Order ORD-002',
-      status: 'Pending',
-    },
-  ];
-
-  const mockActivities: Activity[] = [
-    {
-      id: '1',
-      action: 'Order Placed',
-      description: 'New order ORD-002 placed',
-      timestamp: '2024-01-18T10:30:00Z',
-      user: 'System',
-    },
-    {
-      id: '2',
-      action: 'Customer Updated',
-      description: 'Contact information updated',
-      timestamp: '2024-01-17T14:15:00Z',
-      user: 'Admin User',
-    },
-  ];
+  // Real data will be loaded via API; remove mocks
 
   useEffect(() => {
     fetchCustomerData();
@@ -204,16 +93,17 @@ export default function CustomerDetailPage() {
   const fetchCustomerData = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API calls
-      setTimeout(() => {
-        setCustomer(mockCustomer);
-        setOrders(mockOrders);
-        setTransactions(mockTransactions);
-        setActivities(mockActivities);
-        setLoading(false);
-      }, 500);
+      const customerResp = await customerApi.getCustomer(customerId);
+      if (customerResp.error) throw new Error(customerResp.error);
+      setCustomer(customerResp.data || null);
+
+      // TODO: Hook up orders, transactions, activities when backend endpoints exist
+      setOrders([]);
+      setTransactions([]);
+      setActivities([]);
     } catch (error) {
       message.error('Failed to fetch customer data');
+    } finally {
       setLoading(false);
     }
   };
@@ -231,7 +121,8 @@ export default function CustomerDetailPage() {
       cancelText: 'Cancel',
       onOk: async () => {
         try {
-          // TODO: Replace with actual API call
+          const resp = await customerApi.deleteCustomer(customerId);
+          if (resp.error) throw new Error(resp.error);
           message.success('Customer deleted successfully');
           router.push(`/${locale}/dashboard/customers`);
         } catch (error) {

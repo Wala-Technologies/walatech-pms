@@ -9,8 +9,39 @@ export class DepartmentAccessService {
    * Determines if a user can access all departments
    */
   canAccessAllDepartments(user: User): boolean {
-    const accessLevel = ROLE_ACCESS_MAPPING[user.role];
-    return accessLevel === AccessLevel.ALL_DEPARTMENTS;
+    // Explicit super admin flag from auth/JWT middleware
+    const isSuperAdmin = (user as any)?.isSuperAdmin === true;
+    if (isSuperAdmin) {
+      return true;
+    }
+
+    // Prefer enum role, but fallback to string role_profile_name if present
+    const roleKey = user?.role ?? (user as any)?.role_profile_name;
+
+    // Direct enum mapping
+    const directAccessLevel = ROLE_ACCESS_MAPPING[roleKey as UserRole];
+    if (directAccessLevel) {
+      return directAccessLevel === AccessLevel.ALL_DEPARTMENTS;
+    }
+
+    // Fallback mapping for string role names (case-insensitive) and common aliases
+    const normalized = typeof roleKey === 'string' ? roleKey.toLowerCase() : undefined;
+    const fallbackMapping: Record<string, AccessLevel> = {
+      super_admin: AccessLevel.ALL_DEPARTMENTS,
+      admin: AccessLevel.ALL_DEPARTMENTS,
+      hr: AccessLevel.ALL_DEPARTMENTS,
+      manager: AccessLevel.ALL_DEPARTMENTS,
+      department_head: AccessLevel.ALL_DEPARTMENTS,
+      regular_user: AccessLevel.OWN_DEPARTMENT,
+      user: AccessLevel.OWN_DEPARTMENT,
+      sales: AccessLevel.OWN_DEPARTMENT,
+      purchasing: AccessLevel.OWN_DEPARTMENT,
+      production: AccessLevel.OWN_DEPARTMENT,
+      accounting: AccessLevel.OWN_DEPARTMENT,
+    };
+
+    const fallbackAccessLevel = normalized ? fallbackMapping[normalized] : undefined;
+    return fallbackAccessLevel === AccessLevel.ALL_DEPARTMENTS;
   }
 
   /**

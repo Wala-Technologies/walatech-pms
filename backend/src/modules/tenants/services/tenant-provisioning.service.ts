@@ -31,29 +31,39 @@ export class TenantProvisioningService {
     private departmentRepository: Repository<Department>,
     private dataSource: DataSource,
   ) {}
-
   async provisionTenant(provisionDto: ProvisionTenantDto): Promise<TenantProvisioningResult> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    console.log('Starting tenant provisioning with data:', JSON.stringify(provisionDto, null, 2));
+
     try {
-      // Step 1: Validate subdomain availability
+      // Step 1: Validate subdomain
+      console.log('Validating subdomain...');
       await this.validateSubdomain(provisionDto.subdomain);
 
       // Step 2: Create tenant
+      console.log('Creating tenant...');
       const tenant = await this.createTenant(provisionDto, queryRunner);
+      console.log('Tenant created:', { tenantId: tenant.id, subdomain: tenant.subdomain });
 
       // Step 3: Create admin user
+      console.log('Creating admin user...');
       const adminUser = await this.createAdminUser(tenant, provisionDto, queryRunner);
+      console.log('Admin user created:', { userId: adminUser.id, email: adminUser.email });
 
       // Step 4: Initialize tenant settings
+      console.log('Initializing tenant settings...');
       await this.initializeTenantSettings(tenant, queryRunner);
 
       // Step 5: Set up default configurations
+      console.log('Setting up default configurations...');
       const defaultUsersCreated = await this.setupDefaultConfigurations(tenant, queryRunner);
+      console.log(`Created ${defaultUsersCreated} default users`);
 
       await queryRunner.commitTransaction();
+      console.log('Tenant provisioning completed successfully');
 
       return {
         tenant,
@@ -63,10 +73,32 @@ export class TenantProvisioningService {
         message: 'Tenant provisioned successfully with default users',
       };
     } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
+      console.error('Error during tenant provisioning:', error);
+      
+      // Add more context to the error
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      } else {
+        console.error('Non-Error object thrown:', error);
+      }
+      
+      await queryRunner.rollbackTransaction().catch(rollbackError => {
+        console.error('Error during transaction rollback:', rollbackError);
+      });
+      
+      // Re-throw the error with more context
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during tenant provisioning';
+      throw new Error(`Failed to provision tenant: ${errorMessage}`, { cause: error });
     } finally {
-      await queryRunner.release();
+      try {
+        await queryRunner.release();
+      } catch (releaseError) {
+        console.error('Error releasing query runner:', releaseError);
+      }
     }
   }
 

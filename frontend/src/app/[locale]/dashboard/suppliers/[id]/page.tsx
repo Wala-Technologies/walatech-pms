@@ -122,138 +122,17 @@ export default function SupplierDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      // Mock data for development
-      const mockSupplier: MockSupplier = {
-        id: supplierId,
-        name: 'Global Manufacturing Co.',
-        code: 'GM001',
-        type: SupplierType.MANUFACTURER,
-        status: SupplierStatus.ACTIVE,
-        email: 'contact@globalmanufacturing.com',
-        phone: '+1234567890',
-        website: 'https://globalmanufacturing.com',
-        country: 'USA',
-        isActive: true,
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T10:30:00Z',
-      };
-
-      const mockQuotations: MockQuotation[] = [
-        {
-          id: '1',
-          quotationNumber: 'QT-001',
-          date: '2024-01-20T00:00:00Z',
-          totalAmount: 15000,
-          status: QuotationStatus.APPROVED,
-          validUntil: '2024-02-20T00:00:00Z',
-          supplierId: supplierId,
-          items: [
-            {
-              id: 'item-1',
-              productName: 'Steel Beams',
-              quantity: 100,
-              unitPrice: 150,
-              totalPrice: 15000
-            }
-          ],
-          subtotal: 15000,
-          taxAmount: 1500,
-          taxRate: 0.1,
-          currency: 'USD',
-          notes: 'Bulk order discount applied',
-          createdBy: 'user-123',
-          createdAt: '2024-01-20T00:00:00Z',
-          updatedAt: '2024-01-20T00:00:00Z',
-        },
-        {
-          id: '2',
-          quotationNumber: 'QT-002',
-          date: '2024-01-25T00:00:00Z',
-          totalAmount: 22000,
-          status: QuotationStatus.SUBMITTED,
-          validUntil: '2024-02-25T00:00:00Z',
-          supplierId: supplierId,
-          items: [
-            {
-              id: 'item-2',
-              productName: 'Aluminum Sheets',
-              quantity: 200,
-              unitPrice: 110,
-              totalPrice: 22000
-            }
-          ],
-          subtotal: 22000,
-          taxAmount: 2200,
-          taxRate: 0.1,
-          currency: 'USD',
-          notes: 'Urgent delivery requested',
-          createdBy: 'user-123',
-          createdAt: '2024-01-25T00:00:00Z',
-          updatedAt: '2024-01-25T00:00:00Z',
-        },
-      ];
-
-      // Complete mock scorecards with all required properties
-      const mockScorecards: MockScorecard[] = [
-        {
-          id: '1',
-          name: 'testname',
-          evaluationDate: '2024-04-01T00:00:00Z',
-          evaluationPeriod: 'Q2-2024',
-          evaluatedBy: 'James Dobsen',
-          comments: 'No comment',
-          supplierId: supplierId,
-          period: 'Q1 2024',
-          overallScore: 4.2,
-          deliveryScore: 4.0,
-          qualityScore: 4.1,
-          serviceScore: 4.1,
-          priceScore: 4.1,
-          rating: PerformanceRating.EXCELLENT,
-          criteria: {
-            quality: 4.5,
-            delivery: 4.0,
-            price: 4.1,
-            service: 4.3
-          },
-          weightedScore: 4.2,
-          createdAt: '2024-04-01T00:00:00Z',
-          updatedAt: '2024-04-01T00:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'testname',
-          evaluationDate: '2024-04-01T00:00:00Z',
-          evaluationPeriod: 'Q2-2024',
-          evaluatedBy: 'James Dobsen',
-          comments: 'No comment',
-          supplierId: supplierId,
-          period: 'Q4 2023',
-          overallScore: 3.8,
-          qualityScore: 4.1,
-          serviceScore: 4.1,
-           deliveryScore: 4.0,
-            priceScore: 4.1,
-         rating: PerformanceRating.GOOD,
-          criteria: {
-            quality: 4.0,
-            delivery: 3.5,
-            price: 3.9,
-            service: 3.8
-          },
-          weightedScore: 3.8,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-      ];
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setSupplier(mockSupplier);
-      setQuotations(mockQuotations);
-      setScorecards(mockScorecards);
+      const supplierResp = await supplierApi.getSupplier(supplierId);
+      setSupplier(supplierResp.data || null);
+      // Optional: fetch quotations and scorecards if needed when backend supports
+      try {
+        const quotationsResp = await supplierApi.getQuotations({ supplierId });
+        setQuotations(quotationsResp.data?.quotations || []);
+      } catch {}
+      try {
+        const scorecardsResp = await supplierApi.getScorecards({ supplierId });
+        setScorecards(scorecardsResp.data?.scorecards || []);
+      } catch {}
     } catch (err) {
       console.error('Error fetching supplier data:', err);
       setError(t('messages.fetchError'));
@@ -269,11 +148,13 @@ export default function SupplierDetailPage() {
   const handleStatusChange = useCallback(async (newStatus: SupplierStatus) => {
     try {
       setActionLoading(true);
-      
-      // Mock API call
-      console.log('Changing supplier status to:', newStatus);
-      setSupplier(prev => prev ? { ...prev, status: newStatus } : null);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (newStatus === SupplierStatus.ACTIVE) {
+        const resp = await supplierApi.activateSupplier(supplierId);
+        setSupplier(resp.data || null);
+      } else if (newStatus === SupplierStatus.DISABLED) {
+        const resp = await supplierApi.deactivateSupplier(supplierId);
+        setSupplier(resp.data || null);
+      }
       
       message.success(t('messages.statusUpdateSuccess'));
     } catch (error) {
@@ -282,15 +163,12 @@ export default function SupplierDetailPage() {
     } finally {
       setActionLoading(false);
     }
-  }, [t]);
+  }, [t, supplierId]);
 
   const handleDelete = async () => {
     try {
       setActionLoading(true);
-      
-      // Mock API call
-      console.log('Deleting supplier:', supplierId);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await supplierApi.deleteSupplier(supplierId);
       
       message.success(t('messages.deleteSuccess'));
       router.push(`/${locale}/dashboard/suppliers/list`);
@@ -397,7 +275,7 @@ export default function SupplierDetailPage() {
       render: (amount: number) => `$${amount.toLocaleString()}`,
     },
     {
-      title: t('status'),
+      title: t('statusLabel'),
       dataIndex: 'status',
       key: 'status',
       render: (status: QuotationStatus) => (
@@ -498,25 +376,36 @@ export default function SupplierDetailPage() {
           onClick={() => router.back()}
           style={{ marginBottom: '16px' }}
         >
-          {t('back')}
+          <Link href={`/${locale}/dashboard`}>
+            <HomeOutlined /> {t('dashboard')}
+          </Link>
         </Button>
-        
-        <Breadcrumb style={{ marginBottom: '16px' }}>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard`}>
-              <HomeOutlined /> {t('dashboard')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard/suppliers`}>
-              <ShopOutlined /> {t('suppliers')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            {supplier.name}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-        
+
+        <Breadcrumb
+          items={[
+            {
+              href: `/${locale}/dashboard`,
+              title: (
+                <>
+                  <HomeOutlined /> {t('dashboard')}
+                </>
+              ),
+            },
+            {
+              href: `/${locale}/dashboard/suppliers`,
+              title: (
+                <>
+                  <ShopOutlined /> {t('suppliers')}
+                </>
+              ),
+            },
+            {
+              title: supplier.name,
+            },
+          ]}
+          style={{ marginBottom: '16px' }}
+        />
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
@@ -543,7 +432,6 @@ export default function SupplierDetailPage() {
             </Dropdown>
           </Space>
         </div>
-      </div>
 
       {/* Content */}
       <Tabs defaultActiveKey="overview">
@@ -561,7 +449,7 @@ export default function SupplierDetailPage() {
                   <Descriptions.Item label={t('supplierType')}>
                     {t(`supplierTypes.${supplier.type}`)}
                   </Descriptions.Item>
-                  <Descriptions.Item label={t('status')}>
+                  <Descriptions.Item label={t('statusLabel')}>
                     <Tag color={getStatusColor(supplier.status)}>
                       {t(`status.${supplier.status}`)}
                     </Tag>

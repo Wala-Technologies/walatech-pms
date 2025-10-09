@@ -18,11 +18,22 @@ export class CustomersService {
   ) {}
 
   private get tenant_id(): string {
-    return this.request.tenant_id || this.request.user?.tenant_id;
+    const tenantId = this.request?.tenant_id || this.request?.user?.tenant_id || this.request?.tenant?.id;
+    if (!tenantId) {
+      console.error('No tenant_id found in request context:', {
+        hasRequest: !!this.request,
+        hasRequestTenantId: !!this.request?.tenant_id,
+        hasRequestUser: !!this.request?.user,
+        hasRequestUserTenantId: !!this.request?.user?.tenant_id,
+        hasRequestTenant: !!this.request?.tenant,
+        requestKeys: this.request ? Object.keys(this.request) : []
+      });
+      throw new Error('No tenant_id found in request context');
+    }
+    return tenantId;
   }
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
-    const userId = this.request.user?.user_id;
     const departmentId = createCustomerDto.department_id || this.request.user?.default_department_id;
 
     // Validate department access
@@ -30,7 +41,7 @@ export class CustomersService {
       throw new BadRequestException('Department ID is required');
     }
 
-    const canAccess = await this.departmentAccessService.canAccessDepartment(userId, departmentId);
+    const canAccess = await this.departmentAccessService.canAccessDepartment(this.request.user, departmentId);
     if (!canAccess) {
       throw new BadRequestException('You do not have access to create customers in this department');
     }
@@ -128,8 +139,7 @@ export class CustomersService {
     }
 
     // Validate department access
-    const userId = this.request.user?.user_id;
-    const canAccess = await this.departmentAccessService.canAccessDepartment(userId, customer.department_id);
+    const canAccess = await this.departmentAccessService.canAccessDepartment(this.request.user, customer.department_id);
     if (!canAccess) {
       throw new NotFoundException('Customer not found');
     }

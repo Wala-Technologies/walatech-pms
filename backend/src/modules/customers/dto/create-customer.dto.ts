@@ -1,5 +1,6 @@
 import { IsString, IsEmail, IsOptional, IsNumber, IsBoolean, IsIn, MaxLength, Min, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreateCustomerDto {
   @ApiProperty({ description: 'Customer name', maxLength: 140 })
@@ -69,12 +70,14 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Transform(({ value }) => (value === '' || value === null || value === undefined ? undefined : parseFloat(value)))
   credit_limit?: number;
 
   @ApiPropertyOptional({ description: 'Payment terms in days', minimum: 0, default: 0 })
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Transform(({ value }) => (value === '' || value === null || value === undefined ? undefined : parseInt(value, 10)))
   payment_terms?: number;
 
   @ApiPropertyOptional({ description: 'Is customer frozen', default: false })

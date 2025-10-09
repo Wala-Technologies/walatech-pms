@@ -9,6 +9,7 @@ interface User {
   first_name: string;
   last_name: string;
   tenant_id: string;
+  department_id?: string;
   isSuperAdmin: boolean;
   role_profile_name: string;
   enabled: boolean;
