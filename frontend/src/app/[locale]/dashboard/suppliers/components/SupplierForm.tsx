@@ -227,7 +227,7 @@ export default function SupplierForm({
           <Col span={12}>
             <Form.Item
               name="status"
-              label={t('status')}
+              label={t('statusLabel')}
               rules={[{ required: true, message: t('validation.statusRequired') }]}
             >
               <Select placeholder={t('placeholders.status')}>

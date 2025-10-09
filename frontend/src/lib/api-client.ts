@@ -371,14 +371,14 @@ class ApiClient {
 
   async deleteWithTenant<T = any>(
     endpoint: string,
-    tenantSubdomain: string,
-    data?: any
+    data: any,
+    tenantSubdomain: string
   ): Promise<ApiResponse<T>> {
     return this.requestWithContentType<T>(
       endpoint,
       {
         method: 'DELETE',
-        body: data ? JSON.stringify(data) : undefined,
+        body: JSON.stringify(data),
       },
       false,
       tenantSubdomain

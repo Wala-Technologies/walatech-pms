@@ -197,52 +197,19 @@ export default function SuppliersPage() {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      
-      // For development, use mock data
-      // In production, replace with actual API call:
-      // const queryParams: SupplierQueryParams = {
-      //   page: pagination.current,
-      //   limit: pagination.pageSize,
-      //   search: searchTerm || undefined,
-      //   supplierType: filters.supplierType || undefined,
-      //   status: filters.status || undefined,
-      //   country: filters.country || undefined,
-      // };
-      // const response = await supplierApi.getSuppliers(queryParams);
-      // setSuppliers(response.data?.suppliers || []);
-      // setPagination(prev => ({ ...prev, total: response.data?.total || 0 }));
-
-      // Mock implementation
-      let filteredSuppliers = mockSuppliers;
-      
-      if (searchTerm) {
-        filteredSuppliers = filteredSuppliers.filter(supplier =>
-          supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          supplier.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          supplier.email?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      if (filters.supplierType) {
-        filteredSuppliers = filteredSuppliers.filter(supplier => 
-          supplier.type === filters.supplierType
-        );
-      }
-
-      if (filters.status) {
-        filteredSuppliers = filteredSuppliers.filter(supplier => 
-          supplier.status === filters.status
-        );
-      }
-
-      if (filters.country) {
-        filteredSuppliers = filteredSuppliers.filter(supplier => 
-          supplier.country === filters.country
-        );
-      }
-
-      setSuppliers(filteredSuppliers);
-      setPagination(prev => ({ ...prev, total: filteredSuppliers.length }));
+      const queryParams: SupplierQueryParams = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+        search: searchTerm || undefined,
+        type: (filters.supplierType || undefined) as SupplierType | undefined,
+        status: (filters.status || undefined) as SupplierStatus | undefined,
+        country: filters.country || undefined,
+      };
+      const response = await supplierApi.getSuppliers(queryParams);
+      const list = response.data?.suppliers || [];
+      const total = response.data?.total || 0;
+      setSuppliers(list);
+      setPagination(prev => ({ ...prev, total }));
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       message.error('Failed to fetch suppliers');
@@ -253,12 +220,15 @@ export default function SuppliersPage() {
 
   const fetchStats = async () => {
     try {
-      // For development, use mock data
-      // In production, replace with actual API call:
-      // const response = await supplierApi.getSupplierStatistics();
-      // setStats(response.data);
-      
-      setStats(mockStats);
+      const response = await supplierApi.getSupplierStats();
+      const s = response.data;
+      if (s) {
+        const total = s.totalSuppliers || 0;
+        const active = s.activeSuppliers || 0;
+        const onHold = s.suppliersOnHold || 0;
+        const disabled = Math.max(total - active - onHold, 0);
+        setStats({ total, active, disabled, onHold, byType: {}, byCountry: {} });
+      }
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -284,7 +254,7 @@ export default function SuppliersPage() {
 
   const handleActivateSupplier = async (supplierId: string) => {
     try {
-      // await supplierApi.activateSupplier(supplierId);
+      await supplierApi.activateSupplier(supplierId);
       message.success(t('messages.supplierActivated'));
       fetchSuppliers();
     } catch (error) {
@@ -294,7 +264,7 @@ export default function SuppliersPage() {
 
   const handleDeactivateSupplier = async (supplierId: string) => {
     try {
-      // await supplierApi.deactivateSupplier(supplierId);
+      await supplierApi.deactivateSupplier(supplierId);
       message.success(t('messages.supplierDeactivated'));
       fetchSuppliers();
     } catch (error) {
@@ -311,7 +281,7 @@ export default function SuppliersPage() {
       cancelText: t('cancel'),
       onOk: async () => {
         try {
-          // await supplierApi.deleteSupplier(supplierId);
+          await supplierApi.deleteSupplier(supplierId);
           message.success(t('messages.supplierDeleted'));
           fetchSuppliers();
         } catch (error) {
@@ -319,6 +289,39 @@ export default function SuppliersPage() {
         }
       },
     });
+  };
+
+  const handleBulkActivate = async () => {
+    try {
+      await Promise.all(selectedRowKeys.map(id => supplierApi.activateSupplier(id)));
+      message.success(t('messages.supplierActivated'));
+      setSelectedRowKeys([]);
+      fetchSuppliers();
+    } catch (error) {
+      message.error(t('messages.activationFailed'));
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    try {
+      await Promise.all(selectedRowKeys.map(id => supplierApi.deactivateSupplier(id)));
+      message.success(t('messages.supplierDeactivated'));
+      setSelectedRowKeys([]);
+      fetchSuppliers();
+    } catch (error) {
+      message.error(t('messages.deactivationFailed'));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedRowKeys.map(id => supplierApi.deleteSupplier(id)));
+      message.success(t('messages.supplierDeleted'));
+      setSelectedRowKeys([]);
+      fetchSuppliers();
+    } catch (error) {
+      message.error(t('messages.deleteFailed'));
+    }
   };
 
   const getStatusColor = (status: SupplierStatus) => {
@@ -442,18 +445,18 @@ export default function SuppliersPage() {
       ),
     },
     {
-      title: t('status'),
+      title: t('statusLabel'),
       dataIndex: 'status',
       key: 'status',
       width: 100,
       render: (status: SupplierStatus) => (
         <Tag color={getStatusColor(status)}>
-          {t(`status.${status}`)}
+          {t(`statuses.${status}`)}
         </Tag>
       ),
     },
     {
-      title: t('actions'),
+      title: t('actionsColumn'),
       key: 'actions',
       width: 80,
       render: (_, record: Supplier) => (
@@ -474,10 +477,17 @@ export default function SuppliersPage() {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Breadcrumb style={{ marginBottom: '16px' }}>
-        <Breadcrumb.Item>{t('dashboard')}</Breadcrumb.Item>
-        <Breadcrumb.Item>{t('suppliers')}</Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb
+        style={{ marginBottom: '16px' }}
+        items={[
+          {
+            title: t('dashboard'),
+          },
+          {
+            title: t('suppliers'),
+          },
+        ]}
+      />
 
       {/* Statistics Cards */}
       {stats && (
@@ -568,13 +578,13 @@ export default function SuppliersPage() {
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Select
-              placeholder={t('status')}
+              placeholder={t('statusLabel')}
               allowClear
               style={{ width: '100%' }}
               onChange={(value) => handleFilterChange('status', value || '')}
             >
-              <Option value={SupplierStatus.ACTIVE}>{t(`status.${SupplierStatus.ACTIVE}`)}</Option>
-              <Option value={SupplierStatus.DISABLED}>{t(`status.${SupplierStatus.DISABLED}`)}</Option>
+              <Option value={SupplierStatus.ACTIVE}>{t(`statuses.${SupplierStatus.ACTIVE}`)}</Option>
+              <Option value={SupplierStatus.DISABLED}>{t(`statuses.${SupplierStatus.DISABLED}`)}</Option>
             </Select>
           </Col>
           <Col xs={24} sm={8} md={4}>
@@ -607,9 +617,9 @@ export default function SuppliersPage() {
           <div style={{ marginBottom: '16px', padding: '8px', background: '#f0f2f5', borderRadius: '4px' }}>
             <Space>
               <span>{t('selectedItems', { count: selectedRowKeys.length })}</span>
-              <Button size="small">{t('bulkActivate')}</Button>
-              <Button size="small">{t('bulkDeactivate')}</Button>
-              <Button size="small" danger>{t('bulkDelete')}</Button>
+              <Button size="small" onClick={handleBulkActivate}>{t('bulkActivate')}</Button>
+              <Button size="small" onClick={handleBulkDeactivate}>{t('bulkDeactivate')}</Button>
+              <Button size="small" danger onClick={handleBulkDelete}>{t('bulkDelete')}</Button>
             </Space>
           </div>
         )}

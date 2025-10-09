@@ -43,6 +43,9 @@ import type { MenuProps } from 'antd';
 import CustomerForm from './components/CustomerForm';
 import { apiClient } from '../../../../config/api';
 import { apiConfig } from '../../../../config/api';
+import { hrApi } from '../../../../lib/hr-api';
+import { useAuth } from '../../../../hooks/useAuth';
+import { customerApi, CustomerCreateDto } from '../../../../lib/customer-api';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -75,6 +78,7 @@ export default function CustomersPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { user } = useAuth();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -94,6 +98,8 @@ export default function CustomersPage() {
   });
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [addModalLoading, setAddModalLoading] = useState(false);
+  const [firstDepartmentId, setFirstDepartmentId] = useState<string | null>(null);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
 
   // Mock data for development
   const mockCustomers: Customer[] = [
@@ -154,6 +160,28 @@ export default function CustomersPage() {
     fetchCustomers();
     fetchStats();
   }, [searchTerm, filters, pagination.current, pagination.pageSize]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true);
+        const response = await hrApi.getDepartments({ limit: 1 });
+        const data: any = response.data;
+        const list = Array.isArray(data) ? data : data?.departments || [];
+        const deptId = list?.[0]?.id || null;
+        if (!deptId) {
+          message.warning('No departments found. Please create a department first.');
+        }
+        setFirstDepartmentId(deptId);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        message.error('Failed to load departments');
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -290,22 +318,54 @@ export default function CustomersPage() {
   const handleAddCustomerSubmit = async (values: any) => {
     setAddModalLoading(true);
     try {
-      const response = await apiClient.post(apiConfig.endpoints.customers.create, values);
-
-      if (response.ok) {
-        message.success('Customer created successfully');
-        setIsAddModalVisible(false);
-        
-        // Refresh the customer list and stats
-        fetchCustomers();
-        fetchStats();
-      } else {
-        const errorData = await response.json();
-        message.error(errorData.message || 'Failed to create customer');
+      const departmentId = user?.department_id || firstDepartmentId;
+      if (!departmentId) {
+        throw new Error('No department available. Please create a department first.');
       }
+
+      const payload: CustomerCreateDto = {
+        customer_name: values.customer_name,
+        customer_code: values.customer_code,
+        customer_type: values.customer_type,
+        email: values.email,
+        mobile_no: values.mobile_no,
+        phone: values.phone,
+        website: values.website,
+        tax_id: values.tax_id,
+        billing_address_line1: values.billing_address_line1,
+        billing_address_line2: values.billing_address_line2,
+        billing_city: values.billing_city,
+        billing_state: values.billing_state,
+        billing_country: values.billing_country,
+        billing_pincode: values.billing_pincode,
+        shipping_address_line1: values.shipping_address_line1,
+        shipping_address_line2: values.shipping_address_line2,
+        shipping_city: values.shipping_city,
+        shipping_state: values.shipping_state,
+        shipping_country: values.shipping_country,
+        shipping_pincode: values.shipping_pincode,
+        credit_limit: values.credit_limit,
+        payment_terms: values.payment_terms,
+        is_frozen: values.is_frozen,
+        disabled: values.disabled,
+        notes: values.notes,
+        department_id: departmentId,
+      };
+
+      const response = await customerApi.createCustomer(payload);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      message.success('Customer created successfully');
+      setIsAddModalVisible(false);
+
+      // Refresh the customer list and stats
+      fetchCustomers();
+      fetchStats();
     } catch (error) {
       console.error('Failed to create customer:', error);
-      message.error('Failed to create customer');
+      const errorMessage = (error as any)?.message || 'Failed to create customer';
+      message.error(errorMessage);
     } finally {
       setAddModalLoading(false);
     }

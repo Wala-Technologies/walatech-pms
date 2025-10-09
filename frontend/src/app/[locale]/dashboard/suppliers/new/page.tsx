@@ -19,15 +19,7 @@ export default function NewSupplierPage() {
   const handleSubmit = async (values: CreateSupplierDto) => {
     try {
       setLoading(true);
-      
-      // Mock API call for development
-      console.log('Creating supplier:', values);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real implementation, uncomment this:
-      // const newSupplier = await supplierApi.createSupplier(values);
+      await supplierApi.createSupplier(values);
       
       message.success(t('messages.createSuccess'));
       router.push(`/${locale}/dashboard/suppliers/list`);
@@ -55,21 +47,32 @@ export default function NewSupplierPage() {
           {t('back')}
         </Button>
         
-        <Breadcrumb style={{ marginBottom: '16px' }}>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard`}>
-              <HomeOutlined /> {t('dashboard')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard/suppliers`}>
-              <ShopOutlined /> {t('suppliers')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <PlusOutlined /> {t('addSupplier')}
-          </Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb
+          style={{ marginBottom: '16px' }}
+          items={[
+            {
+              title: (
+                <Link href={`/${locale}/dashboard`}>
+                  <HomeOutlined /> {t('dashboard')}
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <Link href={`/${locale}/dashboard/suppliers`}>
+                  <ShopOutlined /> {t('suppliers')}
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <>
+                  <PlusOutlined /> {t('addSupplier')}
+                </>
+              ),
+            },
+          ]}
+        />
         
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
           {t('addSupplier')}

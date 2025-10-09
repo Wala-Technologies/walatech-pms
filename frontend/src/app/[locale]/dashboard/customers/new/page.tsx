@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Form,
   Input,
@@ -28,6 +28,10 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import { customerApi } from '../../../../../lib/customer-api';
+import { useAuth } from '../../../../../hooks/useAuth';
+import { hrApi } from '../../../../../lib/hr-api';
+import type { CustomerCreateDto } from '../../../../../lib/customer-api';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -64,27 +68,55 @@ export default function NewCustomerPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { user } = useAuth();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(false);
+  const [firstDepartmentId, setFirstDepartmentId] = useState<string | null>(null);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true);
+        const response = await hrApi.getDepartments({ limit: 1 });
+        const data: any = response.data;
+        const list = Array.isArray(data) ? data : data?.departments || [];
+        const deptId = list?.[0]?.id || null;
+        if (!deptId) {
+          message.warning('No departments found. Please create a department first.');
+        }
+        setFirstDepartmentId(deptId);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        message.error('Failed to load departments');
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (values: CustomerFormData) => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/customers', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const departmentId = user?.department_id || firstDepartmentId;
+      if (!departmentId) {
+        throw new Error('No department available. Please create a department first.');
+      }
+      const payload: CustomerCreateDto = {
+        ...values,
+        department_id: departmentId,
+      };
+      const response = await customerApi.createCustomer(payload);
+      if (response.error) {
+        throw new Error(response.error);
+      }
       message.success('Customer created successfully');
       router.push(`/${locale}/dashboard/customers`);
     } catch (error) {
-      message.error('Failed to create customer');
+      const errMsg = (error as any)?.message || 'Failed to create customer';
+      message.error(errMsg);
     } finally {
       setLoading(false);
     }

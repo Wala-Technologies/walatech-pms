@@ -15,8 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import CustomerForm from '../../components/CustomerForm';
-import { apiClient } from '../../../../../../config/api';
-import { apiConfig } from '../../../../../../config/api';
+import { customerApi } from '../../../../../../lib/customer-api';
 
 interface CustomerFormData {
   customer_name: string;
@@ -62,42 +61,11 @@ export default function EditCustomerPage() {
   const fetchCustomer = async () => {
     try {
       setInitialLoading(true);
-      const response = await apiClient.get(`${apiConfig.endpoints.customers.list}/${customerId}`);
-      
-      if (response.ok) {
-        const customer = await response.json();
-        setCustomerData(customer);
-      } else {
-        // Fallback to mock data if API fails
-        const mockCustomer: CustomerFormData = {
-          customer_name: 'Acme Corporation',
-          customer_code: 'ACME001',
-          customer_type: 'Company',
-          email: 'contact@acme.com',
-          mobile_no: '+1234567890',
-          phone: '+1234567891',
-          website: 'https://acme.com',
-          tax_id: 'TAX123456789',
-          billing_address_line1: '123 Business St',
-          billing_address_line2: 'Suite 100',
-          billing_city: 'New York',
-          billing_state: 'NY',
-          billing_country: 'USA',
-          billing_pincode: '10001',
-          shipping_address_line1: '456 Warehouse Ave',
-          shipping_address_line2: '',
-          shipping_city: 'Brooklyn',
-          shipping_state: 'NY',
-          shipping_country: 'USA',
-          shipping_pincode: '11201',
-          credit_limit: 50000,
-          payment_terms: 'Net 30',
-          is_frozen: false,
-          disabled: false,
-          notes: 'Important client with long-term contract',
-        };
-        setCustomerData(mockCustomer);
+      const response = await customerApi.getCustomer(customerId);
+      if (response.error) {
+        throw new Error(response.error);
       }
+      setCustomerData(response.data as CustomerFormData);
     } catch (error) {
       console.error('Failed to fetch customer:', error);
       message.error('Failed to fetch customer data');
@@ -109,15 +77,12 @@ export default function EditCustomerPage() {
   const handleSubmit = async (values: CustomerFormData) => {
     setLoading(true);
     try {
-      const response = await apiClient.patch(`${apiConfig.endpoints.customers.update}/${customerId}`, values);
-      
-      if (response.ok) {
-        message.success('Customer updated successfully');
-        router.push(`/${locale}/dashboard/customers/${customerId}`);
-      } else {
-        const errorData = await response.json();
-        message.error(errorData.message || 'Failed to update customer');
+      const response = await customerApi.updateCustomer(customerId, values);
+      if (response.error) {
+        throw new Error(response.error);
       }
+      message.success('Customer updated successfully');
+      router.push(`/${locale}/dashboard/customers/${customerId}`);
     } catch (error) {
       console.error('Failed to update customer:', error);
       message.error('Failed to update customer');

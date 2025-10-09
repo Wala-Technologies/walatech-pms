@@ -7,7 +7,7 @@ import { Button, Breadcrumb, message, Card, Spin, Alert } from 'antd';
 import { ArrowLeftOutlined, HomeOutlined, ShopOutlined, EditOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import SupplierForm from '../../components/SupplierForm';
-import { Supplier, UpdateSupplierDto, SupplierStatus, SupplierType } from '../../../../../../lib/supplier-api';
+import { supplierApi, Supplier, UpdateSupplierDto, SupplierStatus, SupplierType } from '../../../../../../lib/supplier-api';
 
 export default function EditSupplierPage() {
   const router = useRouter();
@@ -25,27 +25,8 @@ export default function EditSupplierPage() {
     try {
       setLoading(true);
       setError(null);
-
-      // Mock data for development
-      const mockSupplier: Supplier = {
-        id: supplierId,
-        name: 'Global Manufacturing Co.',
-        code: 'GM001',
-        type: SupplierType.MANUFACTURER,
-        status: SupplierStatus.ACTIVE,
-        email: 'contact@globalmanufacturing.com',
-        phone: '+1234567890',
-        website: 'https://globalmanufacturing.com',
-        country: 'USA',
-        isActive: true,
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T10:30:00Z',
-      };
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      setSupplier(mockSupplier);
+      const response = await supplierApi.getSupplier(supplierId);
+      setSupplier(response.data || null);
     } catch (error) {
       console.error('Error fetching supplier:', error);
       setError(t('messages.fetchError'));
@@ -61,12 +42,7 @@ export default function EditSupplierPage() {
   const handleSubmit = useCallback(async (values: UpdateSupplierDto) => {
     try {
       setSubmitLoading(true);
-
-      // Mock API call for development
-      console.log('Updating supplier:', values);
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await supplierApi.updateSupplier(supplierId, values);
 
       message.success(t('messages.updateSuccess'));
       router.push(`/${locale}/dashboard/suppliers/list`);
@@ -76,7 +52,7 @@ export default function EditSupplierPage() {
     } finally {
       setSubmitLoading(false);
     }
-  }, [t, locale, router]);
+  }, [t, locale, router, supplierId]);
 
   const handleCancel = () => {
     router.back();
@@ -139,26 +115,39 @@ export default function EditSupplierPage() {
           {t('back')}
         </Button>
 
-        <Breadcrumb style={{ marginBottom: '16px' }}>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard`}>
-              <HomeOutlined /> {t('dashboard')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard/suppliers`}>
-              <ShopOutlined /> {t('suppliers')}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link href={`/${locale}/dashboard/suppliers/${supplierId}`}>
-              {supplier.name}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <EditOutlined /> {t('edit')}
-          </Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb
+          style={{ marginBottom: '16px' }}
+          items={[
+            {
+              title: (
+                <Link href={`/${locale}/dashboard`}>
+                  <HomeOutlined /> {t('dashboard')}
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <Link href={`/${locale}/dashboard/suppliers`}>
+                  <ShopOutlined /> {t('suppliers')}
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <Link href={`/${locale}/dashboard/suppliers/${supplierId}`}>
+                  {supplier.name}
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <>
+                  <EditOutlined /> {t('edit')}
+                </>
+              ),
+            },
+          ]}
+        />
 
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
           {t('editSupplier')}: {supplier.name}

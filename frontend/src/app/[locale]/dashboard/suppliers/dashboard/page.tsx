@@ -224,7 +224,7 @@ export default function SupplierDashboard() {
       render: (amount: number) => `$${amount.toLocaleString()}`,
     },
     {
-      title: t('status'),
+      title: t('statusLabel'),
       dataIndex: 'status',
       key: 'status',
       render: (status: QuotationStatus) => (
@@ -259,7 +259,7 @@ export default function SupplierDashboard() {
       render: (type: string) => t(`supplierTypes.${type}`),
     },
     {
-      title: t('status'),
+      title: t('statusLabel'),
       dataIndex: 'status',
       key: 'status',
       render: (status: SupplierStatus) => (
